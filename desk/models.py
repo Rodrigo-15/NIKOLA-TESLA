@@ -132,4 +132,4 @@ class ProcedureTracing(models.Model):
         return ProcedureTracing.objects.filter(procedure_id=procedure_id).values("referral_area_id").last()["referral_area_id"]
 
     def __str__(self):
-        return f"{self.procedure_id} - {self.area}"
+        return f"{self.procedure_id} - {self.referral_area}"
