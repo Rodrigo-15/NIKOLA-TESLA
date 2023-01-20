@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "reportes",
     "django.contrib.humanize",
     "mesa_partes.apps.MesaPartesConfig",
+    "desk",
 ]
 
 MIDDLEWARE = [

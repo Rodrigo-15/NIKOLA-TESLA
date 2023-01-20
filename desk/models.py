@@ -18,7 +18,7 @@ class Headquarter(models.Model):
 
 
 class File(models.Model):
-    subject = models.TextField()
+    person = models.ForeignKey(Persona, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateField(auto_now_add=True, auto_now=False)
     updated_at = models.DateField(auto_now_add=False, auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -54,8 +54,8 @@ class ProcedureType(models.Model):
     description = models.CharField(max_length=50)
 
     class Meta:
-        verbose_name = ("procedure type")
-        verbose_name_plural = ("procedure types")
+        verbose_name = "procedure type"
+        verbose_name_plural = "procedure types"
 
     def __str__(self):
         return self.description
@@ -63,12 +63,8 @@ class ProcedureType(models.Model):
 
 class Procedure(models.Model):
     file = models.ForeignKey(File, on_delete=models.CASCADE)
-    person = models.ForeignKey(
-        Persona, on_delete=models.CASCADE, null=True, blank=True)
-    entity = models.CharField(max_length=50, null=True, blank=True)
-    id_number = models.CharField(max_length=20, null=True, blank=True)
-    procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
     subject = models.TextField(null=False, blank=False)
+    procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
     reference_doc_number = models.CharField(max_length=20)
     # user who registered the procedure
     user = models.OneToOneField("auth.User", on_delete=models.CASCADE)
@@ -89,21 +85,21 @@ class Procedure(models.Model):
         return Procedure.objects.filter(id=procedure_id)
 
     def __str__(self):
-        return f"{self.procedure_type} - {self.subject} - {self.headquarter} - {self.created_at} - {self.updated_at}"
+        return f"{self.subject} - {self.procedure_type} - {self.reference_doc_number} - {self.headquarter} - {self.created_at}"
 
 
-class Procedure_ProcedureRequirement(models.Model):
+class Procedure_ProcReq(models.Model):
     """
     Intermediate table between Procedure and ProcedureRequirement
     """
 
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
-    requirement = models.ForeignKey(
-        ProcedureRequirement, on_delete=models.CASCADE)
+    requirement = models.ForeignKey(ProcedureRequirement, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
-        verbose_name = "procedure_procedurerequirement"
-        verbose_name_plural = "procedure_procedurerequirements"
+        verbose_name = "procedure_procreq"
+        verbose_name_plural = "procedure_procreqs"
 
     def __str__(self):
         return f"{self.procedure_type} - {self.requirement}"
@@ -111,10 +107,11 @@ class Procedure_ProcedureRequirement(models.Model):
 
 class ProcedureTracing(models.Model):
     procedure = models.ForeignKey(Procedure, on_delete=models.CASCADE)
-    referral_area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    from_area = models.ForeignKey(
+        Area, on_delete=models.CASCADE, related_name="from_area"
+    )
+    to_area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="to_area")
     action = models.TextField()
-    is_started = models.BooleanField(default=False)
-    is_revision = models.BooleanField(default=False)
     is_finished = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
     updated_at = models.DateTimeField(auto_now_add=False, auto_now=True)
@@ -129,7 +126,11 @@ class ProcedureTracing(models.Model):
 
     @staticmethod
     def get_referral_area_by_procedure_id(procedure_id):
-        return ProcedureTracing.objects.filter(procedure_id=procedure_id).values("referral_area_id").last()["referral_area_id"]
+        return (
+            ProcedureTracing.objects.filter(procedure_id=procedure_id)
+            .values("referral_area_id")
+            .last()["referral_area_id"]
+        )
 
     def __str__(self):
-        return f"{self.procedure_id} - {self.referral_area}"
+        return f"{self.procedure_id} - {self.from_area} - {self.to_area}"
