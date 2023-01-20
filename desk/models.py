@@ -32,7 +32,7 @@ class File(models.Model):
         return File.objects.filter().values("id").last()["id"]
 
     def __str__(self):
-        return self.subject
+        return self.person.nombres
 
 
 class ProcedureRequirement(models.Model):
@@ -85,7 +85,8 @@ class Procedure(models.Model):
         return Procedure.objects.filter(id=procedure_id)
 
     def __str__(self):
-        return f"{self.subject} - {self.procedure_type} - {self.reference_doc_number} - {self.headquarter} - {self.created_at}"
+        return f"{self.file_id} - {self.subject} - {self.procedure_type} -\
+                {self.reference_doc_number} - {self.headquarter}"
 
 
 class Procedure_ProcReq(models.Model):
