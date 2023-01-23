@@ -119,3 +119,18 @@ class CargoArea(models.Model):
 
     def __str__(self):
         return f'{self.persona.nombres} {self.persona.apellido_paterno} {self.persona.apellido_materno} - {self.area.nombre} - {self.cargo.nombre}'
+
+
+class Apps(models.Model):
+    name = models.CharField(max_length=50)
+    url = models.CharField(max_length=50)
+    icon = models.CharField(max_length=50)
+    background = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f'{self.name} - {self.url} - {self.is_active}'
+    
+    @staticmethod
+    def get_apps():
+        return Apps.objects.filter(is_active=True)
