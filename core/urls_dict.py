@@ -1,10 +1,6 @@
-from backend.settings import DEBUG, LOCAL_URL, PROD_URL
+from backend.settings import DEBUG, URL_LOCAL, URL_PROD
 
-if DEBUG:
-    url = LOCAL_URL
-else:
-    url = PROD_URL
-
+url = URL_LOCAL if DEBUG else URL_PROD
 
 urls_dict = {
     "desk": {
