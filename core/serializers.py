@@ -11,3 +11,14 @@ class EtapaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Etapa
         fields = '__all__'
+
+class MenuSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(max_length=200)
+    url = serializers.CharField(max_length=200)
+    icon = serializers.CharField(max_length=200)
+    app = serializers.SerializerMethodField(source="get_app")
+
+    def get_app(self, obj):
+        return obj.app.name
+

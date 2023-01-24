@@ -28,3 +28,21 @@ def get_etapa_active(request):
     etapa = Etapa.get_etapa_activo(programa_id,periodo_id,promocion)
     serializer = EtapaSerializer(etapa)
     return Response(serializer.data)
+
+@api_view(['POST'])
+def get_menus(request):
+    if request.method == 'POST':
+        data = request.data
+        # user = request.user
+        user_model = User.objects.get(id=3)
+        groups = user_model.groups.all()
+        app = data.get('app')
+        menu_obj = []
+        for group in groups:
+            menu = Menu.objects.filter(app__name=app, groups__id=group.id)
+            serializer = MenuSerializer(menu, many=True)
+            for menu in serializer.data:
+                if menu not in menu_obj:
+                    menu_obj.append(menu)
+                
+        return Response(menu_obj)
