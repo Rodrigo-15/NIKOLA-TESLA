@@ -109,9 +109,9 @@ class Procedure_ProcReq(models.Model):
 class ProcedureTracing(models.Model):
     procedure = models.ForeignKey(Procedure, on_delete=models.CASCADE)
     from_area = models.ForeignKey(
-        Area, on_delete=models.CASCADE, related_name="from_area"
+        Area, on_delete=models.CASCADE, related_name="from_area", null=True, blank=True
     )
-    to_area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="to_area")
+    to_area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="to_area", null=True, blank=True)
     action = models.TextField()
     is_finished = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)

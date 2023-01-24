@@ -1,7 +1,8 @@
 from django.db import models
 
 from zonas.models import Pais
-from django.contrib.auth.models import User
+
+from django.contrib.auth.models import User, Group
 # Create your models here.
 
 
@@ -134,3 +135,14 @@ class Apps(models.Model):
     @staticmethod
     def get_apps():
         return Apps.objects.filter(is_active=True)
+
+class Menu(models.Model):
+    name = models.CharField(max_length=50)
+    url = models.CharField(max_length=50)
+    icon = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=True)
+    app = models.ForeignKey(Apps, on_delete=models.CASCADE)
+    groups = models.ManyToManyField(Group)
+
+    def __str__(self):
+        return f'{self.name} - {self.url} - {self.is_active}'
