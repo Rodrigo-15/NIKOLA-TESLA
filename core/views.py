@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from core import urls_dicc
+from core import urls_dict
 from core.models import *
 from core.serializers import *
 
@@ -37,4 +37,4 @@ def get_etapa_active(request):
 
 @api_view(["GET"])
 def paths(request):
-    return Response(urls_dicc.urls_dicc)
+    return Response(urls_dict.urls_dict)

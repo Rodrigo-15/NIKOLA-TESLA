@@ -6,7 +6,7 @@ else:
     url = PROD_URL
 
 
-urls_dicc = {
+urls_dict = {
     "desk": {
         "headquarters": {
             "get": f"{url}desk/headquarters/",  # get
