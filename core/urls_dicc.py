@@ -1,34 +1,42 @@
+from backend.settings import DEBUG, LOCAL_URL, PROD_URL
+
+if DEBUG:
+    url = LOCAL_URL
+else:
+    url = PROD_URL
+
+
 urls_dicc = {
     "desk": {
         "headquarters": {
-            "get": "http://localhost:8000/desk/headquarters/",  # get
-            "save": "http://localhost:8000/desk/headquarters/",  # post
-            "delete": "http://localhost:8000/desk/headquarters/",  # delete
-            "edit": "http://localhost:8000/desk/headquarters/",  # put
+            "get": f"{url}desk/headquarters/",  # get
+            "save": f"{url}desk/headquarters/",  # post
+            "delete": f"{url}desk/headquarters/",  # delete
+            "edit": f"{url}desk/headquarters/",  # put
         },
         "procedure_requirement": {
-            "get": "http://localhost:8000/desk/procedure_requirement/",  # get
-            "save": "http://localhost:8000/desk/procedure_requirement/",  # post
-            "delete": "http://localhost:8000/desk/procedure_requirement/",  # delete
-            "edit": "http://localhost:8000/desk/procedure_requirement/",  # put
+            "get": f"{url}desk/procedure_requirement/",  # get
+            "save": f"{url}desk/procedure_requirement/",  # post
+            "delete": f"{url}desk/procedure_requirement/",  # delete
+            "edit": f"{url}desk/procedure_requirement/",  # put
         },
         "procedure_type": {
-            "get": "http://localhost:8000/desk/procedure_type/",  # get
-            "save": "http://localhost:8000/desk/procedure_type/",  # post
-            "delete": "http://localhost:8000/desk/procedure_type/",  # delete
-            "edit": "http://localhost:8000/desk/procedure_type/",  # put
+            "get": f"{url}desk/procedure_type/",  # get
+            "save": f"{url}desk/procedure_type/",  # post
+            "delete": f"{url}desk/procedure_type/",  # delete
+            "edit": f"{url}desk/procedure_type/",  # put
         },
         "pocedure_procreqs": {
-            "get": "http://localhost:8000/desk/procedure_procreqs/",  # get
-            "save": "http://localhost:8000/desk/procedure_procreqs/",  # post
-            "delete": "http://localhost:8000/desk/procedure_procreqs/",  # delete
-            "edit": "http://localhost:8000/desk/procedure_procreqs/",  # put
+            "get": f"{url}desk/procedure_procreqs/",  # get
+            "save": f"{url}desk/procedure_procreqs/",  # post
+            "delete": f"{url}desk/procedure_procreqs/",  # delete
+            "edit": f"{url}desk/procedure_procreqs/",  # put
         },
         "procedures": {
-            "get": "http://localhost:8000/desk/procedures/",  # get
-            "save": "http://localhost:8000/desk/procedures/",  # post
-            "delete": "http://localhost:8000/desk/procedures/",  # delete
-            "edit": "http://localhost:8000/desk/procedures/",  # put
+            "get": f"{url}desk/procedures/",  # get
+            "save": f"{url}desk/procedures/",  # post
+            "delete": f"{url}desk/procedures/",  # delete
+            "edit": f"{url}desk/procedures/",  # put
         },
     },
 }
