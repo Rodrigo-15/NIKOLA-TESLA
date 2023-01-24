@@ -33,8 +33,8 @@ def get_etapa_active(request):
 def get_menus(request):
     if request.method == 'POST':
         data = request.data
-        # user = request.user
-        user_model = User.objects.get(id=3)
+        user = request.user
+        user_model = User.objects.get(id=user.id)
         groups = user_model.groups.all()
         app = data.get('app')
         menu_obj = []
