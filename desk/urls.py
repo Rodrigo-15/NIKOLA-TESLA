@@ -7,4 +7,5 @@ app_name = "desk"
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("login/", login, name="login"),
 ]
