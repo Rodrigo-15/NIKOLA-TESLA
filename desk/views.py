@@ -42,7 +42,10 @@ def login(request):
             groups = user.groups.all()
 
             if client == "desk":
-                if not groups.filter(name="usuarios").exists():
+                if (
+                    not groups.filter(name="usuario").exists()
+                    or not groups.filter(name="admin").exists()
+                ):
                     return Response(
                         "User does not exist",
                         status=status.HTTP_401_UNAUTHORIZED,
