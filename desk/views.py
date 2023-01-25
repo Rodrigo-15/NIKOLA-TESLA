@@ -20,8 +20,6 @@ def get_procedures(request):
         else:
             procedures = Procedure.objects.filter(Q(created_at__icontains=date) | Q(code_number__icontains=code_number), user_id=user_id )
         serilaizer = ProcedureSerializer(procedures, many=True)
-        
-        print(serilaizer.data)
         return Response(serilaizer.data)
 
 
