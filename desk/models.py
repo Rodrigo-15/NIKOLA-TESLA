@@ -63,6 +63,7 @@ class ProcedureType(models.Model):
 
 class Procedure(models.Model):
     file = models.ForeignKey(File, on_delete=models.CASCADE)
+    code_number = models.CharField(max_length=20, null=True, blank=True)
     subject = models.TextField(null=False, blank=False)
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
     reference_doc_number = models.CharField(max_length=20)
@@ -75,6 +76,22 @@ class Procedure(models.Model):
     class Meta:
         verbose_name = "procedure"
         verbose_name_plural = "procedures"
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.code = self.generate_code()
+        super(Procedure, self).save(*args, **kwargs)
+
+    def generate_code(self):
+        # generate code for procedure   example: 000001-2020
+        
+        last_procedure_id = Procedure.get_last_procedure_id()
+        if last_procedure_id:
+            last_procedure_id += 1
+        else:
+            last_procedure_id = 1
+        return f"{last_procedure_id:06d}-{self.created_at.year}"
+        
 
     @staticmethod
     def get_last_procedure_id():
