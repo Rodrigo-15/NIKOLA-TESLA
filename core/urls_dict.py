@@ -34,5 +34,6 @@ urls_dict = {
             "delete": f"{url}desk/procedures/",  # delete
             "edit": f"{url}desk/procedures/",  # put
         },
+        "login": f"{url}desk/login/",
     },
 }
