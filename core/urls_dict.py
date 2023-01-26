@@ -4,7 +4,7 @@ url = URL_LOCAL if DEBUG else URL_PROD
 
 urls_dict = {
     "desk": {
-        "headquarters": {
+       "headquarters": {
             "get": f"{url}desk/headquarters/",  # get
             "save": f"{url}desk/headquarters/",  # post
             "delete": f"{url}desk/headquarters/",  # delete
