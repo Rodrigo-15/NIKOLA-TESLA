@@ -30,9 +30,15 @@ urls_dict = {
         },
         "procedures": {
             "get": f"{url}desk/procedures/",  # get
+            "get_procedure": f"{url}desk/get_procedure",  # get
             "save": f"{url}desk/procedures/",  # post
             "delete": f"{url}desk/procedures/",  # delete
             "edit": f"{url}desk/procedures/",  # put
         },
     },
+    "core": {
+        "menu": {
+            "get_menus": f"{url}core/get_menus",  # get
+        },
+    }
 }
