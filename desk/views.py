@@ -1,7 +1,8 @@
 from django.shortcuts import render
+from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from desk.models import File,Procedure
+from desk.models import File, Procedure
 from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -9,10 +10,11 @@ from rest_framework.authtoken.models import Token
 from accounts.serializers import GroupSerializer, UserSerializer
 from core.models import Persona
 
-from django.db.models import  Q
+from django.db.models import Q
 
 from desk.serializers import ProcedureSerializer
 # Create your views here.
+
 
 @api_view(['POST'])
 def get_procedures(request):
@@ -22,18 +24,21 @@ def get_procedures(request):
         user_id = data['user_id']
         code_number = data['code_number']
         if user_id == '':
-            procedures = Procedure.objects.filter(Q(created_at__icontains=date) | Q(code_number__icontains=code_number) )
+            procedures = Procedure.objects.filter(
+                Q(created_at__icontains=date) | Q(code_number__icontains=code_number))
         else:
-            procedures = Procedure.objects.filter(Q(created_at__icontains=date) | Q(code_number__icontains=code_number), user_id=user_id )
+            procedures = Procedure.objects.filter(Q(created_at__icontains=date) | Q(
+                code_number__icontains=code_number), user_id=user_id)
         serilaizer = ProcedureSerializer(procedures, many=True)
         return Response(serilaizer.data)
+
 
 @api_view(["POST"])
 def login(request):
     if request.method == "POST":
         email = request.data.get("email")
         password = request.data.get("password")
-        client = request.data.get("client", "")
+        app_name = request.headers["app-name"]
 
         if not email or not password:
             return Response(
@@ -41,9 +46,9 @@ def login(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if client == "":
+        if not app_name:
             return Response(
-                "Client not specified",
+                "app_name header not specified",
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -59,7 +64,7 @@ def login(request):
             token, _ = Token.objects.get_or_create(user=user)
             groups = user.groups.all()
 
-            if client == "desk":
+            if app_name == "desk":
                 if (
                     not groups.filter(name="usuario").exists()
                     or not groups.filter(name="admin").exists()
