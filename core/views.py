@@ -35,7 +35,7 @@ def get_etapa_active(request):
     return Response(serializer.data)
 
 @api_view(['POST'])
-def get_menus(request):
+def get_menu(request):
     if request.method == 'POST':
         data = request.data
         user = request.user

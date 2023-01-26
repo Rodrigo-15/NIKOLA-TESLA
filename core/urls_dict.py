@@ -38,7 +38,7 @@ urls_dict = {
     },
     "core": {
         "menu": {
-            "get_menus": f"{url}core/get_menus",  # get
+            "get_menu": f"{url}core/get_menu",  # get
         },
     }
 }
