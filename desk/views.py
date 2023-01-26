@@ -69,7 +69,6 @@ def login(request):
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
 
-            permissions = user.get_user_permissions()
             person = Persona.objects.get(correo=user.email)
 
             return Response(
@@ -77,7 +76,6 @@ def login(request):
                     "user": UserSerializer(user).data,
                     "groups": GroupSerializer(groups, many=True).data,
                     "token": token.key,
-                    "permissions": permissions,
                     "person_id": person.id,
                     "person_name": person.get_full_name(),
                 }
