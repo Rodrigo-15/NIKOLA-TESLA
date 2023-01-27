@@ -1,8 +1,6 @@
-from django.shortcuts import render
-from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from desk.models import File, Procedure
+from desk.models import Procedure
 from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -13,6 +11,8 @@ from core.models import Persona
 from django.db.models import Q
 
 from desk.serializers import ProcedureSerializer
+from core.decorators import check_app_name, check_credentials
+
 # Create your views here.
 
 
@@ -34,23 +34,13 @@ def get_procedures(request):
 
 
 @api_view(["POST"])
+@check_app_name()
+@check_credentials()
 def login(request):
     if request.method == "POST":
         email = request.data.get("email")
         password = request.data.get("password")
         app_name = request.headers["app-name"]
-
-        if not email or not password:
-            return Response(
-                "Email or password not specified.",
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if not app_name:
-            return Response(
-                "app_name header not specified",
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         try:
             user = User.objects.get(email=email, is_active=True)
@@ -74,20 +64,19 @@ def login(request):
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
 
-            person = Persona.objects.get(correo=user.email)
+                person = Persona.objects.get(correo=user.email)
 
-            return Response(
-                {
-                    "user": UserSerializer(user).data,
-                    "groups": GroupSerializer(groups, many=True).data,
-                    "token": token.key,
-                    "person_id": person.id,
-                    "person_name": person.get_full_name(),
-                }
-            )
-
+                return Response(
+                    {
+                        "user": UserSerializer(user).data,
+                        "groups": GroupSerializer(groups, many=True).data,
+                        "token": token.key,
+                        "person_id": person.id,
+                        "person_name": person.get_full_name(),
+                    }
+                )
         else:
             return Response(
-                "Incorrect email or password",
+                "Incorrect password",
                 status=status.HTTP_401_UNAUTHORIZED,
             )
