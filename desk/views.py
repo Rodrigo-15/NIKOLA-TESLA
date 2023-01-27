@@ -60,7 +60,7 @@ def login(request):
                     or not groups.filter(name="admin").exists()
                 ):
                     return Response(
-                        "User does not exist",
+                        "User without required permissions",
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
 
