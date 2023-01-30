@@ -33,7 +33,9 @@ class File(models.Model):
         return File.objects.filter().values("id").last()["id"]
 
     def __str__(self):
-        return self.person.nombres
+        if self.person is None:
+            return "Unnamed"
+        return self.person.nombres  
 
 
 class ProcedureRequirement(models.Model):
@@ -70,7 +72,7 @@ class Procedure(models.Model):
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
     reference_doc_number = models.CharField(max_length=20)
     # user who registered the procedure
-    user = models.OneToOneField("auth.User", on_delete=models.CASCADE)
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     headquarter = models.ForeignKey(Headquarter, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
     updated_at = models.DateTimeField(auto_now_add=False, auto_now=True)
