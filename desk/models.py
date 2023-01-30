@@ -1,3 +1,4 @@
+from datetime import date
 from django.db import models
 
 from core.models import Area, Persona
@@ -65,6 +66,7 @@ class Procedure(models.Model):
     file = models.ForeignKey(File, on_delete=models.CASCADE)
     code_number = models.CharField(max_length=20, null=True, blank=True)
     subject = models.TextField(null=False, blank=False)
+    attached_files = models.FileField(upload_to="procedures/attached_files/", null=True, blank=True)
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
     reference_doc_number = models.CharField(max_length=20)
     # user who registered the procedure
@@ -90,7 +92,7 @@ class Procedure(models.Model):
             last_procedure_id += 1
         else:
             last_procedure_id = 1
-        return f"{last_procedure_id:06d}-{self.created_at.year}"
+        return f"{last_procedure_id:06d}-{date.today().year}"
         
 
     @staticmethod
