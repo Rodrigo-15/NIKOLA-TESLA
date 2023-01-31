@@ -145,16 +145,15 @@ class DeskTestCase(TestCase):
         client = APIClient()
 
         response = client.post(
-            "/desk/create_procedure/",
+            "/desk/procedures/",
             {
-                #"file_id": 1,
-                "person_id": 1,
+                "file": 1,
                 "code_number": "",
-                "subject": "test subject",
-                "procedure_type_id": 1,
-                "reference_doc_number": "",
-                "user_id": 1,
-                "headquarter_id": 1,
+                "subject": "Testing subject",
+                "reference_doc_number": 1,
+                "procedure_type": 1,
+                "user": 2,
+                "headquarter": 1
             },
             format="json",
         )
@@ -166,13 +165,15 @@ class DeskTestCase(TestCase):
         client = APIClient()
 
         response = client.put(
-            "/desk/update_procedure/",
+            "/desk/procedures/2/", # editing procedure with id=2
             {
-                "procedure_id": 2,
-
-                "subject": "procedure two edited",
-                "procedure_type_id": 1,
-                "reference_doc_number": "01",
+                "file": 1,
+                "code_number": "",
+                "subject": "procedure edited",
+                "reference_doc_number": 1,
+                "procedure_type": 1,
+                "user": 1,
+                "headquarter": 2
             },
             format="json"
         )
