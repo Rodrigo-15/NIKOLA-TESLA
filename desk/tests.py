@@ -90,6 +90,9 @@ def setup_database():
     headquarter_1 = Headquarter(id=1, name="headquarter 1", is_active=True)
     headquarter_1.save()
 
+    headquarter_2 = Headquarter(id=2, name="headquarter 2", is_active=True)
+    headquarter_2.save()
+
     # -- files
     file_1 = File(id=1, person=person_1, is_active=True)
     file_1.save()
@@ -116,7 +119,7 @@ def setup_database():
     procedure_2.save()
 
 
-class UserTestCase(TestCase):
+class DeskTestCase(TestCase):
     def test_login_user(self):
         setup_database()
 
@@ -156,3 +159,22 @@ class UserTestCase(TestCase):
             format="json",
         )
         self.assertEqual(response.status_code, 201)
+
+    def test_update_procedure(self):
+        setup_database()
+
+        client = APIClient()
+
+        response = client.put(
+            "/desk/update_procedure/",
+            {
+                "procedure_id": 2,
+
+                "subject": "procedure two edited",
+                "procedure_type_id": 1,
+                "reference_doc_number": "01",
+            },
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, 200)
