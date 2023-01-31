@@ -119,3 +119,23 @@ def create_procedure(request):
             return Response(
                 "Procedure created successfully", status=status.HTTP_201_CREATED
             )
+
+
+@api_view(["PUT"])
+def update_procedure(request):
+    if request.method == "PUT":
+        data = request.data
+
+        procedure_id = data["procedure_id"]
+        procedure = Procedure.objects.filter(id=procedure_id)
+
+        if not procedure.exists():
+            return Response("Procedure not found", status=status.HTTP_404_NOT_FOUND)
+
+        procedure.update(
+            subject=data["subject"],
+            procedure_type_id=data["procedure_type_id"],
+            reference_doc_number=data["reference_doc_number"],
+        )
+
+        return Response("Procedure updated successfully", status=status.HTTP_200_OK)
