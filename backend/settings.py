@@ -32,9 +32,11 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ["*", "localhost"]
+ALLOWED_HOSTS = ["*", "localhost", "localhost:5173"]
 CORS_ORIGIN_ALLOW_ALL = True
-
+CORS_ALLOW_HEADERS = [     
+    'app-name',
+]
 
 # Application definition
 
