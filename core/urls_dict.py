@@ -26,7 +26,7 @@ urls_dict = {
             "get": f"{url}desk/procedure_procreqs/",  # get
             "save": f"{url}desk/procedure_procreqs/",  # post
             "delete": f"{url}desk/procedure_procreqs/",  # delete
-            "edit": f"{url}desk/procedure_procreqs/",  # put
+            "edit": f"{url}desk/procedure_procreqs/id/",  # put
         },
         "procedures": {
             "get": f"{url}desk/procedures/",  # get
@@ -36,8 +36,8 @@ urls_dict = {
             "edit": f"{url}desk/procedures/",  # put
         },
         "login": f"{url}desk/login/",
-        "create_procedure": f"{url}desk/create_procedure/",
-        "update_procedure": f"{url}desk/update_procedure/",
+        "create_procedure": f"{url}desk/procedures/", # post
+        "update_procedure": f"{url}desk/procedures/id/", # put
     },
     "core": {
         "menu": {
