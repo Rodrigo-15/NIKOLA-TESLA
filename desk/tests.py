@@ -4,47 +4,72 @@ from rest_framework.test import APIClient
 from django.contrib.auth.models import User, Group
 
 from core.models import Persona, TipoDocumento
+from desk.models import (
+    File,
+    Headquarter,
+    Procedure,
+    ProcedureRequirement,
+    ProcedureType,
+)
 from zonas.models import Pais
 
 # Create your tests here.
 
 
-def setUp():
+def setup_database():
     """Function for setting up data to the test database."""
 
-    pais = Pais(id=1, nombre="Peru", iso="PE", nacionalidad="Peruana", is_active=True)
-    pais.save()
+    # groups
+    group_user = Group(id=1, name="usuario")
+    group_user.save()
 
-    tipo_documento = TipoDocumento(id=1, nombre="DNI", is_active=True)
-    tipo_documento.save()
+    group_admin = Group(id=2, name="admin")
+    group_admin.save()
 
-    grupo_usuario = Group(id=1, name="usuario")
-    grupo_usuario.save()
-
-    grupo_admin = Group(id=2, name="admin")
-    grupo_admin.save()
-
-    user = User(
+    # users
+    user_1 = User(
         id=1,
-        username="liomar",
-        email="elmenteloca@mail.com",
+        username="user_1",
+        email="user1@mail.com",
         is_superuser=True,
-        first_name="Liomar",
-        last_name="Masacre",
+        first_name="user",
+        last_name="one",
         is_staff=True,
         is_active=True,
     )
+    user_1.groups.add(1)
+    user_1.groups.add(2)
+    user_1.set_password("user1pass")
+    user_1.save()
 
-    print(user.password)
-    user.groups.add(1)
-    user.groups.add(2)
-    user.set_password("contrasena123")
-    user.save()
+    user_2 = User(
+        id=2,
+        username="user_2",
+        email="user2@mail.com",
+        is_superuser=False,
+        first_name="user",
+        last_name="two",
+        is_staff=False,
+        is_active=True,
+    )
+    user_2.groups.add(1)
+    user_2.set_password("user2pass")
+    user_2.save()
 
-    person = Persona(
+
+    # countries
+    pais_1 = Pais(id=1, nombre="Peru", iso="PE", nacionalidad="Peruana", is_active=True)
+    pais_1.save()
+
+    # tipos de documentos
+    tipo_documento_1 = TipoDocumento(id=1, nombre="tipo documento 1", is_active=True)
+    tipo_documento_1.save()
+
+    # persons
+    person_1 = Persona(
         id=1,
         numero_documento=1234,
-        nombres="Liomar",
+        nombres="person 1",
         apellido_paterno="Masacre",
         apellido_materno="Masacre",
         sexo="M",
@@ -52,26 +77,82 @@ def setUp():
         is_active=True,
         pais_id=1,
         tipo_documento_id=1,
-        correo="elmenteloca@mail.com",
+        correo="user1@mail.com",
         user_id=1,
         celular=98765431,
     )
-    person.save()
+    person_1.save()
+
+
+    # desk
+
+    # -- headquarters
+    headquarter_1 = Headquarter(id=1, name="headquarter 1", is_active=True)
+    headquarter_1.save()
+
+    # -- files
+    file_1 = File(id=1, person=person_1, is_active=True)
+    file_1.save()
+
+    # -- procedure requirements
+    procedure_req_1 = ProcedureRequirement(id=1, description="procedure requirement 1")
+    procedure_req_1.save()
+
+    # -- procedure types
+    procedure_type_1 = ProcedureType(id=1, description="procedure type 1")
+    procedure_type_1.save()
+
+    # -- procedures
+    procedure_2 = Procedure(
+        id=2,
+        file=file_1,
+        code_number="",
+        subject="procedure two subject",
+        procedure_type=procedure_type_1,
+        reference_doc_number="",
+        user=user_1,
+        headquarter=headquarter_1,
+    )
+    procedure_2.save()
 
 
 class UserTestCase(TestCase):
     def test_login_user(self):
-        setUp()
+        setup_database()
 
         client = APIClient()
         client.credentials(HTTP_APP_NAME="desk")
 
         response = client.post(
             "/desk/login/",
-            {"email": "elmenteloca@mail.com", "password": "contrasena123"},
+            {
+                "email": "user1@mail.com", 
+                "password": "user1pass",
+            },
             format="json",
         )
         self.assertEqual(response.status_code, 200)
 
         result = json.loads(response.content)
         self.assertIn("token", result)
+
+    def test_create_procedure(self):
+        setup_database()
+
+        client = APIClient()
+
+        response = client.post(
+            "/desk/create_procedure/",
+            {
+                #"file_id": 1,
+                "person_id": 1,
+                "code_number": "",
+                "subject": "test subject",
+                "procedure_type_id": 1,
+                "reference_doc_number": "",
+                "user_id": 1,
+                "headquarter_id": 1,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
