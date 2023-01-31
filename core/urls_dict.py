@@ -36,6 +36,8 @@ urls_dict = {
             "edit": f"{url}desk/procedures/",  # put
         },
         "login": f"{url}desk/login/",
+        "create_procedure": f"{url}desk/create_procedure/",
+        "update_procedure": f"{url}desk/update_procedure/",
     },
     "core": {
         "menu": {
