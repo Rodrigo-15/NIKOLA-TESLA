@@ -1,3 +1,4 @@
+from datetime import date
 from django.db import models
 
 from core.models import Area, Persona
@@ -32,7 +33,9 @@ class File(models.Model):
         return File.objects.filter().values("id").last()["id"]
 
     def __str__(self):
-        return self.person.nombres
+        if self.person is None:
+            return "Unnamed"
+        return self.person.nombres  
 
 
 class ProcedureRequirement(models.Model):
@@ -65,10 +68,11 @@ class Procedure(models.Model):
     file = models.ForeignKey(File, on_delete=models.CASCADE)
     code_number = models.CharField(max_length=20, null=True, blank=True)
     subject = models.TextField(null=False, blank=False)
+    attached_files = models.FileField(upload_to="procedures/attached_files/", null=True, blank=True)
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
     reference_doc_number = models.CharField(max_length=20)
     # user who registered the procedure
-    user = models.OneToOneField("auth.User", on_delete=models.CASCADE)
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     headquarter = models.ForeignKey(Headquarter, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
     updated_at = models.DateTimeField(auto_now_add=False, auto_now=True)
@@ -90,7 +94,7 @@ class Procedure(models.Model):
             last_procedure_id += 1
         else:
             last_procedure_id = 1
-        return f"{last_procedure_id:06d}-{self.created_at.year}"
+        return f"{last_procedure_id:06d}-{date.today().year}"
         
 
     @staticmethod
