@@ -1,7 +1,7 @@
 from django.urls import include, path
 
 from desk.router import router
-from desk.views import *
+from desk.views import get_procedures, login
 
 app_name = "desk"
 
