@@ -37,9 +37,5 @@ urls_dict = {
         },
         "login": f"{url}desk/login/",
     },
-    "core": {
-        "menu": {
-            "get_menu": f"{url}core/get_menu",  # get
-        },
-    }
+    "get_menu": f"{url}core/get_menu",
 }
