@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 
 from accounts.serializers import GroupSerializer, UserSerializer
-from core.models import Persona
+from core.models import Apps, Menu, Persona
 
 from django.db.models import Q
 
@@ -25,11 +25,13 @@ def get_procedures(request):
         code_number = data["code_number"]
         if user_id == "":
             procedures = Procedure.objects.filter(
-                Q(created_at__icontains=date) | Q(code_number__icontains=code_number)
+                Q(created_at__icontains=date) | Q(
+                    code_number__icontains=code_number)
             )
         else:
             procedures = Procedure.objects.filter(
-                Q(created_at__icontains=date) | Q(code_number__icontains=code_number),
+                Q(created_at__icontains=date) | Q(
+                    code_number__icontains=code_number),
                 user_id=user_id,
             )
         serilaizer = ProcedureSerializer(procedures, many=True)
@@ -46,7 +48,7 @@ def login(request):
         app_name = request.headers["app-name"]
 
         try:
-            user = User.objects.get(email=email, is_active=True)
+            user = User.objects.get(username=email, is_active=True)
         except Exception:
             return Response(
                 "User does not exist",
@@ -57,29 +59,34 @@ def login(request):
             token, _ = Token.objects.get_or_create(user=user)
             groups = user.groups.all()
 
-            if app_name == "desk":
-                if (
-                    not groups.filter(name="usuario").exists()
-                    or not groups.filter(name="admin").exists()
-                ):
-                    return Response(
-                        "User without required permissions",
-                        status=status.HTTP_401_UNAUTHORIZED,
-                    )
+            app = Apps.objects.filter(name=app_name).first()
+            menu = Menu.objects.filter(app=app).first()
 
-                person = Persona.objects.get(correo=user.email)
+            is_group_valid_app = False
+            for group in groups:
+                if group in menu.groups.all():
+                    is_group_valid_app = True
+                    break
 
+            if not is_group_valid_app:
                 return Response(
-                    {
-                        "user": UserSerializer(user).data,
-                        "groups": GroupSerializer(groups, many=True).data,
-                        "token": token.key,
-                        "person_id": person.id,
-                        "person_name": person.get_full_name(),
-                    }
+                    "User does not have permission",
+                    status=status.HTTP_401_UNAUTHORIZED,
                 )
+
+            person = Persona.objects.get(correo=user.email)
+
+            return Response(
+                {
+                    "user": UserSerializer(user).data,
+                    "groups": GroupSerializer(groups, many=True).data,
+                    "token": token.key,
+                    "person_id": person.id,
+                    "person_name": person.get_full_name(),
+                }
+            )
         else:
             return Response(
-                "Incorrect password",
+                "User does not have permission",
                 status=status.HTTP_401_UNAUTHORIZED,
             )
