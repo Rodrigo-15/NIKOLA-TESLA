@@ -1,3 +1,4 @@
+from core.serializers import PeriodoSerializer, PersonSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from desk.models import File, Procedure
@@ -81,8 +82,7 @@ def login(request):
                     "user": UserSerializer(user).data,
                     "groups": GroupSerializer(groups, many=True).data,
                     "token": token.key,
-                    "person_id": person.id,
-                    "person_name": person.get_full_name(),
+                    "person": PersonSerializer(person).data,
                 }
             )
         else:
