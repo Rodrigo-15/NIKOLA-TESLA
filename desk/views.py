@@ -85,6 +85,8 @@ def login(request):
 
 @api_view(["GET"])
 def get_started_procedures(request):
+    """Get procedures that have only one tracing and it is not finished"""
+
     if request.method == "GET":
 
         procedure_tracings = ProcedureTracing.objects.filter(
@@ -100,6 +102,8 @@ def get_started_procedures(request):
 
 @api_view(["GET"])
 def get_inprocess_procedures(request):
+    """Get procedures that have more than one tracing and it is not finished"""
+
     if request.method == "GET":
 
         procedure_tracings = ProcedureTracing.objects.filter(
@@ -115,6 +119,8 @@ def get_inprocess_procedures(request):
 
 @api_view(["GET"])
 def get_finished_procedures(request):
+    """Get finished procedures"""
+
     if request.method == "GET":
         procedure_tracings = ProcedureTracing.objects.filter(is_finished=True)
         serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
