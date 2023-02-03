@@ -108,8 +108,8 @@ class Procedure(models.Model):
         return Procedure.objects.filter(id=procedure_id)
 
     def __str__(self):
-        return f"{self.file_id} - {self.subject} - {self.procedure_type} -\
-                {self.reference_doc_number} - {self.headquarter}"
+        return f"{self.file_id} - {self.code_number} - {self.subject} - {self.procedure_type} -\
+                 {self.reference_doc_number} - {self.headquarter}"
 
 
 class Procedure_ProcReq(models.Model):
