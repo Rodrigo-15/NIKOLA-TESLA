@@ -32,6 +32,7 @@ urls_dict = {
         },
         "login": f"{url}desk/login/",
         "get_started_procedures": f"{url}desk/get_started_procedures", # get
+        "get_inprocess_procedures": f"{url}desk/get_inprocess_procedures", # get
         "get_finished_procedures": f"{url}desk/get_finished_procedures", # get
     },
     "get_menu": f"{url}core/get_menu",

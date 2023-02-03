@@ -99,6 +99,21 @@ def get_started_procedures(request):
 
 
 @api_view(["GET"])
+def get_inprocess_procedures(request):
+    if request.method == "GET":
+
+        procedure_tracings = ProcedureTracing.objects.filter(
+            procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+            .annotate(count=Count("procedure_id"))
+            .filter(count__gt=1)
+            .values("procedure_id")
+        )
+
+        serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
+        return Response(serializer.data)
+
+
+@api_view(["GET"])
 def get_finished_procedures(request):
     if request.method == "GET":
         procedure_tracings = ProcedureTracing.objects.filter(is_finished=True)
