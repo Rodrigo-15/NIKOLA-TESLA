@@ -41,7 +41,7 @@ def get_menu(request):
         user = data.get('user')
         user_model = User.objects.get(id=user.get('id'))
         groups = user_model.groups.all()
-        app = data.get('app')
+        app = request.headers["app-name"]
         menu_obj = []
         for group in groups:
             menu = Menu.objects.filter(app__name=app, groups__id=group.id)
