@@ -1,20 +1,15 @@
-from collections import Counter
-from itertools import count
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from desk.models import File, Procedure, ProcedureTracing
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count, Q
 from rest_framework import status
 from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from accounts.serializers import GroupSerializer, UserSerializer
-from core.models import Persona
-
-from django.db.models import Q
-
-from desk.serializers import ProcedureSerializer, ProcedureTracingSerializer
 from core.decorators import check_app_name, check_credentials
+from core.models import Persona
+from desk.models import Procedure, ProcedureTracing
+from desk.serializers import ProcedureSerializer, ProcedureTracingSerializer
 
 # Create your views here.
 
@@ -86,6 +81,21 @@ def login(request):
                 "Incorrect password",
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+
+@api_view(["GET"])
+def get_started_procedures(request):
+    if request.method == "GET":
+
+        procedure_tracings = ProcedureTracing.objects.filter(
+            procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+            .annotate(count=Count("procedure_id"))
+            .filter(count=1)
+            .values("procedure_id")
+        )
+
+        serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
+        return Response(serializer.data)
 
 
 @api_view(["GET"])
