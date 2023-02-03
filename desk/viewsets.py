@@ -5,6 +5,7 @@ from desk.models import (
     Procedure,
     Procedure_ProcReq,
     ProcedureRequirement,
+    ProcedureTracing,
     ProcedureType,
 )
 from desk.serializers import (
@@ -12,6 +13,7 @@ from desk.serializers import (
     Procedure_ProcReqSerializer,
     ProcedureRequirementSerializer,
     ProcedureSerializer,
+    ProcedureTracingSerializer,
     ProcedureTypeSerializer,
 )
 
@@ -42,3 +44,7 @@ class ProcedureViewSet(ModelViewSet):
     # permission_classes = (IsAuthenticated,)
     queryset = Procedure.objects.all()
     serializer_class = ProcedureSerializer
+
+class ProcedureTracingViewSet(ModelViewSet):
+    queryset = ProcedureTracing.objects.all()
+    serializer_class = ProcedureTracingSerializer
