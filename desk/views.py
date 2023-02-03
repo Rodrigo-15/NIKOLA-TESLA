@@ -106,7 +106,7 @@ def get_inprocess_procedures(request):
 
     if request.method == "GET":
 
-        procedure_tracings = ProcedureTracing.objects.filter(
+        procedure_tracings = ProcedureTracing.objects.filter(is_finished=False,
             procedure_id__in=ProcedureTracing.objects.values("procedure_id")
             .annotate(count=Count("procedure_id"))
             .filter(count__gt=1)
