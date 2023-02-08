@@ -66,7 +66,7 @@ class ProcedureType(models.Model):
 
 class Procedure(models.Model):
     file = models.ForeignKey(File, on_delete=models.CASCADE)
-    code_number = models.CharField(max_length=20, null=True, blank=True)
+    code_number = models.CharField(max_length=15, null=True, blank=True)
     subject = models.TextField(null=False, blank=False)
     attached_files = models.FileField(upload_to="procedures/attached_files/", null=True, blank=True)
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
@@ -80,10 +80,12 @@ class Procedure(models.Model):
     class Meta:
         verbose_name = "procedure"
         verbose_name_plural = "procedures"
+        
 
     def save(self, *args, **kwargs):
         if not self.id:
-            self.code = self.generate_code()
+            print(self.generate_code())
+            self.code_number = self.generate_code()
         super(Procedure, self).save(*args, **kwargs)
 
     def generate_code(self):
@@ -106,8 +108,8 @@ class Procedure(models.Model):
         return Procedure.objects.filter(id=procedure_id)
 
     def __str__(self):
-        return f"{self.file_id} - {self.subject} - {self.procedure_type} -\
-                {self.reference_doc_number} - {self.headquarter}"
+        return f"{self.file_id} - {self.code_number} - {self.subject} - {self.procedure_type} -\
+                 {self.reference_doc_number} - {self.headquarter}"
 
 
 class Procedure_ProcReq(models.Model):

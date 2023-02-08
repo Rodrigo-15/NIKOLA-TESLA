@@ -4,6 +4,7 @@ from desk.viewsets import (
     HeadquarterViewSet,
     Procedure_ProcReqViewSet,
     ProcedureRequirementViewSet,
+    ProcedureTracingViewSet,
     ProcedureTypeViewSet,
     ProcedureViewSet,
 )
@@ -15,3 +16,4 @@ router.register("procedure_requirement", ProcedureRequirementViewSet)
 router.register("procedure_type", ProcedureTypeViewSet)
 router.register("procedure_procreqs", Procedure_ProcReqViewSet)
 router.register("procedures", ProcedureViewSet)
+router.register("procedure_tracing", ProcedureTracingViewSet)
