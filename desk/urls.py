@@ -2,7 +2,7 @@ from django.urls import include, path
 
 from desk.router import router
 from desk.views import (get_finished_procedures, get_inprocess_procedures, get_procedures,
-                        get_started_procedures, login)
+                        get_started_procedures, login, get_dashboard_procedures)
 
 app_name = "desk"
 
@@ -12,5 +12,6 @@ urlpatterns = [
     path("get_started_procedures", get_started_procedures, name="get_started_procedures"),
     path("get_inprocess_procedures", get_inprocess_procedures, name="get_inprocess_procedures"),
     path("get_finished_procedures", get_finished_procedures, name="get_finished_procedures"),
+    path("get_dashboard_procedures", get_dashboard_procedures, name="get_dashboard_procedures"),
     path("login/", login, name="login"),
 ]

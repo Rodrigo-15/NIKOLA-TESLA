@@ -139,3 +139,26 @@ def get_finished_procedures(request):
         procedure_tracings = ProcedureTracing.objects.filter(is_finished=True)
         serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
         return Response(serializer.data)
+
+@api_view(["GET"])
+def get_dashboard_procedures(request):
+    """Get count of procedures"""
+
+    if request.method == "GET":
+        procedure_started_tracings = ProcedureTracing.objects.filter(
+            procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+            .annotate(count=Count("procedure_id"))
+            .filter(count=1)
+            .values("procedure_id")
+        ).count()
+        procedure_inprocess_tracings = ProcedureTracing.objects.filter(is_finished=False,
+            procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+            .annotate(count=Count("procedure_id"))
+            .filter(count__gt=1)
+            .values("procedure_id")
+        ).count()
+        procedure_fished = ProcedureTracing.objects.filter(is_finished=True).count()
+        print(procedure_started_tracings)
+        print(procedure_inprocess_tracings)
+        print(procedure_fished)
+        return Response({ "started": procedure_started_tracings, "inprocess": procedure_inprocess_tracings, "finished": procedure_fished })
