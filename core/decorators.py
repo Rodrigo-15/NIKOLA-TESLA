@@ -1,4 +1,5 @@
 from functools import wraps
+from core.models import Apps
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -9,10 +10,12 @@ def check_app_name():
     def decorator(function):
         @wraps(function)
         def wrapped(request, *args, **kwargs):
-            if not request.headers["app-name"]:
+            app_name = request.headers["app-name"]
+            app = Apps.objects.filter(name=app_name).first()
+            if not app:
                 return Response(
-                    "Client not specified.",
-                    status=status.HTTP_400_BAD_REQUEST,
+                    "App does not exist.",
+                    status=status.HTTP_404_NOT_FOUND,
                 )
 
             return function(request, *args, **kwargs)

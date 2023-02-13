@@ -7,10 +7,12 @@ class PeriodoSerializer(serializers.ModelSerializer):
         model = Periodo
         fields = '__all__'
 
+
 class EtapaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Etapa
         fields = '__all__'
+
 
 class MenuSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)

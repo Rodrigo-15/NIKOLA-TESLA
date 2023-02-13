@@ -5,6 +5,7 @@ from desk.models import (
     Procedure,
     Procedure_ProcReq,
     ProcedureRequirement,
+    ProcedureTracing,
     ProcedureType,
 )
 
@@ -36,4 +37,9 @@ class Procedure_ProcReqSerializer(serializers.ModelSerializer):
 class ProcedureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Procedure
+        fields = "__all__"
+
+class ProcedureTracingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcedureTracing
         fields = "__all__"
