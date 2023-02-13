@@ -3,6 +3,14 @@ from backend.settings import DEBUG, URL_LOCAL, URL_PROD
 url = URL_LOCAL if DEBUG else URL_PROD
 
 urls_dict = {
+    "core": {
+        "persona": {
+            "get_all": f"{url}core/persona/",  # get
+            "get": f"{url}core/persona/id/",  # get
+            "create": f"{url}core/persona/",  # post
+            "update": f"{url}core/persona/id/",  # put
+        },
+    },
     "desk": {
        "headquarters": {
             "get": f"{url}desk/headquarters/",  # get

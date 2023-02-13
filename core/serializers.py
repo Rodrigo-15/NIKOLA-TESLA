@@ -24,7 +24,6 @@ class MenuSerializer(serializers.Serializer):
     def get_app(self, obj):
         return obj.app.name
 
-
 class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Persona

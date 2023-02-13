@@ -15,22 +15,22 @@ class TipoDocumento(models.Model):
 
 
 class Persona(models.Model):
-    tipo_documento = models.ForeignKey(TipoDocumento, on_delete=models.CASCADE)
-    numero_documento = models.CharField(max_length=20)
-    nombres = models.CharField(max_length=50)
-    apellido_paterno = models.CharField(max_length=50)
-    apellido_materno = models.CharField(max_length=50)
-    pais = models.ForeignKey(Pais, on_delete=models.CASCADE)
+    tipo_documento = models.ForeignKey(TipoDocumento, on_delete=models.CASCADE, null=True, blank=True)
+    numero_documento = models.CharField(max_length=20, null=True, blank=True)
+    nombres = models.CharField(max_length=50, null=True, blank=True)
+    apellido_paterno = models.CharField(max_length=50, null=True, blank=True)
+    apellido_materno = models.CharField(max_length=50, null=True, blank=True)
+    pais = models.ForeignKey(Pais, on_delete=models.CASCADE, null=True, blank=True)
     SEXOS = (
         ("M", "Masculino"),
         ("F", "Femenino"),
     )
     sexo = models.CharField(max_length=1, choices=SEXOS)
-    fecha_nacimiento = models.DateField()
+    fecha_nacimiento = models.DateField(null=True, blank=True)
     correo = models.EmailField(max_length=254, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     user = models.OneToOneField(
-        'auth.User', on_delete=models.CASCADE, blank=True, null=True)
+        'auth.User', on_delete=models.CASCADE, null=True, blank=True)
     foto = models.ImageField(upload_to='fotos', null=True, blank=True)
     celular = models.CharField(max_length=20, null=True, blank=True)
 
