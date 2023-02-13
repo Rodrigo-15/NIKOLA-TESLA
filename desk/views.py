@@ -158,7 +158,4 @@ def get_dashboard_procedures(request):
             .values("procedure_id")
         ).count()
         procedure_fished = ProcedureTracing.objects.filter(is_finished=True).count()
-        print(procedure_started_tracings)
-        print(procedure_inprocess_tracings)
-        print(procedure_fished)
         return Response({ "started": procedure_started_tracings, "inprocess": procedure_inprocess_tracings, "finished": procedure_fished })
