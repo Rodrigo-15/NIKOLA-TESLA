@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from core import urls_dict
 from core.models import *
 from core.serializers import *
+from core.filters import *
 
 
 def DefaultTemplate(request):
@@ -34,12 +35,13 @@ def get_etapa_active(request):
     serializer = EtapaSerializer(etapa)
     return Response(serializer.data)
 
-@api_view(['POST'])
+
+@api_view(["POST"])
 def get_menu(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         data = request.data
-        user = data.get('user')
-        user_model = User.objects.get(id=user.get('id'))
+        user = data.get("user")
+        user_model = User.objects.get(id=user.get("id"))
         groups = user_model.groups.all()
         app = request.headers["app-name"]
         menu_obj = []
@@ -49,8 +51,9 @@ def get_menu(request):
             for menu in serializer.data:
                 if menu not in menu_obj:
                     menu_obj.append(menu)
-                
+
         return Response(menu_obj)
+
 
 @api_view(["GET"])
 def paths(request):

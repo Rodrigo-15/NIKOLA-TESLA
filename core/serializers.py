@@ -28,3 +28,10 @@ class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Persona
         fields = '__all__'
+
+class PersonListSerializer(serializers.Serializer):
+        id = serializers.IntegerField(read_only=True)
+        nombres = serializers.CharField(max_length=200)
+        apellido_paterno = serializers.CharField(max_length=200)
+        apellido_materno = serializers.CharField(max_length=200)
+        numero_documento = serializers.CharField(max_length=200)
