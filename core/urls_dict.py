@@ -3,6 +3,14 @@ from backend.settings import DEBUG, URL_LOCAL, URL_PROD
 url = URL_LOCAL if DEBUG else URL_PROD
 
 urls_dict = {
+    "core": {
+        "persona": {
+            "get_all": f"{url}core/persona/",  # get
+            "get": f"{url}core/persona/id/",  # get
+            "create": f"{url}core/persona/",  # post
+            "update": f"{url}core/persona/id/",  # put
+        },
+    },
     "desk": {
        "headquarters": {
             "get": f"{url}desk/headquarters/",  # get
@@ -31,7 +39,7 @@ urls_dict = {
             "update": f"{url}desk/procedures/id/",  # put
         },
         "login": f"{url}desk/login/",
-        "get_tracings_procedures": f"{url}desk/get_tracings_procedures", # get
+        "get_tracings_procedures": f"{url}desk/get_tracings_procedures/status", # get
         "get_dashboard_procedures": f"{url}desk/get_dashboard_procedures", # get
     },
     "get_menu": f"{url}core/get_menu",

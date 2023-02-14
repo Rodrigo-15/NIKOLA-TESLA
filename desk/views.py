@@ -155,10 +155,13 @@ def get_dashboard_procedures(request):
 
 
 @api_view(["GET"])
-def get_tracings_procedures(request):
+def get_tracings_procedures(request, status):
     if request.method == "GET":
-        started = get_started_procedures
-        in_process = get_in_process_procedures
-        finished = get_finished_procedures
+        if status == 0:
+            procedures = {"started": get_started_procedures()}
+        if status == 1:
+            procedures = {"in_process": get_in_process_procedures()}
+        if status == 2: 
+            procedures = {"finished": get_finished_procedures()}
 
-        return Response({"started": started, "in_process": in_process, "finished": finished})
+        return Response(procedures)
