@@ -65,8 +65,7 @@ INSTALLED_APPS = [
     "admision",
     "django_filters",
     "reportes",
-    "django.contrib.humanize",
-    "mesa_partes.apps.MesaPartesConfig",
+    "django.contrib.humanize",     
     "desk",
 ]
 
