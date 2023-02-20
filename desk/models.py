@@ -80,7 +80,6 @@ class Procedure(models.Model):
     class Meta:
         verbose_name = "procedure"
         verbose_name_plural = "procedures"
-        
 
     def save(self, *args, **kwargs):
         if not self.id:
@@ -90,18 +89,18 @@ class Procedure(models.Model):
 
     def generate_code(self):
         # generate code for procedure   example: 000001-2020
-        
         last_procedure_id = Procedure.get_last_procedure_id()
         if last_procedure_id:
             last_procedure_id += 1
         else:
             last_procedure_id = 1
         return f"{last_procedure_id:06d}-{date.today().year}"
-        
 
     @staticmethod
     def get_last_procedure_id():
-        return Procedure.objects.filter().values("id").last()["id"]
+        if Procedure.objects.filter().values("id").last():
+            return Procedure.objects.filter().values("id").last()["id"]
+        return 0
 
     @staticmethod
     def get_procedure_by_id(procedure_id):
