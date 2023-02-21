@@ -31,13 +31,11 @@ def get_procedures(request):
         code_number = data["code_number"]
         if user_id == "":
             procedures = Procedure.objects.filter(
-                Q(created_at__icontains=date) | Q(
-                    code_number__icontains=code_number)
+                Q(created_at__icontains=date) | Q(code_number__icontains=code_number)
             )
         else:
             procedures = Procedure.objects.filter(
-                Q(created_at__icontains=date) | Q(
-                    code_number__icontains=code_number),
+                Q(created_at__icontains=date) | Q(code_number__icontains=code_number),
                 user_id=user_id,
             )
         serilaizer = ProcedureSerializer(procedures, many=True)
@@ -100,28 +98,30 @@ def login(request):
 def get_started_procedures():
     """Get Procedures that have just one TracingProcedure and it is not finished"""
 
-    procedure_tracings = ProcedureTracing.objects.filter(is_finished=False,
+    procedure_tracings = ProcedureTracing.objects.filter(
+        is_finished=False,
         procedure_id__in=ProcedureTracing.objects.values("procedure_id")
         .annotate(count=Count("procedure_id"))
         .filter(count=1)
-        .values("procedure_id")
+        .values("procedure_id"),
     )
     serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
-    
+
     return serializer.data
 
 
 def get_in_process_procedures():
     """Get Procedures that have more than one TracingProcedure and it is not finished"""
 
-    procedure_tracings = ProcedureTracing.objects.filter(is_finished=False,
+    procedure_tracings = ProcedureTracing.objects.filter(
+        is_finished=False,
         procedure_id__in=ProcedureTracing.objects.values("procedure_id")
         .annotate(count=Count("procedure_id"))
         .filter(count__gt=1)
-        .values("procedure_id")
+        .values("procedure_id"),
     )
     serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
-    
+
     return serializer.data
 
 
@@ -132,6 +132,7 @@ def get_finished_procedures():
     serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
 
     return serializer.data
+
 
 @api_view(["GET"])
 def get_dashboard_procedures(request):
@@ -144,14 +145,21 @@ def get_dashboard_procedures(request):
             .filter(count=1)
             .values("procedure_id")
         ).count()
-        procedure_inprocess_tracings = ProcedureTracing.objects.filter(is_finished=False,
+        procedure_inprocess_tracings = ProcedureTracing.objects.filter(
+            is_finished=False,
             procedure_id__in=ProcedureTracing.objects.values("procedure_id")
             .annotate(count=Count("procedure_id"))
             .filter(count__gt=1)
-            .values("procedure_id")
+            .values("procedure_id"),
         ).count()
         procedure_fished = ProcedureTracing.objects.filter(is_finished=True).count()
-        return Response({ "started": procedure_started_tracings, "inprocess": procedure_inprocess_tracings, "finished": procedure_fished })
+        return Response(
+            {
+                "started": procedure_started_tracings,
+                "inprocess": procedure_inprocess_tracings,
+                "finished": procedure_fished,
+            }
+        )
 
 
 @api_view(["GET"])
@@ -161,7 +169,7 @@ def get_tracings_procedures(request, status):
             procedures = {"started": get_started_procedures()}
         if status == 1:
             procedures = {"in_process": get_in_process_procedures()}
-        if status == 2: 
+        if status == 2:
             procedures = {"finished": get_finished_procedures()}
 
         return Response(procedures)

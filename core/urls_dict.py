@@ -36,7 +36,7 @@ urls_dict = {
     },
     "get_menu": f"{url}core/get_menu",
     "person": {
-            "get_all": f"{url}core/persona/",  # get
+            "get_person_list": f"{url}core/get_person_list",  # get
             "get": f"{url}core/persona/id/",  # get
             "create": f"{url}core/persona/",  # post
             "update": f"{url}core/persona/id/",  # put

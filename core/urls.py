@@ -2,7 +2,6 @@ from django.urls import include, path
 from core.router import router
 
 from core.views import *
-from core.viewsets import PersonFilter
 
 urlpatterns = [
     path("", include(router.urls)),
@@ -11,6 +10,6 @@ urlpatterns = [
     path("get_periodos", get_periodos, name="get_periodos"),
     path("get_menu", get_menu, name="get_menu"),
     path("paths", paths, name="paths"),
-    path("personas", PersonFilter.as_view(), name="personas"),
+    path("get_person_list", get_person_list, name="get_person_list"),
 
 ]

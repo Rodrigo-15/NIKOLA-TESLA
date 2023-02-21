@@ -12,8 +12,7 @@ urlpatterns = [
     path("academicos/", include("academicos.urls")),
     path("accounts/", include("accounts.urls")),
     path("reportes/", include("reportes.urls")),
-    path("core/", include("core.urls")),
-    path('mesa_partes/', include('mesa_partes.urls')),
+    path("core/", include("core.urls")),     
     path('desk/', include('desk.urls')),
 ]
 

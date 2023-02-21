@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from core import urls_dict
 from core.models import *
 from core.serializers import *
-from core.filters import *
+from django.db.models import Q
 
 
 def DefaultTemplate(request):
@@ -58,3 +58,19 @@ def get_menu(request):
 @api_view(["GET"])
 def paths(request):
     return Response(urls_dict.urls_dict)
+
+
+@api_view(["POST"])
+def get_person_list(request):
+    if request.method == "POST":
+        query = request.data.get("query")
+        # filter person multiple fields AND ESPACE INSENSITIVE
+        person = Persona.objects.filter(
+            Q(numero_documento__icontains=query)
+        )[:5]
+
+        if not person:
+            return Response([])
+
+        serializer = PersonListSerializer(person, many=True)
+    return Response(serializer.data)

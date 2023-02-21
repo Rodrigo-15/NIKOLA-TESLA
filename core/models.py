@@ -50,7 +50,7 @@ class Persona(models.Model):
     @staticmethod
     def get_persona_by_numero_id(numero_documento):
         return Persona.objects.filter(numero_documento=numero_documento)
-    
+
 
 
 class Periodo(models.Model):
