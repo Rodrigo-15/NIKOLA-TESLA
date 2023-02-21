@@ -6,5 +6,8 @@
     "--disable=C0111",
     "--load-plugins=pylint_django",
     "--django-settings-module=backend.settings"
+  ],
+  "cSpell.words": [
+    "recepcionado"
   ]
 }

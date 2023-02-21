@@ -1,6 +1,8 @@
 from django.contrib import admin
-from core.models import *
+from core.models import * 
 # Register your models here.
+
+
 admin.site.register(TipoDocumento)
 admin.site.register(Persona)
 admin.site.register(Periodo)
@@ -10,3 +12,4 @@ admin.site.register(Cargo)
 admin.site.register(CargoArea)
 admin.site.register(Apps)
 admin.site.register(Menu)
+

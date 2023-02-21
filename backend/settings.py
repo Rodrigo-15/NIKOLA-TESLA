@@ -34,7 +34,7 @@ DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = ["*", "localhost", "localhost:5173"]
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_HEADERS = [     
+CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
     "authorization",
@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "reportes",
     "django.contrib.humanize",     
     "desk",
+    'django_seed',
 ]
 
 MIDDLEWARE = [

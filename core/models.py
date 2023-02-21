@@ -92,7 +92,7 @@ class Area(models.Model):
     key_name = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
-        return f'{self.nombre} - {self.is_active}'
+        return f'{self.nombre}'
 
 
 class Cargo(models.Model):
