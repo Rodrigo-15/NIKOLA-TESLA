@@ -10,10 +10,10 @@ class Facultad(models.Model):
     nombre = models.CharField(max_length=50)
     sigla = models.CharField(max_length=10)
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.nombre = self.nombre.upper()
         self.sigla = self.sigla.upper()
-        super(Facultad, self).save()
+        super(Facultad, self).save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.nombre} - {self.sigla}"
@@ -23,9 +23,9 @@ class TipoPrograma(models.Model):
     nombre = models.CharField(max_length=50)
     cantidad_matriculas = models.IntegerField(default=0)
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.nombre = self.nombre.upper()
-        super(TipoPrograma, self).save()
+        super(TipoPrograma, self).save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.nombre} - {self.cantidad_matriculas}"
