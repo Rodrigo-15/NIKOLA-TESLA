@@ -61,10 +61,11 @@ def main():
     for name in group_names:
         seeder.add_entity(Group, 1, {"name": name})
 
-    # Users     
+    # Users
     from django.contrib.auth.hashers import make_password
+    password_default = make_password("123456")
     password_maick = make_password("djmaickxd")
-    password_jonatan = make_password("Unap123456")     
+    password_jonatan = make_password("Unap123456")
     seeder.add_entity(
         User,
         1,
@@ -74,9 +75,8 @@ def main():
             "password": password_maick,
             "is_superuser": True,
             "is_staff": True,
-        },         
+        },
     )
-    
     seeder.add_entity(
         User,
         1,
@@ -86,10 +86,13 @@ def main():
             "password": password_jonatan,
             "is_superuser": True,
             "is_staff": True,
-        },         
+        },
     )
-    
-    seeder.add_entity(User, 5, {"is_superuser": False})
+    seeder.add_entity(User, 5, {
+        "username": lambda x: seeder.faker.email().split("@")[0] + "@postgradounap.edu.pe",
+        "password": password_default,
+        "is_superuser": False,
+    })
 
     #########
     # Core
@@ -100,7 +103,34 @@ def main():
         seeder.add_entity(TipoDocumento, 1, {"nombre": f"Tipo {n}", "is_active": True})
 
     # Persona
-    for n in range(1, 6):
+    # agregar dos personas: Maick Davila y Jonatan Rengifo
+    seeder.add_entity(Persona, 1, {
+        "tipo_documento_id": 1,
+        "numero_documento": "71128047",
+        "nombres": "Maick",
+        "apellido_paterno": "Davila",
+        "apellido_materno": "Jesus",
+        "pais_id": 1,
+        "is_active": True,
+        "user_id": 1,
+        "celular": "999999999",
+        "correo": "mdavilaj@postgradounap.edu.pe",
+        })
+
+    seeder.add_entity(Persona, 1, {
+        "tipo_documento_id": 1,
+        "numero_documento": "1234567",
+        "nombres": "Jonatan",
+        "apellido_paterno": "Rengifo",
+        "apellido_materno": "Garcia",
+        "pais_id": 1,
+        "is_active": True,
+        "user_id": 2,
+        "celular": "999999999",
+        "correo": "jrengifog@postgradounap.edu.pe",
+    })
+
+    for n in range(3, 6):
         seeder.add_entity(
             Persona,
             1,
