@@ -81,28 +81,28 @@ class Procedure(models.Model):
     class Meta:
         verbose_name = "procedure"
         verbose_name_plural = "procedures"
-        
 
     def save(self, *args, **kwargs):
         if not self.id:
-            print(self.generate_code())
             self.code_number = self.generate_code()
+        else:
+            self.code_number = Procedure.objects.get(id=self.id).code_number
         super(Procedure, self).save(*args, **kwargs)
 
     def generate_code(self):
         # generate code for procedure   example: 000001-2020
-        
         last_procedure_id = Procedure.get_last_procedure_id()
         if last_procedure_id:
             last_procedure_id += 1
         else:
             last_procedure_id = 1
         return f"{last_procedure_id:06d}-{date.today().year}"
-        
 
     @staticmethod
     def get_last_procedure_id():
-        return Procedure.objects.filter().values("id").last()["id"]
+        if Procedure.objects.filter().values("id").last():
+            return Procedure.objects.filter().values("id").last()["id"]
+        return 0
 
     @staticmethod
     def get_procedure_by_id(procedure_id):
@@ -130,6 +130,12 @@ class Procedure_ProcReq(models.Model):
         return f"{self.procedure_type} - {self.requirement}"
 
 
+
+def date_formatter(date1): 
+        if date1 is None:
+            return  date.today().strftime("%d/%m/%Y %H:%M")
+        return date1.strftime("%d/%m/%Y %H:%M")
+
 class ProcedureTracing(models.Model):
     procedure = models.ForeignKey(Procedure, on_delete=models.CASCADE)
     from_area = models.ForeignKey(
@@ -140,10 +146,43 @@ class ProcedureTracing(models.Model):
     is_finished = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
     updated_at = models.DateTimeField(auto_now_add=False, auto_now=True)
+    ref_procedure_tracking = models.ForeignKey(
+       "desk.ProcedureTracing", on_delete=models.CASCADE, null=True, blank=True, related_name="procedure_tracking"
+    )
+    is_approved = models.BooleanField(default=False)
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
+    assigned_user = models.ForeignKey(
+        "auth.User", on_delete=models.CASCADE, null=True, blank=True, related_name="assigned_user"
+    )
+    action_log = models.TextField(null=True, blank=True)
+    document_response = models.FileField(upload_to="procedures/document_response/", null=True, blank=True)
+
+    def save (self, *args, **kwargs):
+        if self.from_area and self.to_area:
+            self.action_log = self.get_derivation_message(self)
+        if self.from_area and not self.to_area:
+            self.action_log = self.get_received_message(self)
+        if not self.ref_procedure_tracking_id:
+            self.action_log = self.action = self.get_created_message(self)
+
+        super(ProcedureTracing, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = "procedure tracing"
         verbose_name_plural = "procedure tracings"
+
+    @staticmethod
+    def get_created_message(self):
+        return f"El documento fue creado por {self.user} en el area {self.from_area} [{date_formatter(self.created_at)}]"
+
+    @staticmethod
+    def get_derivation_message(self):
+        extra_message = f" para el usuario {self.assigned_user}" if self.assigned_user else ""
+        return f"El documento fue derivado desde {self.from_area} a {self.to_area} {extra_message} por {self.user} [{date_formatter(self.created_at)}]"
+
+    @staticmethod
+    def get_received_message(self):
+        return f"El documento fue recepcionado por {self.user} en el area {self.from_area} [{date_formatter(self.created_at)}]"
 
     @staticmethod
     def get_tracing_by_procedure_id(procedure_id):
@@ -158,4 +197,4 @@ class ProcedureTracing(models.Model):
         )
 
     def __str__(self):
-        return f"{self.procedure_id} - {self.from_area} - {self.to_area}"
+        return self.action_log if self.action_log else self.action

@@ -110,7 +110,7 @@ def get_started_procedures():
     return serializer.data
 
 
-def get_in_process_procedures():
+def get_in_progress_procedures():
     """Get Procedures that have more than one TracingProcedure and it is not finished"""
 
     procedure_tracings = ProcedureTracing.objects.filter(
@@ -145,14 +145,22 @@ def get_dashboard_procedures(request):
             .filter(count=1)
             .values("procedure_id")
         ).count()
-        procedure_inprocess_tracings = ProcedureTracing.objects.filter(
-            is_finished=False,
-            procedure_id__in=ProcedureTracing.objects.values("procedure_id")
-            .annotate(count=Count("procedure_id"))
-            .filter(count__gt=1)
-            .values("procedure_id"),
-        ).count()
-        procedure_fished = ProcedureTracing.objects.filter(is_finished=True).count()
+        procedure_inprocess_tracings = (
+            ProcedureTracing.objects.filter(
+                is_finished=False,
+                procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+                .annotate(count=Count("procedure_id"))
+                .filter(count_gte=1)
+                .values("procedure_id"),
+            )
+            .distinct("procedure_id")
+            .count()
+        )
+        procedure_fished = (
+            ProcedureTracing.objects.filter(is_finished=True)
+            .distinct("procedure_id")
+            .count()
+        )
         return Response(
             {
                 "started": procedure_started_tracings,

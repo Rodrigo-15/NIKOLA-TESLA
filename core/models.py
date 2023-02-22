@@ -90,9 +90,10 @@ class Etapa(models.Model):
 class Area(models.Model):
     nombre = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
+    key_name = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
-        return f'{self.nombre} - {self.is_active}'
+        return f'{self.nombre}'
 
 
 class Cargo(models.Model):

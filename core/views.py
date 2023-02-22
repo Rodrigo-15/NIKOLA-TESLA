@@ -51,7 +51,6 @@ def get_menu(request):
             for menu in serializer.data:
                 if menu not in menu_obj:
                     menu_obj.append(menu)
-
         return Response(menu_obj)
 
 
