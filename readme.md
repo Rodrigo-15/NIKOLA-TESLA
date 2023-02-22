@@ -40,6 +40,6 @@ python manage.py runserver
 
 # Seeders
 Para eliminar todos los datos de la base de datos y crear nuevos datos de prueba se debe ejecutar el siguiente comando
-```python manage.py fush```
-luego ejecutar
-```python seeder.py```
+```python manage.py flush``` y escribir **yes**
+, luego ejecutar
+```python seeder.py```.
