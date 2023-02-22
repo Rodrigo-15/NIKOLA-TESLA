@@ -154,15 +154,15 @@ class ProcedureTracing(models.Model):
     action_log = models.TextField(null=True, blank=True)
     document_response = models.FileField(upload_to="procedures/document_response/", null=True, blank=True)
 
-    # def save (self, *args, **kwargs):
-    #     if self.from_area and self.to_area:
-    #         self.action_log = self.get_derivation_message(self)
-    #     if self.from_area and not self.to_area:
-    #         self.action_log = self.get_received_message(self)
-    #     if not self.procedure_tracking_id:
-    #         self.action_log = self.action = self.get_created_message(self)
+    def save (self, *args, **kwargs):
+        if self.from_area and self.to_area:
+            self.action_log = self.get_derivation_message(self)
+        if self.from_area and not self.to_area:
+            self.action_log = self.get_received_message(self)
+        if not self.ref_procedure_tracking:
+            self.action_log = self.action = self.get_created_message(self)
 
-    #     super(ProcedureTracing, self).save(*args, **kwargs)
+        super(ProcedureTracing, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = "procedure tracing"

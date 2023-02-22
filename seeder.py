@@ -153,7 +153,7 @@ def main():
     # Apps
     apps = {
         "desk": {
-            "name": "desk",
+            "name": "deskpart",
             "url": "http://desk.postgradounap.edu.pe",
             "icon": "escuela.icon",
             "background": "deskpart.jpeg",
