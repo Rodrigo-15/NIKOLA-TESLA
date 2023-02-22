@@ -36,3 +36,10 @@ python manage.py runserver
 ## Rutas
 - localhost:8000
 - localhost:8000/admin
+
+
+# Seeders
+Para eliminar todos los datos de la base de datos y crear nuevos datos de prueba se debe ejecutar el siguiente comando
+```python manage.py fush```
+luego ejecutar
+```python seeder.py```
