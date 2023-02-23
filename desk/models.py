@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from django.db import models
 
 from core.models import Area, Persona
@@ -28,6 +28,7 @@ class File(models.Model):
         verbose_name = "file"
         verbose_name_plural = "files"
 
+
     @staticmethod
     def get_last_file_id():
         return File.objects.filter().values("id").last()["id"]
@@ -35,7 +36,7 @@ class File(models.Model):
     def __str__(self):
         if self.person is None:
             return "Unnamed"
-        return self.person.nombres  
+        return self.person.nombres
 
 
 class ProcedureRequirement(models.Model):
@@ -69,9 +70,11 @@ class Procedure(models.Model):
     code_number = models.CharField(max_length=15, null=True, blank=True)
     subject = models.TextField(null=False, blank=False)
     description = models.TextField(null=True, blank=True)
-    attached_files = models.FileField(upload_to="procedures/attached_files/", null=True, blank=True)
+    attached_files = models.FileField(
+        upload_to="procedures/attached_files/", null=True, blank=True
+    )
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
-    reference_doc_number = models.CharField(max_length=20)
+    reference_doc_number = models.CharField(max_length=20, null=True, blank=True)
     # user who registered the procedure
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     headquarter = models.ForeignKey(Headquarter, on_delete=models.CASCADE)
@@ -90,13 +93,11 @@ class Procedure(models.Model):
         super(Procedure, self).save(*args, **kwargs)
 
     def generate_code(self):
-        # generate code for procedure   example: 000001-2020
-        last_procedure_id = Procedure.get_last_procedure_id()
-        if last_procedure_id:
-            last_procedure_id += 1
-        else:
-            last_procedure_id = 1
-        return f"{last_procedure_id:06d}-{date.today().year}"
+        return f"{Procedure.get_count_procedures_by_year(date.today().year) + 1:05d}-{date.today().year}"
+    
+    @staticmethod
+    def get_count_procedures_by_year(year):
+        return Procedure.objects.filter(created_at__year=year).count()
 
     @staticmethod
     def get_last_procedure_id():
@@ -114,10 +115,6 @@ class Procedure(models.Model):
 
 
 class Procedure_ProcReq(models.Model):
-    """
-    Intermediate table between Procedure and ProcedureRequirement
-    """
-
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
     requirement = models.ForeignKey(ProcedureRequirement, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
@@ -130,39 +127,51 @@ class Procedure_ProcReq(models.Model):
         return f"{self.procedure_type} - {self.requirement}"
 
 
+def date_formatter(date):
+    if date is None:
+        return datetime.now().strftime("%d/%m/%Y %H:%M")
+    return date.strftime("%d/%m/%Y %H:%M")
 
-def date_formatter(date1): 
-        if date1 is None:
-            return  date.today().strftime("%d/%m/%Y %H:%M")
-        return date1.strftime("%d/%m/%Y %H:%M")
 
 class ProcedureTracing(models.Model):
     procedure = models.ForeignKey(Procedure, on_delete=models.CASCADE)
     from_area = models.ForeignKey(
         Area, on_delete=models.CASCADE, related_name="from_area", null=True, blank=True
     )
-    to_area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="to_area", null=True, blank=True)
+    to_area = models.ForeignKey(
+        Area, on_delete=models.CASCADE, related_name="to_area", null=True, blank=True
+    )
     action = models.TextField()
     is_finished = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
     updated_at = models.DateTimeField(auto_now_add=False, auto_now=True)
     ref_procedure_tracking = models.ForeignKey(
-       "desk.ProcedureTracing", on_delete=models.CASCADE, null=True, blank=True, related_name="procedure_tracking"
+        "desk.ProcedureTracing",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="procedure_tracking",
     )
     is_approved = models.BooleanField(default=False)
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     assigned_user = models.ForeignKey(
-        "auth.User", on_delete=models.CASCADE, null=True, blank=True, related_name="assigned_user"
+        "auth.User",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="assigned_user",
     )
     action_log = models.TextField(null=True, blank=True)
-    document_response = models.FileField(upload_to="procedures/document_response/", null=True, blank=True)
+    document_response = models.FileField(
+        upload_to="procedures/document_response/", null=True, blank=True
+    )
 
-    def save (self, *args, **kwargs):
+    def save(self, *args, **kwargs):
         if self.from_area and self.to_area:
             self.action_log = self.get_derivation_message(self)
         if self.from_area and not self.to_area:
             self.action_log = self.get_received_message(self)
-        if not self.ref_procedure_tracking_id:
+        if not self.ref_procedure_tracking:
             self.action_log = self.action = self.get_created_message(self)
 
         super(ProcedureTracing, self).save(*args, **kwargs)
@@ -177,7 +186,9 @@ class ProcedureTracing(models.Model):
 
     @staticmethod
     def get_derivation_message(self):
-        extra_message = f" para el usuario {self.assigned_user}" if self.assigned_user else ""
+        extra_message = (
+            f" para el usuario {self.assigned_user}" if self.assigned_user else ""
+        )
         return f"El documento fue derivado desde {self.from_area} a {self.to_area} {extra_message} por {self.user} [{date_formatter(self.created_at)}]"
 
     @staticmethod

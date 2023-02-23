@@ -15,7 +15,7 @@ from core.models import Apps, Menu, Persona
 
 from desk.serializers import ProcedureSerializer
 from core.decorators import check_app_name, check_credentials
-from core.models import Persona
+from core.models import Persona, CargoArea
 from desk.models import Procedure, ProcedureTracing
 from desk.serializers import ProcedureSerializer, ProcedureTracingSerializer
 
@@ -150,7 +150,7 @@ def get_dashboard_procedures(request):
                 is_finished=False,
                 procedure_id__in=ProcedureTracing.objects.values("procedure_id")
                 .annotate(count=Count("procedure_id"))
-                .filter(count_gte=1)
+                .filter(count__gt=1)
                 .values("procedure_id"),
             )
             .distinct("procedure_id")
@@ -181,3 +181,39 @@ def get_tracings_procedures(request, status):
             procedures = {"finished": get_finished_procedures()}
 
         return Response(procedures)
+
+
+@api_view(["POST"])
+def save_procedure(request):
+    if request.method == "POST":
+        person_id = request.data["person_id"]
+        subject = request.data["subject"]
+        description = request.data["description"]
+        procedure_type_id = request.data["procedure_type_id"]
+        reference_doc_number = request.data["reference_doc_number"]
+        headquarter_id = request.data["headquarter_id"]
+        user_id = request.data["user_id"]
+
+        area_user = CargoArea.objects.filter(persona__user_id=user_id).first()
+        file = File.objects.filter(person_id=person_id).first()
+
+        if not file:
+            file = File.objects.create(person_id=person_id)
+        procedure = Procedure.objects.create(
+            file_id=file.id,
+            subject=subject,
+            description=description,
+            procedure_type_id=procedure_type_id,
+            reference_doc_number=reference_doc_number,
+            headquarter_id=headquarter_id,
+            user_id=user_id,
+        )
+
+        procedure_tracing = ProcedureTracing.objects.create(
+            procedure_id=procedure.id,
+            from_area_id=area_user.area_id,
+            action= "Iniciando",
+            user_id=user_id,
+        )
+
+        return Response(status=status.HTTP_200_OK , data={"code_number": procedure.code_number})
