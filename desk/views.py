@@ -17,7 +17,7 @@ from desk.serializers import ProcedureSerializer
 from core.decorators import check_app_name, check_credentials
 from core.models import Persona, CargoArea
 from desk.models import Procedure, ProcedureTracing
-from desk.serializers import ProcedureSerializer, ProcedureTracingSerializer
+from desk.serializers import ProcedureSerializer, ProcedureTracingSerializer,ProcedureTracingsList
 
 # Create your views here.
 
@@ -212,8 +212,52 @@ def save_procedure(request):
         procedure_tracing = ProcedureTracing.objects.create(
             procedure_id=procedure.id,
             from_area_id=area_user.area_id,
-            action= "Iniciando",
+            action="Iniciando",
             user_id=user_id,
         )
 
-        return Response(status=status.HTTP_200_OK , data={"code_number": procedure.code_number})
+        return Response(
+            status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
+        )
+
+
+@api_view(["POST"])
+def get_procedure(request):
+    if request.method == "POST":
+        procedure_id = request.data["procedure_id"]
+
+        procedure = Procedure.objects.filter(id=procedure_id).first()
+        procedure_tracings = ProcedureTracing.objects.filter(procedure_id=procedure_id).order_by("-created_at")
+        
+        serializer_procedure = ProcedureSerializer(procedure)
+        serializer_procedure_tracings = ProcedureTracingsList(
+            procedure_tracings, many=True
+        )
+
+        return Response(
+            {
+                "procedure": {
+                    "id": procedure.id,
+                    "file_id": procedure.file_id,
+                    "person": procedure.file.person.nombres
+                    + " "
+                    + procedure.file.person.apellido_paterno
+                    + " "
+                    + procedure.file.person.apellido_materno,
+                    "person_document": procedure.file.person.numero_documento,
+                    "code_number": procedure.code_number,
+                    "procedure_type_id": procedure.procedure_type_id,
+                    "procedure_type": procedure.procedure_type.description,
+                    "subject": procedure.subject,
+                    "description": procedure.description,
+                    "reference_doc_number": procedure.reference_doc_number,
+                    "headquarter_id": procedure.headquarter_id,
+                    "headquarter": procedure.headquarter.name,
+                    "user_id": procedure.user_id,
+                    "user": procedure.user.username,
+                    "created_at": serializer_procedure.data["created_at"],
+                    "updated_at": serializer_procedure.data["updated_at"],
+                },
+                "procedure_tracings": serializer_procedure_tracings.data,
+            }
+        )
