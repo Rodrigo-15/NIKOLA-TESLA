@@ -25,6 +25,7 @@ class MenuSerializer(serializers.Serializer):
         return obj.app.name
 
 class PersonSerializer(serializers.ModelSerializer):
+    fecha_nacimiento = serializers.DateField(format="%d/%m/%Y")
     class Meta:
         model = Persona
         fields = '__all__'
