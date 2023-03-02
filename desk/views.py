@@ -239,11 +239,7 @@ def get_procedure(request):
                 "procedure": {
                     "id": procedure.id,
                     "file_id": procedure.file_id,
-                    "person": procedure.file.person.nombres
-                    + " "
-                    + procedure.file.person.apellido_paterno
-                    + " "
-                    + procedure.file.person.apellido_materno,
+                    "person": procedure.file.person.get_full_name(),
                     "person_document": procedure.file.person.numero_documento,
                     "code_number": procedure.code_number,
                     "procedure_type_id": procedure.procedure_type_id,

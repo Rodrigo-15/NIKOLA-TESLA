@@ -69,7 +69,7 @@ class Procedure(models.Model):
     file = models.ForeignKey(File, on_delete=models.CASCADE)
     code_number = models.CharField(max_length=15, null=True, blank=True)
     subject = models.TextField(null=False, blank=False)
-    description = models.TextField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True, default="")
     attached_files = models.FileField(
         upload_to="procedures/attached_files/", null=True, blank=True
     )
