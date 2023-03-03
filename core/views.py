@@ -1,3 +1,4 @@
+from functools import reduce
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -63,13 +64,21 @@ def paths(request):
 def get_person_list(request):
     if request.method == "POST":
         query = request.data.get("query")
-        # filter person multiple fields AND ESPACE INSENSITIVE
-        person = Persona.objects.filter(
-            Q(numero_documento__icontains=query)
-        )[:5]
+        if query.isdigit():
+            persons = Persona.objects.filter(numero_documento__icontains=query)[:10]
+        else:
+            persons = Persona.objects.filter(
+                reduce(
+                    lambda x, y: x | y,
+                    [Q(nombres__icontains=word) for word in query.split(" ")]
+                ) | reduce(
+                    lambda x, y: x | y,
+                    [Q(apellido_paterno__icontains=word) for word in query.split(" ")]
+                )
+            )[:10]
 
-        if not person:
+        if not persons:
             return Response([])
 
-        serializer = PersonListSerializer(person, many=True)
+        serializer = PersonListSerializer(persons, many=True)
     return Response(serializer.data)

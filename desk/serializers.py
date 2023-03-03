@@ -68,7 +68,6 @@ class ProcedureTracingsList(serializers.Serializer):
     def get_user(self, obj):
         person = Persona.objects.filter(user_id=obj.user_id).first()
         if person:
-            print(person.nombres)
             return (
                 person.nombres
                 + " "

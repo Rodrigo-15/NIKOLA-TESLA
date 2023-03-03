@@ -36,3 +36,8 @@ class PersonListSerializer(serializers.Serializer):
         apellido_paterno = serializers.CharField(max_length=200)
         apellido_materno = serializers.CharField(max_length=200)
         numero_documento = serializers.CharField(max_length=200)
+        full_name = serializers.SerializerMethodField(source="get_full_name")
+
+        def get_full_name(self, obj):
+            if not obj: return ''
+            return obj.get_full_name()

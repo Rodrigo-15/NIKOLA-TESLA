@@ -10,15 +10,3 @@ from django_filters.rest_framework import DjangoFilterBackend
 class PersonaViewSet(ModelViewSet):
     queryset = Persona.objects.all()
     serializer_class = PersonSerializer
-
-
-# class PersonFilter(generics.ListAPIView):
-#     queryset = Persona.objects.all()
-#     serializer_class = PersonListSerializer
-#     filter_backends = [DjangoFilterBackend]
-#     filterset_fields = [
-#         "nombres",
-#         "apellido_paterno",
-#         "apellido_materno",
-#         "numero_documento",
-#     ]

@@ -1,6 +1,7 @@
 from core.serializers import PersonSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from desk.NAMES import APP_NAME
 from desk.models import File, Procedure
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
@@ -18,28 +19,52 @@ from core.decorators import check_app_name, check_credentials
 from core.models import Persona, CargoArea
 from desk.models import Procedure, ProcedureTracing
 from desk.serializers import ProcedureSerializer, ProcedureTracingSerializer,ProcedureTracingsList
-
 # Create your views here.
 
 
-@api_view(["POST"])
+@check_app_name(APP_NAME)
+@api_view(["GET"])
 def get_procedures(request):
-    if request.method == "POST":
-        data = request.data
+    if request.method == "GET":
+        data = request.query_params
+        STATES = ["started", "in_progress", "finished"]
+        params = ["date", "code_number", "state"]
+        if not all(param in data for param in params):
+            return Response(
+                "Missing parameters: " + str(params),
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         date = data["date"]
-        user_id = data["user_id"]
         code_number = data["code_number"]
-        if user_id == "":
-            procedures = Procedure.objects.filter(
-                Q(created_at__icontains=date) | Q(code_number__icontains=code_number)
+        state = data["state"]
+        if state not in STATES:
+            return Response(
+                "Invalid state: " + str(STATES),
+                status=status.HTTP_400_BAD_REQUEST,
             )
+
+        procedures = []
+        if state == "started":
+            procedures = get_started_procedures()
+        elif state == "in_progress":
+            procedures = get_in_progress_procedures()
         else:
-            procedures = Procedure.objects.filter(
-                Q(created_at__icontains=date) | Q(code_number__icontains=code_number),
-                user_id=user_id,
-            )
-        serilaizer = ProcedureSerializer(procedures, many=True)
-        return Response(serilaizer.data)
+            procedures = get_finished_procedures()
+
+        procedures = Procedure.objects.filter(id__in=[procedure["procedure"] for procedure in procedures])
+
+        if date:
+            procedures = procedures.filter(created_at__icontains=date)
+
+        if code_number:
+            procedures = procedures.filter(code_number__icontains=code_number)
+
+        if not date and not code_number:
+            procedures = procedures.order_by("-created_at")[:20]
+
+        serializer = ProcedureSerializer(procedures, many=True)
+        return Response(serializer.data)
 
 
 @api_view(["POST"])
@@ -188,11 +213,19 @@ def save_procedure(request):
     if request.method == "POST":
         person_id = request.data["person_id"]
         subject = request.data["subject"]
-        description = request.data["description"]
+        description = request.data["description"] if "description" in request.data else ""
         procedure_type_id = request.data["procedure_type_id"]
-        reference_doc_number = request.data["reference_doc_number"]
+        reference_doc_number = request.data["reference_doc_number"] if "reference_doc_number" in request.data else ""
         headquarter_id = request.data["headquarter_id"]
+
+        if not headquarter_id:
+            return Response(
+                "Headquarter is required",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         user_id = request.data["user_id"]
+        user = User.objects.get(id=user_id)
 
         area_user = CargoArea.objects.filter(persona__user_id=user_id).first()
         file = File.objects.filter(person_id=person_id).first()
@@ -209,10 +242,9 @@ def save_procedure(request):
             user_id=user_id,
         )
 
-        procedure_tracing = ProcedureTracing.objects.create(
+        ProcedureTracing.objects.create(
             procedure_id=procedure.id,
-            from_area_id=area_user.area_id,
-            action="Iniciando",
+            from_area_id=area_user.area_id if area_user else None,
             user_id=user_id,
         )
 
@@ -222,13 +254,13 @@ def save_procedure(request):
 
 
 @api_view(["POST"])
-def get_procedure(request):
+def get_procedure_and_tracing_by_id(request):
     if request.method == "POST":
         procedure_id = request.data["procedure_id"]
 
         procedure = Procedure.objects.filter(id=procedure_id).first()
         procedure_tracings = ProcedureTracing.objects.filter(procedure_id=procedure_id).order_by("-created_at")
-        
+
         serializer_procedure = ProcedureSerializer(procedure)
         serializer_procedure_tracings = ProcedureTracingsList(
             procedure_tracings, many=True

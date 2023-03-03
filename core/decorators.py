@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 
-def check_app_name():
+def check_app_name(name=""):
     """Decorator that checks if header app-name were passed in the request."""
 
     def decorator(function):
@@ -16,6 +16,12 @@ def check_app_name():
                 return Response(
                     "App does not exist.",
                     status=status.HTTP_404_NOT_FOUND,
+                )
+
+            if name != "" and app_name != name:
+                return Response(
+                    "User does not have permission",
+                    status=status.HTTP_401_UNAUTHORIZED,
                 )
 
             return function(request, *args, **kwargs)
