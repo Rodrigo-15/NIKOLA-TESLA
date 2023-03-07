@@ -35,8 +35,8 @@ class Procedure_ProcReqSerializer(serializers.ModelSerializer):
 
 
 class ProcedureSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S")
-    updated_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S")
+    created_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
+    updated_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
     
     class Meta:
         model = Procedure
@@ -77,3 +77,20 @@ class ProcedureTracingsList(serializers.Serializer):
             )
 
         return obj.user.username
+
+
+class ProcedureListSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    code_number = serializers.CharField()
+    created_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
+    updated_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
+    reference_doc_number = serializers.CharField()
+    subject = serializers.CharField()
+    solicitante = serializers.SerializerMethodField(source="get_solicitante")
+
+    def get_solicitante(self, obj):
+        file = obj.file
+        person = Persona.objects.filter(user_id=file.person.user_id).first()
+        if person:
+            return person.get_full_name()
+        return "No registrado"

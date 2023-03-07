@@ -26,7 +26,7 @@ urls_dict = {
         },
         "procedures": {
             "get_procedures": f"{url}desk/get_procedures?date&code_number",  # get
-            "get_procedure_by_id": f"{url}desk/get_procedure_by_id",  # get
+            "get_procedure_and_tracing_by_id": f"{url}desk/get_procedure_and_tracing_by_id",  # get
             "save_procedure": f"{url}desk/save_procedure",  # post
             "create": f"{url}desk/procedures/",  # post
             "update": f"{url}desk/procedures/id/",  # put

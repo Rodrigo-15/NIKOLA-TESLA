@@ -94,7 +94,7 @@ class Procedure(models.Model):
 
     def generate_code(self):
         return f"{Procedure.get_count_procedures_by_year(date.today().year) + 1:05d}-{date.today().year}"
-    
+
     @staticmethod
     def get_count_procedures_by_year(year):
         return Procedure.objects.filter(created_at__year=year).count()

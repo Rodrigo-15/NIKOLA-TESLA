@@ -14,7 +14,7 @@ from accounts.serializers import GroupSerializer, UserSerializer
 from core.models import Apps, Menu, Persona
 
 
-from desk.serializers import ProcedureSerializer
+from desk.serializers import ProcedureListSerializer, ProcedureSerializer
 from core.decorators import check_app_name, check_credentials
 from core.models import Persona, CargoArea
 from desk.models import Procedure, ProcedureTracing
@@ -63,7 +63,7 @@ def get_procedures(request):
         if not date and not code_number:
             procedures = procedures.order_by("-created_at")[:20]
 
-        serializer = ProcedureSerializer(procedures, many=True)
+        serializer = ProcedureListSerializer(procedures, many=True)
         return Response(serializer.data)
 
 
