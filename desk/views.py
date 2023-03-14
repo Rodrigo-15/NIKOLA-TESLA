@@ -18,7 +18,12 @@ from desk.serializers import ProcedureListSerializer, ProcedureSerializer
 from core.decorators import check_app_name, check_credentials
 from core.models import Persona, CargoArea
 from desk.models import Procedure, ProcedureTracing
-from desk.serializers import ProcedureSerializer, ProcedureTracingSerializer,ProcedureTracingsList
+from desk.serializers import (
+    ProcedureSerializer,
+    ProcedureTracingSerializer,
+    ProcedureTracingsList,
+)
+
 # Create your views here.
 
 
@@ -52,7 +57,9 @@ def get_procedures(request):
         else:
             procedures = get_finished_procedures()
 
-        procedures = Procedure.objects.filter(id__in=[procedure["procedure"] for procedure in procedures])
+        procedures = Procedure.objects.filter(
+            id__in=[procedure["procedure"] for procedure in procedures]
+        )
 
         if date:
             procedures = procedures.filter(created_at__icontains=date)
@@ -103,14 +110,16 @@ def login(request):
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-            person = Persona.objects.get(correo=user.email)
-
+            person = Persona.objects.get(user_id=user.id)
+            headquarter = CargoArea.objects.filter(persona_id=person.id).values("headquarter_id","headquarter__name" ).first()
+            print(headquarter)
             return Response(
                 {
                     "user": UserSerializer(user).data,
                     "groups": GroupSerializer(groups, many=True).data,
                     "token": token.key,
                     "person": PersonSerializer(person).data,
+                    "headquarter" : headquarter
                 }
             )
         else:
@@ -213,20 +222,25 @@ def save_procedure(request):
     if request.method == "POST":
         person_id = request.data["person_id"]
         subject = request.data["subject"]
-        description = request.data["description"] if "description" in request.data else ""
+        description = (
+            request.data["description"] if "description" in request.data else ""
+        )
         procedure_type_id = request.data["procedure_type_id"]
-        reference_doc_number = request.data["reference_doc_number"] if "reference_doc_number" in request.data else ""
-        headquarter_id = request.data["headquarter_id"]
-
-        if not headquarter_id:
-            return Response(
-                "Headquarter is required",
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        reference_doc_number = (
+            request.data["reference_doc_number"]
+            if "reference_doc_number" in request.data
+            else ""
+        )
 
         user_id = request.data["user_id"]
-        user = User.objects.get(id=user_id)
-
+        headquarter = (
+            CargoArea.objects.filter(persona__user_id=user_id)
+            .values("headquarter_id")
+            .first()
+        )
+        headquarter_id = headquarter["headquarter_id"]
+        if not headquarter:
+            headquarter_id = 1
         area_user = CargoArea.objects.filter(persona__user_id=user_id).first()
         file = File.objects.filter(person_id=person_id).first()
 
@@ -259,7 +273,9 @@ def get_procedure_and_tracing_by_id(request):
         procedure_id = request.data["procedure_id"]
 
         procedure = Procedure.objects.filter(id=procedure_id).first()
-        procedure_tracings = ProcedureTracing.objects.filter(procedure_id=procedure_id).order_by("-created_at")
+        procedure_tracings = ProcedureTracing.objects.filter(
+            procedure_id=procedure_id
+        ).order_by("-created_at")
 
         serializer_procedure = ProcedureSerializer(procedure)
         serializer_procedure_tracings = ProcedureTracingsList(
