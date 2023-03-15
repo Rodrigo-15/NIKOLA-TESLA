@@ -305,3 +305,10 @@ def get_procedure_and_tracing_by_id(request):
                 "procedure_tracings": serializer_procedure_tracings.data,
             }
         )
+    
+@api_view(["GET"])
+def years_for_procedures(request):
+    if request.method == "GET":
+        years = Procedure.objects.values("created_at__year").distinct()
+        years = [year["created_at__year"] for year in years]
+        return Response(years)
