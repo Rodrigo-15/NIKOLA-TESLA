@@ -48,7 +48,12 @@ def get_procedures(request):
                 "Invalid state: " + str(STATES),
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
+        
+        counters = { 
+            "total": 0,
+            "count": 0,
+            "label": "0/0",
+        }
         procedures = []
         if state == "started":
             procedures = get_started_procedures()
@@ -56,10 +61,13 @@ def get_procedures(request):
             procedures = get_in_progress_procedures()
         else:
             procedures = get_finished_procedures()
+            
 
         procedures = Procedure.objects.filter(
             id__in=[procedure["procedure"] for procedure in procedures]
         )
+
+        counters["total"] = len(procedures)
 
         if date:
             procedures = procedures.filter(created_at__icontains=date)
@@ -71,7 +79,11 @@ def get_procedures(request):
             procedures = procedures.order_by("-created_at")[:20]
 
         serializer = ProcedureListSerializer(procedures, many=True)
-        return Response(serializer.data)
+
+        counters["count"] = len(serializer.data)
+        counters["label"] = f"{counters['count']}/{counters['total']}"
+        
+        return Response({"procedures": serializer.data, "counters": counters})
 
 
 @api_view(["POST"])
@@ -112,7 +124,6 @@ def login(request):
 
             person = Persona.objects.get(user_id=user.id)
             headquarter = CargoArea.objects.filter(persona_id=person.id).values("headquarter_id","headquarter__name" ).first()
-            print(headquarter)
             return Response(
                 {
                     "user": UserSerializer(user).data,
