@@ -323,3 +323,35 @@ def years_for_procedures(request):
         years = Procedure.objects.values("created_at__year").distinct()
         years = [year["created_at__year"] for year in years]
         return Response(years)
+    
+@api_view(["POST"])
+def save_derive_procedure(request):
+    if request.method == "POST":
+        procedure_id = request.data["procedure_id"]
+        user_id = request.data["user_id"]
+        from_area_id = CargoArea.objects.filter(persona__user_id=user_id).first().area_id
+        to_area_id = request.data["to_area_id"]
+        action = request.data["action"]
+        ref_procedure_tracking_id = ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id   
+        if request.data["assigned_user_id"] != '':
+            assigned_user_id = request.data["assigned_user_id"]
+            ProcedureTracing.objects.create(
+                procedure_id=procedure_id,
+                from_area_id=from_area_id,
+                to_area_id=to_area_id,
+                user_id=user_id,
+                action=action,
+                assigned_user_id=assigned_user_id,
+                ref_procedure_tracking_id=ref_procedure_tracking_id,
+            )
+        else:
+            ProcedureTracing.objects.create(
+                procedure_id=procedure_id,
+                from_area_id=from_area_id,
+                to_area_id=to_area_id,
+                user_id=user_id,
+                action=action,
+                ref_procedure_tracking_id=ref_procedure_tracking_id,
+            )
+            
+        return Response(status=status.HTTP_200_OK)
