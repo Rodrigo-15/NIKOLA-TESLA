@@ -388,3 +388,11 @@ def approve_tracing(request):
 
 
         return Response(status=status.HTTP_200_OK)
+    
+@api_view(["POST"])
+def finally_trace_procedure(request):
+    if request.method == "POST":
+        procedure_id = request.data["procedure_id"]
+        user_id = request.data["user_id"]
+        
+        return Response(status=status.HTTP_200_OK)
