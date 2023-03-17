@@ -171,6 +171,7 @@ class ProcedureTracing(models.Model):
             self.action_log = self.get_derivation_message(self)
         if self.from_area and not self.to_area:
             self.action_log = self.get_received_message(self)
+            self.action = self.get_received_message(self)
         if not self.ref_procedure_tracking:
             self.action_log = self.action = self.get_created_message(self)
 
@@ -182,7 +183,7 @@ class ProcedureTracing(models.Model):
 
     @staticmethod
     def get_created_message(self):
-        return f"El documento fue creado por {self.user} en el area {self.from_area} [{date_formatter(self.created_at)}]"
+        return f"El Tramite fue creado por {self.user} en el area {self.from_area} [{date_formatter(self.created_at)}]"
 
     @staticmethod
     def get_derivation_message(self):

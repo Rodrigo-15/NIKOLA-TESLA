@@ -51,11 +51,15 @@ class ProcedureTracingSerializer(serializers.ModelSerializer):
 
 class ProcedureTracingsList(serializers.Serializer):
     id = serializers.IntegerField()
+    procedure_id = serializers.IntegerField()
     action = serializers.CharField()
     action_log = serializers.CharField()
     is_finished = serializers.BooleanField()
     is_approved = serializers.BooleanField()
+    user_id = serializers.IntegerField()
     user = serializers.SerializerMethodField(source="get_user")
+    assigned_user_id = serializers.IntegerField()
+    assigned_user = serializers.SerializerMethodField(source="get_assigned_user")
     date = serializers.SerializerMethodField(source="get_date")
     hour = serializers.SerializerMethodField(source="get_hour")
 
@@ -77,7 +81,19 @@ class ProcedureTracingsList(serializers.Serializer):
             )
 
         return obj.user.username
+    
+    def get_assigned_user(self, obj):
+        if obj.assigned_user_id:
+            person = Persona.objects.filter(user_id=obj.assigned_user_id).first()
+            return (
+                person.nombres
+                + " "
+                + person.apellido_paterno
+                + " "
+                + person.apellido_materno
+            )
 
+        return 'No Asignado'
 
 class ProcedureListSerializer(serializers.Serializer):
     id = serializers.IntegerField()

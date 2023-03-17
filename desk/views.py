@@ -355,3 +355,36 @@ def save_derive_procedure(request):
             )
             
         return Response(status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def get_tracings_to_approved(request):
+    if request.method == "POST":
+        user_id = request.data["user_id"]
+        area_id = CargoArea.objects.filter(persona__user_id=user_id).first().area_id
+        tracings_for_area = ProcedureTracing.objects.filter(to_area_id=area_id, is_approved=False, assigned_user_id= None ).order_by('-created_at')
+        tracings_for_user = ProcedureTracing.objects.filter(to_area_id = area_id,assigned_user_id=user_id, is_approved=False).order_by('-created_at')
+        serializer_tracings_for_area = ProcedureTracingsList(tracings_for_area, many=True)
+        serializer_tracings_for_user = ProcedureTracingsList(tracings_for_user, many=True)
+        return Response({ "tracings_for_area": serializer_tracings_for_area.data, "tracings_for_user": serializer_tracings_for_user.data })
+    
+@api_view(["POST"])
+def approve_tracing(request):
+    if request.method == "POST":
+        tracing_id = request.data["tracing_id"]
+        procedure_id = request.data["procedure_id"]
+        user_id = request.data["user_id"]
+        print(tracing_id)
+        ProcedureTracing.objects.filter(id=tracing_id).update(is_approved=True)
+        
+        from_area_id = CargoArea.objects.filter(persona__user_id=user_id).first().area_id
+        ref_procedure_tracking_id = ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
+
+        ProcedureTracing.objects.create(
+            procedure_id=procedure_id,
+            from_area_id=from_area_id,
+            user_id=user_id,
+            ref_procedure_tracking_id=ref_procedure_tracking_id,
+        )
+
+
+        return Response(status=status.HTTP_200_OK)
