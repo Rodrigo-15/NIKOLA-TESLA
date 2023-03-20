@@ -14,6 +14,11 @@ urls_dict = {
             "create": f"{url}desk/procedure_requirement/",  # post
             "update": f"{url}desk/procedure_requirement/id/",  # put
         },
+        "procedure_tracing": {
+            "get_tracings_to_approved": f"{url}desk/get_tracings_to_approved",  # post
+            "approve_tracing": f"{url}desk/approve_tracing",  # post
+            "save_derive_procedure": f"{url}desk/save_derive_procedure",  # post
+        },
         "procedure_type": {
             "get": f"{url}desk/procedure_type/",  # get
             "create": f"{url}desk/procedure_type/",  # post
@@ -34,6 +39,7 @@ urls_dict = {
         "login": f"{url}desk/login/",
         "get_tracings_procedures": f"{url}desk/get_tracings_procedures/status", # get
         "get_dashboard_procedures": f"{url}desk/get_dashboard_procedures", # get
+        "year_for_procedures": f"{url}desk/year_for_procedures", # get
     },
     "get_menu": f"{url}core/get_menu",
     "person": {
