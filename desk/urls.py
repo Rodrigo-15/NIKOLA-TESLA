@@ -25,7 +25,7 @@ urlpatterns = [
     path("save_procedure", save_procedure, name="save_procedure"),
     path('update_procedure', update_procedure),
     path("get_procedure_and_tracing_by_id", get_procedure_and_tracing_by_id),
-    path("get_procedure_by_id", get_procedure_by_id),
+    path("get_procedure_by_id/<int:procedure_id>", get_procedure_by_id),
     path("years_for_procedures", years_for_procedures),
     path("save_derive_procedure", save_derive_procedure),
     path("get_tracings_to_approved", get_tracings_to_approved),
