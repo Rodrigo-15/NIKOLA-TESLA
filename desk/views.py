@@ -75,8 +75,7 @@ def get_procedures(request):
         if code_number:
             procedures = procedures.filter(code_number__icontains=code_number)
 
-        if not date and not code_number:
-            procedures = procedures.order_by("-created_at")[:20]
+        procedures = procedures.order_by("-created_at")[:20]
 
         serializer = ProcedureListSerializer(procedures, many=True)
 
@@ -308,7 +307,9 @@ def update_procedure(request):
         procedure.reference_doc_number = reference_doc_number
         procedure.save()
 
-        return Response(status=status.HTTP_200_OK)
+        data = ProcedureSerializer(procedure).data
+
+        return Response(status=status.HTTP_200_OK, data=data)
 
 
 @ api_view(["POST"])
@@ -328,24 +329,7 @@ def get_procedure_and_tracing_by_id(request):
 
         return Response(
             {
-                "procedure": {
-                    "id": procedure.id,
-                    "file_id": procedure.file_id,
-                    "person": procedure.file.person.get_full_name(),
-                    "person_document": procedure.file.person.numero_documento,
-                    "code_number": procedure.code_number,
-                    "procedure_type_id": procedure.procedure_type_id,
-                    "procedure_type": procedure.procedure_type.description,
-                    "subject": procedure.subject,
-                    "description": procedure.description,
-                    "reference_doc_number": procedure.reference_doc_number,
-                    "headquarter_id": procedure.headquarter_id,
-                    "headquarter": procedure.headquarter.name,
-                    "user_id": procedure.user_id,
-                    "user": procedure.user.username,
-                    "created_at": serializer_procedure.data["created_at"],
-                    "updated_at": serializer_procedure.data["updated_at"],
-                },
+                "procedure": serializer_procedure.data,
                 "procedure_tracings": serializer_procedure_tracings.data,
             }
         )
@@ -445,13 +429,10 @@ def finally_trace_procedure(request):
         return Response(status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
+@api_view(["GET"])
 @check_is_auth()
-def get_procedure_by_id(request):
-    if request.method == "POST":
-        procedure_id = request.data["procedure_id"]
-
+def get_procedure_by_id(request, procedure_id):
+    if request.method == "GET":
         procedure = Procedure.objects.filter(id=procedure_id).first()
-        serializer_procedure = ProcedureSerializer(procedure)
-
-        return Response(serializer_procedure.data)
+        data = ProcedureSerializer(procedure).data
+        return Response(data)
