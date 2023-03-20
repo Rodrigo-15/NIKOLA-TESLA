@@ -8,6 +8,7 @@ from desk.views import (
     get_dashboard_procedures,
     get_tracings_procedures,
     save_procedure,
+    update_procedure,
     years_for_procedures,
     save_derive_procedure,
     get_tracings_to_approved,
@@ -29,6 +30,7 @@ urlpatterns = [
     ),
     path("login/", login, name="login"),
     path("save_procedure", save_procedure, name="save_procedure"),
+    path('update_procedure', update_procedure),
     path(
         "get_procedure_and_tracing_by_id",
         get_procedure_and_tracing_by_id,
