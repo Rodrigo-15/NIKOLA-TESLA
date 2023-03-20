@@ -1,3 +1,5 @@
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.models import User
 from functools import wraps
 from core.models import Apps
 from rest_framework import status
@@ -41,6 +43,25 @@ def check_credentials():
                 return Response(
                     "Email or password not specified.",
                     status=status.HTTP_400_BAD_REQUEST,
+                )
+            return function(request, *args, **kwargs)
+
+        return wrapped
+
+    return decorator
+
+
+# check if is auth
+def check_is_auth():
+    """Decorator that checks if the user is authenticated."""
+
+    def decorator(function):
+        @wraps(function)
+        def wrapped(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return Response(
+                    "User is not authenticated.",
+                    status=status.HTTP_401_UNAUTHORIZED,
                 )
             return function(request, *args, **kwargs)
 

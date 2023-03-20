@@ -1,3 +1,4 @@
+from rest_framework.permissions import IsAuthenticated
 from core.serializers import PersonSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -15,7 +16,7 @@ from core.models import Apps, Menu, Persona
 
 
 from desk.serializers import ProcedureListSerializer, ProcedureSerializer
-from core.decorators import check_app_name, check_credentials
+from core.decorators import check_app_name, check_is_auth, check_credentials
 from core.models import Persona, CargoArea
 from desk.models import Procedure, ProcedureTracing
 from desk.serializers import (
@@ -442,3 +443,15 @@ def finally_trace_procedure(request):
         user_id = request.data["user_id"]
 
         return Response(status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@check_is_auth()
+def get_procedure_by_id(request):
+    if request.method == "POST":
+        procedure_id = request.data["procedure_id"]
+
+        procedure = Procedure.objects.filter(id=procedure_id).first()
+        serializer_procedure = ProcedureSerializer(procedure)
+
+        return Response(serializer_procedure.data)

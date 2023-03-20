@@ -85,6 +85,9 @@ class ProcedureTracingsList(serializers.Serializer):
     def get_assigned_user(self, obj):
         if obj.assigned_user_id:
             person = Persona.objects.filter(user_id=obj.assigned_user_id).first()
+            if not person:
+                return 'No Asignado'
+
             return (
                 person.nombres
                 + " "
