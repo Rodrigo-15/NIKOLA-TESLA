@@ -50,11 +50,8 @@ def get_procedures(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        counters = {
-            "total": 0,
-            "count": 0,
-            "label": "0/0",
-        }
+        counters = get_counters_procedure(date, code_number)
+        
         procedures = []
         if state == "started":
             procedures = get_started_procedures()
@@ -67,8 +64,6 @@ def get_procedures(request):
             id__in=[procedure["procedure"] for procedure in procedures]
         )
 
-        counters["total"] = len(procedures)
-
         if date:
             procedures = procedures.filter(created_at__icontains=date)
 
@@ -79,10 +74,87 @@ def get_procedures(request):
 
         serializer = ProcedureListSerializer(procedures, many=True)
 
-        counters["count"] = len(serializer.data)
-        counters["label"] = f"{counters['count']}/{counters['total']}"
-
         return Response({"procedures": serializer.data, "counters": counters})
+
+
+def get_counters_procedure(date=None, code_number=None):
+    counters = {
+        "started": {
+            "label": "",
+            "total": 0,
+            "count": 0,
+        },
+        "in_progress": {
+            "label": "",
+            "total": 0,
+            "count": 0,
+        },
+        "finished": {
+            "label": "",
+            "total": 0,
+            "count": 0,
+        },
+    }
+
+    procedures_started = []
+    procedures_in_progress = []
+    procedures_finished = []
+
+    procedures_started = get_started_procedures()
+    procedures_started = Procedure.objects.filter(
+        id__in=[procedure["procedure"] for procedure in procedures_started]
+    )
+    counters["started"]["total"] = len(procedures_started)
+
+    procedures_in_progress = get_in_progress_procedures()
+    procedures_in_progress = Procedure.objects.filter(
+        id__in=[procedure["procedure"] for procedure in procedures_in_progress]
+    )
+    counters["in_progress"]["total"] = len(procedures_in_progress)
+
+    procedures_finished = get_finished_procedures()
+    procedures_finished = Procedure.objects.filter(
+        id__in=[procedure["procedure"] for procedure in procedures_finished]
+    )
+    counters["finished"]["total"] = len(get_finished_procedures())
+
+    if date:
+        procedures_started = procedures_started.filter(created_at__icontains=date)
+        procedures_in_progress = procedures_in_progress.filter(
+            created_at__icontains=date
+        )
+        procedures_finished = procedures_finished.filter(created_at__icontains=date)
+
+    if code_number:
+        procedures_started = procedures_started.filter(
+            code_number__icontains=code_number
+        )
+        procedures_in_progress = procedures_in_progress.filter(
+            code_number__icontains=code_number
+        )
+        procedures_finished = procedures_finished.filter(
+            code_number__icontains=code_number
+        )
+
+    serializer_started = ProcedureListSerializer(procedures_started, many=True)
+    serializer_in_progress = ProcedureListSerializer(procedures_in_progress, many=True)
+    serializer_finished = ProcedureListSerializer(procedures_finished, many=True)
+
+    counters["started"]["count"] = len(serializer_started.data)
+    counters["in_progress"]["count"] = len(serializer_in_progress.data)
+    counters["finished"]["count"] = len(serializer_finished.data)
+
+    counters["started"][
+        "label"
+    ] = f"{counters['started']['count']}/{counters['started']['total']}"
+    counters["in_progress"][
+        "label"
+    ] = f"{counters['in_progress']['count']}/{counters['in_progress']['total']}"
+    counters["finished"][
+        "label"
+    ] = f"{counters['finished']['count']}/{counters['finished']['total']}"
+
+    return counters
 
 
 @api_view(["POST"])
@@ -122,15 +194,18 @@ def login(request):
                 )
 
             person = Persona.objects.get(user_id=user.id)
-            headquarter = CargoArea.objects.filter(persona_id=person.id).values(
-                "headquarter_id", "headquarter__name").first()
+            headquarter = (
+                CargoArea.objects.filter(persona_id=person.id)
+                .values("headquarter_id", "headquarter__name")
+                .first()
+            )
             return Response(
                 {
                     "user": UserSerializer(user).data,
                     "groups": GroupSerializer(groups, many=True).data,
                     "token": token.key,
                     "person": PersonSerializer(person).data,
-                    "headquarter": headquarter
+                    "headquarter": headquarter,
                 }
             )
         else:
@@ -193,8 +268,7 @@ def get_dashboard_procedures(request):
         procedure_in_progress_tracings = (
             ProcedureTracing.objects.filter(
                 is_finished=False,
-                procedure_id__in=ProcedureTracing.objects.values(
-                    "procedure_id")
+                procedure_id__in=ProcedureTracing.objects.values("procedure_id")
                 .annotate(count=Count("procedure_id"))
                 .filter(count__gt=1)
                 .values("procedure_id"),
@@ -276,8 +350,7 @@ def save_procedure(request):
         )
 
         return Response(
-            status=status.HTTP_200_OK, data={
-                "code_number": procedure.code_number}
+            status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
         )
 
 
@@ -290,17 +363,28 @@ def update_procedure(request):
             description = request.data["description"]
             reference_doc_number = request.data["reference_doc_number"]
         except KeyError:
-            return Response(status=status.HTTP_400_BAD_REQUEST, data={
-                "message": "Fields are missing",
-                "fields": ["procedure_id", "subject", "description", "reference_doc_number"]
-            })
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={
+                    "message": "Fields are missing",
+                    "fields": [
+                        "procedure_id",
+                        "subject",
+                        "description",
+                        "reference_doc_number",
+                    ],
+                },
+            )
 
         procedure = Procedure.objects.filter(id=procedure_id).first()
 
         if not procedure:
-            return Response(status=status.HTTP_400_BAD_REQUEST, data={
-                "message": "No se encontró el procedimiento o no tiene permisos para editarlo"
-            })
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={
+                    "message": "No se encontró el procedimiento o no tiene permisos para editarlo"
+                },
+            )
 
         procedure.subject = subject
         procedure.description = description
@@ -312,7 +396,7 @@ def update_procedure(request):
         return Response(status=status.HTTP_200_OK, data=data)
 
 
-@ api_view(["POST"])
+@api_view(["POST"])
 def get_procedure_and_tracing_by_id(request):
     if request.method == "POST":
         procedure_id = request.data["procedure_id"]
@@ -335,7 +419,7 @@ def get_procedure_and_tracing_by_id(request):
         )
 
 
-@ api_view(["GET"])
+@api_view(["GET"])
 def years_for_procedures(request):
     if request.method == "GET":
         years = Procedure.objects.values("created_at__year").distinct()
@@ -343,18 +427,20 @@ def years_for_procedures(request):
         return Response(years)
 
 
-@ api_view(["POST"])
+@api_view(["POST"])
 def save_derive_procedure(request):
     if request.method == "POST":
         procedure_id = request.data["procedure_id"]
         user_id = request.data["user_id"]
-        from_area_id = CargoArea.objects.filter(
-            persona__user_id=user_id).first().area_id
+        from_area_id = (
+            CargoArea.objects.filter(persona__user_id=user_id).first().area_id
+        )
         to_area_id = request.data["to_area_id"]
         action = request.data["action"]
-        ref_procedure_tracking_id = ProcedureTracing.objects.filter(
-            procedure_id=procedure_id).last().id
-        if request.data["assigned_user_id"] != '':
+        ref_procedure_tracking_id = (
+            ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
+        )
+        if request.data["assigned_user_id"] != "":
             assigned_user_id = request.data["assigned_user_id"]
             ProcedureTracing.objects.create(
                 procedure_id=procedure_id,
@@ -378,37 +464,45 @@ def save_derive_procedure(request):
         return Response(status=status.HTTP_200_OK)
 
 
-@ api_view(["POST"])
+@api_view(["POST"])
 def get_tracings_to_approved(request):
     if request.method == "POST":
         user_id = request.data["user_id"]
-        area_id = CargoArea.objects.filter(
-            persona__user_id=user_id).first().area_id
+        area_id = CargoArea.objects.filter(persona__user_id=user_id).first().area_id
         tracings_for_area = ProcedureTracing.objects.filter(
-            to_area_id=area_id, is_approved=False, assigned_user_id=None).order_by('-created_at')
+            to_area_id=area_id, is_approved=False, assigned_user_id=None
+        ).order_by("-created_at")
         tracings_for_user = ProcedureTracing.objects.filter(
-            to_area_id=area_id, assigned_user_id=user_id, is_approved=False).order_by('-created_at')
+            to_area_id=area_id, assigned_user_id=user_id, is_approved=False
+        ).order_by("-created_at")
         serializer_tracings_for_area = ProcedureTracingsList(
-            tracings_for_area, many=True)
+            tracings_for_area, many=True
+        )
         serializer_tracings_for_user = ProcedureTracingsList(
-            tracings_for_user, many=True)
-        return Response({"tracings_for_area": serializer_tracings_for_area.data, "tracings_for_user": serializer_tracings_for_user.data})
+            tracings_for_user, many=True
+        )
+        return Response(
+            {
+                "tracings_for_area": serializer_tracings_for_area.data,
+                "tracings_for_user": serializer_tracings_for_user.data,
+            }
+        )
 
 
-@ api_view(["POST"])
+@api_view(["POST"])
 def approve_tracing(request):
     if request.method == "POST":
         tracing_id = request.data["tracing_id"]
         procedure_id = request.data["procedure_id"]
         user_id = request.data["user_id"]
-        print(tracing_id)
-        ProcedureTracing.objects.filter(
-            id=tracing_id).update(is_approved=True)
+        ProcedureTracing.objects.filter(id=tracing_id).update(is_approved=True)
 
-        from_area_id = CargoArea.objects.filter(
-            persona__user_id=user_id).first().area_id
-        ref_procedure_tracking_id = ProcedureTracing.objects.filter(
-            procedure_id=procedure_id).last().id
+        from_area_id = (
+            CargoArea.objects.filter(persona__user_id=user_id).first().area_id
+        )
+        ref_procedure_tracking_id = (
+            ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
+        )
 
         ProcedureTracing.objects.create(
             procedure_id=procedure_id,
@@ -420,7 +514,7 @@ def approve_tracing(request):
         return Response(status=status.HTTP_200_OK)
 
 
-@ api_view(["POST"])
+@api_view(["POST"])
 def finally_trace_procedure(request):
     if request.method == "POST":
         procedure_id = request.data["procedure_id"]
