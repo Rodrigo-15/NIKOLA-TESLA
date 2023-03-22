@@ -51,7 +51,7 @@ def get_procedures(request):
             )
 
         counters = get_counters_procedure(date, code_number)
-        
+
         procedures = []
         if state == "started":
             procedures = get_started_procedures()
@@ -135,7 +135,7 @@ def get_counters_procedure(date=None, code_number=None):
         procedures_finished = procedures_finished.filter(
             code_number__icontains=code_number
         )
-
+        
     serializer_started = ProcedureListSerializer(procedures_started, many=True)
     serializer_in_progress = ProcedureListSerializer(procedures_in_progress, many=True)
     serializer_finished = ProcedureListSerializer(procedures_finished, many=True)
@@ -144,15 +144,37 @@ def get_counters_procedure(date=None, code_number=None):
     counters["in_progress"]["count"] = len(serializer_in_progress.data)
     counters["finished"]["count"] = len(serializer_finished.data)
 
-    counters["started"][
-        "label"
-    ] = f"{counters['started']['count']}/{counters['started']['total']}"
-    counters["in_progress"][
-        "label"
-    ] = f"{counters['in_progress']['count']}/{counters['in_progress']['total']}"
-    counters["finished"][
-        "label"
-    ] = f"{counters['finished']['count']}/{counters['finished']['total']}"
+    if date:
+        counters["started"][
+            "label"
+        ] = f"{counters['started']['count']}/{counters['started']['total']}"
+        counters["in_progress"][
+            "label"
+        ] = f"{counters['in_progress']['count']}/{counters['in_progress']['total']}"
+        counters["finished"][
+            "label"
+        ] = f"{counters['finished']['count']}/{counters['finished']['total']}"
+    elif len (code_number) > 5:
+        print("code_number" + code_number)
+        counters["started"][
+            "label"
+        ] = f"{counters['started']['count']}/{counters['started']['total']}"
+        counters["in_progress"][
+            "label"
+        ] = f"{counters['in_progress']['count']}/{counters['in_progress']['total']}"
+        counters["finished"][
+            "label"
+        ] = f"{counters['finished']['count']}/{counters['finished']['total']}"
+    else:
+        counters["started"][
+            "label"
+        ] = f"{counters['started']['total']}"
+        counters["in_progress"][
+            "label"
+        ] = f"{counters['in_progress']['total']}"
+        counters["finished"][
+            "label"
+        ] = f"{counters['finished']['total']}"
 
     return counters
 
