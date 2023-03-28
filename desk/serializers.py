@@ -126,7 +126,7 @@ class ProcedureTracingsList(serializers.Serializer):
         return obj.created_at.strftime("%d/%m/%Y")
 
     def get_hour(self, obj):
-        return obj.created_at.strftime("%H:%M:%S")
+        return obj.created_at.strftime("%H:%M:%S %p")
 
     def get_user(self, obj):
         person = Persona.objects.filter(user_id=obj.user_id).first()
