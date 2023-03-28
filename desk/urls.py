@@ -13,7 +13,9 @@ from desk.views import (
     save_derive_procedure,
     get_tracings_to_approved,
     approve_tracing,
-    get_procedure_by_id
+    get_procedure_by_id,
+    get_areas,
+    get_user_for_area,
 )
 
 urlpatterns = [
@@ -30,4 +32,6 @@ urlpatterns = [
     path("save_derive_procedure", save_derive_procedure),
     path("get_tracings_to_approved", get_tracings_to_approved),
     path("approve_tracing", approve_tracing, name="approve_tracing"),
+    path("get_areas", get_areas, name="get_areas"),
+    path("get_user_for_area", get_user_for_area, name="get_user_for_area"),
 ]

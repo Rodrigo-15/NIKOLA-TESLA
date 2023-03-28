@@ -1,5 +1,5 @@
 from rest_framework.permissions import IsAuthenticated
-from core.serializers import PersonSerializer
+from core.serializers import PersonSerializer, AreaSerializer, CargoAreaPersonSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from desk.NAMES import APP_NAME
@@ -12,7 +12,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from accounts.serializers import GroupSerializer, UserSerializer
-from core.models import Apps, Menu, Persona
+from core.models import Apps, Menu, Persona, Area
 
 
 from desk.serializers import ProcedureListSerializer, ProcedureSerializer
@@ -462,8 +462,9 @@ def save_derive_procedure(request):
         ref_procedure_tracking_id = (
             ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
         )
-        if request.data["assigned_user_id"] != "":
-            assigned_user_id = request.data["assigned_user_id"]
+        assigned_user_id = request.data["assigned_user_id"]
+        print(assigned_user_id)
+        if assigned_user_id != None:
             ProcedureTracing.objects.create(
                 procedure_id=procedure_id,
                 from_area_id=from_area_id,
@@ -535,6 +536,20 @@ def approve_tracing(request):
 
         return Response(status=status.HTTP_200_OK)
 
+@api_view(["GET"])
+def get_areas(request):
+    if request.method == "GET":
+        areas = Area.objects.filter(is_active=True)
+        serializer = AreaSerializer(areas, many=True)
+        return Response(serializer.data)
+
+@api_view(["POST"])
+def get_user_for_area(request):
+    if request.method == "POST":
+        area_id = request.data["area_id"]
+        users= CargoArea.objects.filter(area_id=area_id)
+        serializer = CargoAreaPersonSerializer(users, many=True)
+        return Response(serializer.data)
 
 @api_view(["POST"])
 def finally_trace_procedure(request):
