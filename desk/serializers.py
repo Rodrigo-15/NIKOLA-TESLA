@@ -57,7 +57,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
     updated_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
 
     def get_user_name(self, obj):
-        person = Persona.objects.filter(id=obj.user_id).first()
+        person = Persona.objects.filter(user_id=obj.user_id).first()
         if person:
             return person.get_full_name()
         return None
