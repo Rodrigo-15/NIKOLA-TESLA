@@ -45,6 +45,7 @@ urls_dict = {
         "get_areas": f"{url}desk/get_areas",  # get
         "get_user_for_area": f"{url}desk/get_user_for_area",  # post
         "save_derive_procedure": f"{url}desk/save_derive_procedure",  # post
+        "finally_trace_procedure": f"{url}desk/finally_trace_procedure",  # post
     },
     "get_menu": f"{url}core/get_menu",
     "person": {
