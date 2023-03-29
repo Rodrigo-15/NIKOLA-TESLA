@@ -167,10 +167,18 @@ class ProcedureListSerializer(serializers.Serializer):
     reference_doc_number = serializers.CharField()
     subject = serializers.CharField()
     solicitante = serializers.SerializerMethodField(source="get_solicitante")
+    last_action = serializers.SerializerMethodField(source="get_last_action")
 
     def get_solicitante(self, obj):
         file = obj.file
         person = Persona.objects.filter(user_id=file.person.user_id).first()
         if person:
             return person.get_full_name()
+        return "No registrado"
+
+    def get_last_action(self, obj):
+        procedure_tracing = ProcedureTracing.objects.filter(
+            procedure_id=obj.id).order_by("-created_at").first()
+        if procedure_tracing:
+            return procedure_tracing.action
         return "No registrado"
