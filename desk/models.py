@@ -169,9 +169,12 @@ class ProcedureTracing(models.Model):
     def save(self, *args, **kwargs):
         if self.from_area and self.to_area:
             self.action_log = self.get_derivation_message(self)
-        if self.from_area and not self.to_area:
+        if self.from_area and not self.to_area and not self.is_finished:
             self.action_log = self.get_received_message(self)
             self.action = self.get_received_message(self)
+        if self.from_area and self.is_finished :
+            self.action_log = self.get_finished_message(self)
+            self.action = self.action
         if not self.ref_procedure_tracking:
             self.action_log = self.action = self.get_created_message(self)
 
@@ -195,6 +198,10 @@ class ProcedureTracing(models.Model):
     @staticmethod
     def get_received_message(self):
         return f"El documento fue recepcionado por {self.user} en el area {self.from_area} [{date_formatter(self.created_at)}]"
+
+    @staticmethod
+    def get_finished_message(self):
+        return f"El documento fue finalizado y entregado al tramitante  por el {self.user} en el area {self.from_area} [{date_formatter(self.created_at)}]"
 
     @staticmethod
     def get_tracing_by_procedure_id(procedure_id):
