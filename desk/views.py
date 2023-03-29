@@ -556,6 +556,21 @@ def finally_trace_procedure(request):
     if request.method == "POST":
         procedure_id = request.data["procedure_id"]
         user_id = request.data["user_id"]
+        from_area_id = (
+            CargoArea.objects.filter(persona__user_id=user_id).first().area_id
+        )
+        action = request.data["action"]
+        ref_procedure_tracking_id = (
+            ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
+        )
+        ProcedureTracing.objects.create(
+            procedure_id=procedure_id,
+            from_area_id=from_area_id,
+            user_id=user_id,
+            action=action,
+            ref_procedure_tracking_id=ref_procedure_tracking_id,
+            is_finished=True,
+        )
 
         return Response(status=status.HTTP_200_OK)
 
