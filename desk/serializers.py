@@ -55,6 +55,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField(source="get_user_name")
     created_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
     updated_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
+    state = serializers.SerializerMethodField(source="get_state")
 
     def get_user_name(self, obj):
         person = Persona.objects.filter(user_id=obj.user_id).first()
@@ -95,6 +96,13 @@ class ProcedureSerializer(serializers.ModelSerializer):
             return person.id
 
         return None
+    
+    def get_state(self, obj):
+        procedure_tracing = ProcedureTracing.objects.filter(
+             is_approved=False, procedure_id=obj.id ).exclude(to_area_id = None).first()
+        if procedure_tracing:
+            return True
+        return False
 
     class Meta:
         model = Procedure
@@ -168,6 +176,7 @@ class ProcedureListSerializer(serializers.Serializer):
     subject = serializers.CharField()
     solicitante = serializers.SerializerMethodField(source="get_solicitante")
     last_action = serializers.SerializerMethodField(source="get_last_action")
+    state = serializers.SerializerMethodField(source="get_state")
 
     def get_solicitante(self, obj):
         file = obj.file
@@ -182,3 +191,10 @@ class ProcedureListSerializer(serializers.Serializer):
         if procedure_tracing:
             return procedure_tracing.action
         return "No registrado"
+    
+    def get_state(self, obj):
+        procedure_tracing = ProcedureTracing.objects.filter(
+             is_approved=False, procedure_id=obj.id ).exclude(to_area_id = None).first()
+        if procedure_tracing:
+            return True
+        return False
