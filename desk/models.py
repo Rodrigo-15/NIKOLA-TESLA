@@ -201,7 +201,7 @@ class ProcedureTracing(models.Model):
 
     @staticmethod
     def get_finished_message(self):
-        return f"El documento fue finalizado y entregado al tramitante  por el {self.user} en el area {self.from_area} [{date_formatter(self.created_at)}]"
+        return f"El documento fue finalizado y entregado al tramitante  por el usuario {self.user} en el area {self.from_area} [{date_formatter(self.created_at)}]"
 
     @staticmethod
     def get_tracing_by_procedure_id(procedure_id):
