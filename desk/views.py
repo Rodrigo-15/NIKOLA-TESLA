@@ -135,7 +135,7 @@ def get_counters_procedure(date=None, code_number=None):
         procedures_finished = procedures_finished.filter(
             code_number__icontains=code_number
         )
-        
+
     serializer_started = ProcedureListSerializer(procedures_started, many=True)
     serializer_in_progress = ProcedureListSerializer(procedures_in_progress, many=True)
     serializer_finished = ProcedureListSerializer(procedures_finished, many=True)
@@ -154,7 +154,7 @@ def get_counters_procedure(date=None, code_number=None):
         counters["finished"][
             "label"
         ] = f"{counters['finished']['count']}/{counters['finished']['total']}"
-    elif len (code_number) > 5:
+    elif len(code_number) > 5:
         print("code_number" + code_number)
         counters["started"][
             "label"
@@ -166,15 +166,9 @@ def get_counters_procedure(date=None, code_number=None):
             "label"
         ] = f"{counters['finished']['count']}/{counters['finished']['total']}"
     else:
-        counters["started"][
-            "label"
-        ] = f"{counters['started']['total']}"
-        counters["in_progress"][
-            "label"
-        ] = f"{counters['in_progress']['total']}"
-        counters["finished"][
-            "label"
-        ] = f"{counters['finished']['total']}"
+        counters["started"]["label"] = f"{counters['started']['total']}"
+        counters["in_progress"]["label"] = f"{counters['in_progress']['total']}"
+        counters["finished"]["label"] = f"{counters['finished']['total']}"
 
     return counters
 
@@ -463,7 +457,16 @@ def save_derive_procedure(request):
             ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
         )
         assigned_user_id = request.data["assigned_user_id"]
-        print(assigned_user_id)
+        #to_area_id != none
+
+        procedure_tracing = ProcedureTracing.objects.filter(
+             is_approved=False, procedure_id=procedure_id
+        ).exclude(to_area_id = None).first()
+
+        if procedure_tracing:
+            return Response(status=status.HTTP_202_ACCEPTED,
+                            data={"message": "El tramite esta pendiente de aprobación por favor revise su bandeja de entrada"})
+
         if assigned_user_id != None:
             ProcedureTracing.objects.create(
                 procedure_id=procedure_id,
@@ -474,6 +477,9 @@ def save_derive_procedure(request):
                 assigned_user_id=assigned_user_id,
                 ref_procedure_tracking_id=ref_procedure_tracking_id,
             )
+
+            return Response(status=status.HTTP_200_OK)
+
         else:
             ProcedureTracing.objects.create(
                 procedure_id=procedure_id,
@@ -484,7 +490,7 @@ def save_derive_procedure(request):
                 ref_procedure_tracking_id=ref_procedure_tracking_id,
             )
 
-        return Response(status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
@@ -536,6 +542,7 @@ def approve_tracing(request):
 
         return Response(status=status.HTTP_200_OK)
 
+
 @api_view(["GET"])
 def get_areas(request):
     if request.method == "GET":
@@ -543,13 +550,15 @@ def get_areas(request):
         serializer = AreaSerializer(areas, many=True)
         return Response(serializer.data)
 
+
 @api_view(["POST"])
 def get_user_for_area(request):
     if request.method == "POST":
         area_id = request.data["area_id"]
-        users= CargoArea.objects.filter(area_id=area_id)
+        users = CargoArea.objects.filter(area_id=area_id)
         serializer = CargoAreaPersonSerializer(users, many=True)
         return Response(serializer.data)
+
 
 @api_view(["POST"])
 def finally_trace_procedure(request):
