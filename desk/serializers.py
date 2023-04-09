@@ -191,7 +191,7 @@ class ProcedureListSerializer(serializers.Serializer):
         if procedure_tracing:
             return procedure_tracing.action
         return "No registrado"
-    
+
     def get_state(self, obj):
         procedure_tracing = ProcedureTracing.objects.filter(
              is_approved=False, procedure_id=obj.id ).exclude(to_area_id = None).first()

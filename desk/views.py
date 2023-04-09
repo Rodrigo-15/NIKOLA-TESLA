@@ -119,11 +119,13 @@ def get_counters_procedure(date=None, code_number=None):
     counters["finished"]["total"] = len(get_finished_procedures())
 
     if date:
-        procedures_started = procedures_started.filter(created_at__icontains=date)
+        procedures_started = procedures_started.filter(
+            created_at__icontains=date)
         procedures_in_progress = procedures_in_progress.filter(
             created_at__icontains=date
         )
-        procedures_finished = procedures_finished.filter(created_at__icontains=date)
+        procedures_finished = procedures_finished.filter(
+            created_at__icontains=date)
 
     if code_number:
         procedures_started = procedures_started.filter(
@@ -137,8 +139,10 @@ def get_counters_procedure(date=None, code_number=None):
         )
 
     serializer_started = ProcedureListSerializer(procedures_started, many=True)
-    serializer_in_progress = ProcedureListSerializer(procedures_in_progress, many=True)
-    serializer_finished = ProcedureListSerializer(procedures_finished, many=True)
+    serializer_in_progress = ProcedureListSerializer(
+        procedures_in_progress, many=True)
+    serializer_finished = ProcedureListSerializer(
+        procedures_finished, many=True)
 
     counters["started"]["count"] = len(serializer_started.data)
     counters["in_progress"]["count"] = len(serializer_in_progress.data)
@@ -255,6 +259,10 @@ def get_in_progress_procedures():
         .annotate(count=Count("procedure_id"))
         .filter(count__gt=1)
         .values("procedure_id"),
+    ).exclude(
+        procedure_id__in=ProcedureTracing.objects.filter(
+            is_finished=True
+        ).values("procedure_id")
     )
     serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
 
@@ -284,7 +292,8 @@ def get_dashboard_procedures(request):
         procedure_in_progress_tracings = (
             ProcedureTracing.objects.filter(
                 is_finished=False,
-                procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+                procedure_id__in=ProcedureTracing.objects.values(
+                    "procedure_id")
                 .annotate(count=Count("procedure_id"))
                 .filter(count__gt=1)
                 .values("procedure_id"),
@@ -366,7 +375,8 @@ def save_procedure(request):
         )
 
         return Response(
-            status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
+            status=status.HTTP_200_OK, data={
+                "code_number": procedure.code_number}
         )
 
 
@@ -454,14 +464,15 @@ def save_derive_procedure(request):
         to_area_id = request.data["to_area_id"]
         action = request.data["action"]
         ref_procedure_tracking_id = (
-            ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
+            ProcedureTracing.objects.filter(
+                procedure_id=procedure_id).last().id
         )
         assigned_user_id = request.data["assigned_user_id"]
-        #to_area_id != none
+        # to_area_id != none
 
         procedure_tracing = ProcedureTracing.objects.filter(
-             is_approved=False, procedure_id=procedure_id
-        ).exclude(to_area_id = None).first()
+            is_approved=False, procedure_id=procedure_id
+        ).exclude(to_area_id=None).first()
 
         if procedure_tracing:
             return Response(status=status.HTTP_202_ACCEPTED,
@@ -497,7 +508,8 @@ def save_derive_procedure(request):
 def get_tracings_to_approved(request):
     if request.method == "POST":
         user_id = request.data["user_id"]
-        area_id = CargoArea.objects.filter(persona__user_id=user_id).first().area_id
+        area_id = CargoArea.objects.filter(
+            persona__user_id=user_id).first().area_id
         tracings_for_area = ProcedureTracing.objects.filter(
             to_area_id=area_id, is_approved=False, assigned_user_id=None
         ).order_by("-created_at")
@@ -522,15 +534,19 @@ def get_tracings_to_approved(request):
 def approve_tracing(request):
     if request.method == "POST":
         tracing_id = request.data["tracing_id"]
-        procedure_id = request.data["procedure_id"]
         user_id = request.data["user_id"]
+
+        procedure_id = ProcedureTracing.objects.filter(
+            id=tracing_id).first().procedure_id
+
         ProcedureTracing.objects.filter(id=tracing_id).update(is_approved=True)
 
         from_area_id = (
             CargoArea.objects.filter(persona__user_id=user_id).first().area_id
         )
         ref_procedure_tracking_id = (
-            ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
+            ProcedureTracing.objects.filter(
+                procedure_id=procedure_id).last().id
         )
 
         ProcedureTracing.objects.create(
@@ -570,7 +586,8 @@ def finally_trace_procedure(request):
         )
         action = request.data["action"]
         ref_procedure_tracking_id = (
-            ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
+            ProcedureTracing.objects.filter(
+                procedure_id=procedure_id).last().id
         )
         ProcedureTracing.objects.create(
             procedure_id=procedure_id,
