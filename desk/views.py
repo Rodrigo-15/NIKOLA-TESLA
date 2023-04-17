@@ -18,7 +18,7 @@ from core.models import Apps, Menu, Persona, Area
 from desk.serializers import ProcedureListSerializer, ProcedureSerializer
 from core.decorators import check_app_name, check_is_auth, check_credentials
 from core.models import Persona, CargoArea
-from desk.models import Procedure, ProcedureTracing
+from desk.models import Procedure, ProcedureTracing, Procedure_ProcReq
 from desk.serializers import (
     ProcedureSerializer,
     ProcedureTracingSerializer,
@@ -608,3 +608,11 @@ def get_procedure_by_id(request, procedure_id):
         procedure = Procedure.objects.filter(id=procedure_id).first()
         data = ProcedureSerializer(procedure).data
         return Response(data)
+    
+@api_view(["POST"])
+def get_procedures_request(request):
+    if request.method == "POST":
+        procedure_type_id = request.data["procedure_type_id"]
+        requeriments = Procedure_ProcReq.objects.filter( procedure_type_id=procedure_type_id, is_active=True)
+        return Response('hola'  )
+
