@@ -2,7 +2,8 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [     
-    path("reporte-economico-alumno-api/", reporte_economico_alumno_api, name="reporte-economico-alumno-api"),     
+    path("reporte-economico-alumno-api/", reporte_economico_alumno_api, name="reporte-economico-alumno-api"),
+    path("reporte_economico_expediente_api/", reporte_economico_expediente_api, name="reporte_economico_expediente_api"),      
     path("get_reporte_matricula_pdf/", get_reporte_matricula_pdf, name="get_reporte_matricula_pdf"),
     path("get-reporte-ingresos-api/", get_reporte_ingresos_api, name="get-reporte-ingresos-api"),
     path("get-reporte-programas-api/", get_reporte_programas_api, name="get-reporte-programas-api"),

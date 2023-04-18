@@ -13,7 +13,6 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     path("reportes/", include("reportes.urls")),
     path("core/", include("core.urls")),
-    path('mesa_partes/', include('mesa_partes.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -28,3 +28,4 @@ def get_etapa_active(request):
     etapa = Etapa.get_etapa_activo(programa_id,periodo_id,promocion)
     serializer = EtapaSerializer(etapa)
     return Response(serializer.data)
+

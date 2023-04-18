@@ -35,3 +35,7 @@ class Expediente(models.Model):
     @staticmethod
     def get_alumno_by_expediente_id(expediente_id):
         return Expediente.objects.filter(id=expediente_id).first()
+    
+    @staticmethod
+    def get_alumno_expedientes_by_id_persona(id):
+        return Expediente.objects.filter(persona__id=id,  is_active=True).order_by('-id')

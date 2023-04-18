@@ -14,8 +14,9 @@ from academicos.serializers import (CursoGrupoSerializer,
 from admision.models import Expediente
 from admision.serializers.expediente import (ExpedienteAlumnoSerializer,
                                              ExpedienteMatriculaSerializer,
-                                             ExpedientePersonaSerializer)
+                                             ExpedientePersonaSerializer, ExpedientesSerializer)
 from core.models import Periodo, Persona
+from core.serializers import PeridoExpedienteSerializer
 from economicos.models import Concepto, Pago
 
 # Create your views here.
@@ -26,10 +27,12 @@ def get_alumno(request):
     if request.method == 'GET':
         persona_id = request.GET.get('persona_id')
         alumno = Expediente.get_alumno_by_id_persona(persona_id)
+        expedientes = Expediente.get_alumno_expedientes_by_id_persona(persona_id)
         if not alumno:
             return Response({"message": "Alumno no encontrado"}, status=404)
-        serializer = ExpedienteAlumnoSerializer(alumno)
-        return Response(serializer.data)
+        serializer = ExpedientePersonaSerializer(alumno)
+        serializer_expedientes = ExpedientesSerializer(expedientes, many=True)
+        return Response({**serializer.data, "expedientes":serializer_expedientes.data})
 
 
 @api_view(["GET"])
@@ -204,13 +207,21 @@ def get_cursos_matriculados_by_expediente(request):
         expediente_id = request.GET.get('expediente_id')
         periodo_id = request.GET.get('periodo_id')
         cursos_matriculados = Matricula.get_matricula_by_expediente_periodo(
-            expediente_id, periodo_id)
+            expediente_id, periodo_id).order_by('curso_grupo__curso__codigo')
 
         data_final = []
 
         for matricula in cursos_matriculados:
             if matricula.is_publicado == True:
-                promedio_final = matricula.promedio_final
+                 if matricula.is_aplazado == True:
+                    if matricula.promedio_final_aplazado == None:
+                        promedio_final =""
+                    else:
+                        promedio_final ="{:.2f}".format(matricula.promedio_final_aplazado) 
+                 else:
+                    #promedio final tiene dos digitos decimales Y TRASNFORMARLO EN ESTE FORMATO 12.00
+                    promedio_final = "{:.2f}".format(matricula.promedio_final)
+                    
             else:
                 promedio_final = ""
             curso_grupo = CursoGrupo.objects.get(id=matricula.curso_grupo.id)
@@ -469,18 +480,47 @@ def get_progreso_academico_by_expediente_id(request):
     if request.method == 'GET':
         expediente_id = request.GET.get('expediente_id')
         cursos = Matricula.get_progreso_academico_by_expediente(
-            expediente_id).exclude(is_retirado=True)
+            expediente_id).exclude(is_retirado=True).order_by('curso_grupo__curso__codigo')
         data = []
 
         for matricula in cursos:
-            promedio_final = matricula.promedio_final
+            if matricula.is_aplazado == True:
+                if matricula.promedio_final_aplazado == None:
+                    promedio_final =""
+                else:
+                    promedio_final ="{:.2f}".format(matricula.promedio_final_aplazado)
+            else:
+                promedio_final = "{:.2f}".format(matricula.promedio_final)
+            
             curso_grupo = CursoGrupo.objects.get(id=matricula.curso_grupo.id)
             obj_curso = {
                 "id": curso_grupo.curso.id,
                 "codigo": curso_grupo.curso.codigo,
                 "nombre": curso_grupo.curso.nombre,
                 "creditos": curso_grupo.curso.creditos,
-                "periodo": curso_grupo.periodo.nombre
+                "periodo": curso_grupo.periodo.nombre,
+                "grupo": curso_grupo.grupo,
+                "docente": curso_grupo.docente.persona.get_full_name(),
+                "fecha_inicio": curso_grupo.fecha_inicio,
+                "fecha_termino": curso_grupo.fecha_termino,
+                "fecha_cierre_acta" : matricula.fecha_cierre_acta,
             }
             data.append({**obj_curso, "promedio_final": promedio_final})
         return Response(data)
+
+@api_view(['POST'])
+def get_periodos_by_expediente_id(request):
+    expediente_id = request.data.get('expediente_id')
+    periodos = Matricula.objects.filter( expediente__id=expediente_id).values('periodo__id','periodo__nombre', 'periodo__fecha_inicio','periodo__fecha_fin', 'periodo__is_active','periodo__is_active_matricula').distinct()
+    obj_periodos = []
+    for periodo in periodos:
+        obj_periodo = {
+            "id": periodo["periodo__id"],
+            "nombre": periodo["periodo__nombre"],
+            "fecha_inicio": periodo["periodo__fecha_inicio"],
+            "fecha_fin": periodo["periodo__fecha_fin"],
+            "is_active": periodo["periodo__is_active"],
+            "is_active_matricula": periodo["periodo__is_active_matricula"],
+        }
+        obj_periodos.append(obj_periodo)
+    return Response(obj_periodos)
