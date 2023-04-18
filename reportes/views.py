@@ -1045,7 +1045,6 @@ def reporte_academico_function(expediente_id):
                 }
             )
             promedio_graduado = (notas_total/creditos_total)
-            # promedio_graduado= (notas_total/creditos_total)
         else:
             promedios_x_ciclo.append(
                 {
