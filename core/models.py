@@ -46,7 +46,7 @@ class Persona(models.Model):
         return f"{self.apellido_paterno} {self.apellido_materno}"
 
     def __str__(self):
-        return f"{self.id}. {self.tipo_documento.nombre} {self.numero_documento} {self.nombres} {self.apellido_paterno} {self.apellido_materno} ({self.correo})"
+        return f"{self.numero_documento} {self.nombres} {self.apellido_paterno} {self.apellido_materno} ({self.correo})"
 
     @staticmethod
     def get_docente_by_id_persona(persona_id):

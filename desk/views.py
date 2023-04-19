@@ -32,6 +32,21 @@ from desk.serializers import (
 @api_view(["GET"])
 def get_procedures(request):
     if request.method == "GET":
+        user = request.user
+        persona = Persona.objects.filter(user=user).first()
+        if not persona:
+            return Response(
+                "User not found",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        cargo_area = CargoArea.objects.filter(persona=persona).first()
+        if not cargo_area:
+            return Response(
+                "CargoArea not found",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        area = cargo_area.area
+        #
         data = request.query_params
         STATES = ["started", "in_progress", "finished"]
         params = ["date", "code_number", "state"]
@@ -50,7 +65,7 @@ def get_procedures(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        counters = get_counters_procedure(date, code_number)
+        counters = get_counters_procedure(date, code_number, area)
 
         procedures = []
         if state == "started":
@@ -63,6 +78,7 @@ def get_procedures(request):
         procedures = Procedure.objects.filter(
             id__in=[procedure["procedure"] for procedure in procedures]
         )
+        procedures = get_filter_procedures_by_area(procedures, area)
 
         if date:
             procedures = procedures.filter(created_at__icontains=date)
@@ -77,7 +93,7 @@ def get_procedures(request):
         return Response({"procedures": serializer.data, "counters": counters})
 
 
-def get_counters_procedure(date=None, code_number=None):
+def get_counters_procedure(date=None, code_number=None, area=None):
     counters = {
         "started": {
             "label": "",
@@ -104,18 +120,21 @@ def get_counters_procedure(date=None, code_number=None):
     procedures_started = Procedure.objects.filter(
         id__in=[procedure["procedure"] for procedure in procedures_started]
     )
+    procedures_started = get_filter_procedures_by_area(procedures_started, area)
     counters["started"]["total"] = len(procedures_started)
 
     procedures_in_progress = get_in_progress_procedures()
     procedures_in_progress = Procedure.objects.filter(
         id__in=[procedure["procedure"] for procedure in procedures_in_progress]
     )
+    procedures_in_progress = get_filter_procedures_by_area(procedures_in_progress, area)
     counters["in_progress"]["total"] = len(procedures_in_progress)
 
     procedures_finished = get_finished_procedures()
     procedures_finished = Procedure.objects.filter(
         id__in=[procedure["procedure"] for procedure in procedures_finished]
     )
+    procedures_finished = get_filter_procedures_by_area(procedures_finished, area)
     counters["finished"]["total"] = len(get_finished_procedures())
 
     if date:
@@ -234,6 +253,16 @@ def login(request):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
+
+def get_filter_procedures_by_area(procedures, area):
+    procedures_trackings = ProcedureTracing.objects.filter(
+        Q(from_area=area) | Q(to_area=area)
+    )
+    procedure_ids_in_trackings = procedures_trackings.values_list(
+        "procedure", flat=True
+    )
+    procedures = procedures.filter(id__in=procedure_ids_in_trackings)
+    return procedures
 
 def get_started_procedures():
     """Get Procedures that have just one TracingProcedure and it is not finished"""
