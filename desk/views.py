@@ -18,11 +18,12 @@ from core.models import Apps, Menu, Persona, Area
 from desk.serializers import ProcedureListSerializer, ProcedureSerializer
 from core.decorators import check_app_name, check_is_auth, check_credentials
 from core.models import Persona, CargoArea
-from desk.models import Procedure, ProcedureTracing, Procedure_ProcReq
+from desk.models import Procedure, ProcedureTracing, Procedure_ProcReq, ProcedureRequirement
 from desk.serializers import (
     ProcedureSerializer,
     ProcedureTracingSerializer,
     ProcedureTracingsList,
+    ProcedureRequirementSerializer
 )
 
 # Create your views here.
@@ -610,9 +611,13 @@ def get_procedure_by_id(request, procedure_id):
         return Response(data)
     
 @api_view(["POST"])
-def get_procedures_request(request):
+def get_procedures_requeriments(request):
     if request.method == "POST":
         procedure_type_id = request.data["procedure_type_id"]
-        requeriments = Procedure_ProcReq.objects.filter( procedure_type_id=procedure_type_id, is_active=True)
-        return Response('hola'  )
+        requiriments = Procedure_ProcReq.objects.filter( procedure_type_id=procedure_type_id, is_active=True)
+        obj_requeriments = []
+        for r in requiriments:
+            requit = ProcedureRequirement.objects.filter(id=r.requirement_id).values('id','description')
+            obj_requeriments.append(requit[0])
+        return Response(obj_requeriments) 
 
