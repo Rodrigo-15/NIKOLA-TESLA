@@ -1,10 +1,10 @@
 {
-    "python.formatting.provider": "autopep8",
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
-    "python.linting.pylintArgs": [
-        "--disable=C0111",
-        "--load-plugins=pylint_django",
-        "--django-settings-module=backend.settings",
-    ],
+  "python.formatting.provider": "none",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.linting.pylintArgs": [
+    "--disable=C0111",
+    "--load-plugins=pylint_django",
+    "--django-settings-module=backend.settings"
+  ]
 }

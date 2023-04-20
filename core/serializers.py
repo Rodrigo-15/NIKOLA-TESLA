@@ -46,7 +46,6 @@ class PersonListSerializer(serializers.Serializer):
         def get_full_name(self, obj):
             if not obj: return ''
             return obj.get_full_name()
-        
 
 class CargoAreaPersonSerializer(serializers.Serializer):
     id = serializers.IntegerField(source="persona.id", read_only=True)
@@ -58,3 +57,21 @@ class CargoAreaPersonSerializer(serializers.Serializer):
     def get_full_name(self, obj):
         if not obj: return ''
         return obj.persona.get_full_name()
+
+
+class PersonaSerializerFilter(serializers.Serializer):
+    id = serializers.IntegerField()
+    nombres = serializers.CharField()
+    apellido_paterno = serializers.CharField()
+    apellido_materno = serializers.CharField()
+    numero_documento = serializers.CharField()
+    correo = serializers.CharField()
+    celular = serializers.CharField()
+
+class PeridoExpedienteSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    nombre = serializers.CharField()
+    fecha_inicio = serializers.DateField()
+    fecha_fin = serializers.DateField()
+    is_active = serializers.BooleanField()
+    is_active_matricula = serializers.BooleanField()
