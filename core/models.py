@@ -84,7 +84,11 @@ class Etapa(models.Model):
     programa = models.ForeignKey("academicos.Programa", on_delete=models.CASCADE)
     promocion = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
-
+    fecha_inicio = models.DateField( blank=True, null=True)
+    fecha_fin = models.DateField( blank=True, null=True)
+    fecha_extemporaneo_inicio = models.DateField( blank=True, null=True)
+    fecha_extemporaneo_fin = models.DateField( blank=True, null=True)
+    
     def __str__(self):
         return f"{self.descipcion} - Programa: {self.programa.nombre} - Periodo:{self.periodo.nombre}"
 
