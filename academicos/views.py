@@ -101,7 +101,7 @@ def get_cursos_by_programa_id(request):
         if tipo_programa == 1:
             matriculas = (
                 Matricula.objects.filter(
-                    Q(promedio_final__isnull=True) | Q(promedio_final__gte=14),
+                    Q(promedio_final__isnull=True) | Q(promedio_final__gte=14) | Q(promedio_final_aplazado__gte=14),
                     expediente_id=expediente_id,
                 )
                 .exclude(is_retirado=True)
@@ -111,7 +111,7 @@ def get_cursos_by_programa_id(request):
         elif tipo_programa == 2:
             matriculas = (
                 Matricula.objects.filter(
-                    Q(promedio_final__isnull=True) | Q(promedio_final__gte=15),
+                    Q(promedio_final__isnull=True) | Q(promedio_final__gte=15) | Q(promedio_final_aplazado__gte=15),
                     expediente_id=expediente_id,
                 )
                 .exclude(is_retirado=True)
@@ -137,7 +137,6 @@ def get_cursos_by_programa_id(request):
             .exclude(requisito_id__in=matriculas)
             .values("curso_id")
         )
-        print(requisitos)
         cursos = (
             Cursos.objects.filter(
                 plan_estudio__programa_id=programa_id, ciclo__lte=ciclo
