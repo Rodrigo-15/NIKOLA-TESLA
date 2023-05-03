@@ -1,4 +1,5 @@
 from rest_framework.permissions import IsAuthenticated
+from backend.settings import URL_LOCAL, URL_PROD
 from core.serializers import PersonSerializer, AreaSerializer, CargoAreaPersonSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -239,12 +240,18 @@ def login(request):
                 .values("headquarter_id", "headquarter__name")
                 .first()
             )
+            person_data = PersonSerializer(person).data
+            from backend.settings import DEBUG, URL_LOCAL, URL_PROD
+            url = URL_LOCAL if DEBUG else URL_PROD
+            path = person_data["foto"]
+            path = path.replace("/media", "media")
+            person_data["foto"] = url + path
             return Response(
                 {
                     "user": UserSerializer(user).data,
                     "groups": GroupSerializer(groups, many=True).data,
                     "token": token.key,
-                    "person": PersonSerializer(person).data,
+                    "person": person_data,
                     "headquarter": headquarter,
                 }
             )
