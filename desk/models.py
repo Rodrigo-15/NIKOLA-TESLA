@@ -129,8 +129,8 @@ class Procedure_ProcReq(models.Model):
 
 def date_formatter(date):
     if date is None:
-        return datetime.now().strftime("%d/%m/%Y %H:%M")
-    return date.strftime("%d/%m/%Y %H:%M")
+        return datetime.now().strftime("%d/%m/%Y %H:%M %p")
+    return date.strftime("%d/%m/%Y %H:%M %p")
 
 
 class ProcedureTracing(models.Model):
@@ -186,22 +186,34 @@ class ProcedureTracing(models.Model):
 
     @staticmethod
     def get_created_message(self):
-        return f"El Tramite fue creado por {self.user} en el area {self.from_area} [{date_formatter(self.created_at)}]"
+        person = Persona.objects.filter(user=self.user).first()
+        if not person:
+            return f"El Tramite fue creado por {self.user} en el area {self.from_area} el dia {date_formatter(self.created_at)}"
+        return f"El Tramite fue creado por {person.get_full_name()} en el area {self.from_area} el dia {date_formatter(self.created_at)}"
 
     @staticmethod
     def get_derivation_message(self):
         extra_message = (
             f" para el usuario {self.assigned_user}" if self.assigned_user else ""
         )
-        return f"El documento fue derivado desde {self.from_area} a {self.to_area} {extra_message} por {self.user} [{date_formatter(self.created_at)}]"
+        person = Persona.objects.filter(user=self.user).first()
+        if not person:
+            return f"El documento fue derivado desde {self.from_area} a {self.to_area} {extra_message} por {self.user} el dia {date_formatter(self.created_at)}"
+        return f"El documento fue derivado desde {self.from_area} a {self.to_area} {extra_message} por {person.get_full_name()} el dia {date_formatter(self.created_at)}"
 
     @staticmethod
     def get_received_message(self):
-        return f"El documento fue recepcionado por {self.user} en el area {self.from_area} [{date_formatter(self.created_at)}]"
+        person = Persona.objects.filter(user=self.user).first()
+        if not person:
+            return f"El documento fue recepcionado por {self.user} en el area {self.from_area} el dia {date_formatter(self.created_at)}"
+        return f"El documento fue recepcionado por {person.get_full_name()} en el area {self.from_area} el dia {date_formatter(self.created_at)}"
 
     @staticmethod
     def get_finished_message(self):
-        return f"El documento fue finalizado y entregado al tramitante  por el usuario {self.user} en el area {self.from_area} [{date_formatter(self.created_at)}]"
+        person = Persona.objects.filter(user=self.user).first()
+        if not person:
+            return f"El documento fue finalizado y entregado al tramitante  por el usuario {self.user} en el area {self.from_area} {date_formatter(self.created_at)}"
+        return f"El documento fue finalizado y entregado al tramitante  por el usuario {person.get_full_name()} en el area {self.from_area} {date_formatter(self.created_at)}"
 
     @staticmethod
     def get_tracing_by_procedure_id(procedure_id):
