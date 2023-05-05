@@ -244,8 +244,9 @@ def login(request):
             from backend.settings import DEBUG, URL_LOCAL, URL_PROD
             url = URL_LOCAL if DEBUG else URL_PROD
             path = person_data["foto"]
-            path = path.replace("/media", "media")
-            person_data["foto"] = url + path
+            if path:
+                path = path.replace("/media", "media")
+                person_data["foto"] = url + path
             return Response(
                 {
                     "user": UserSerializer(user).data,
