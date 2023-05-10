@@ -66,7 +66,6 @@ def get_procedures(request):
                 "Invalid state: " + str(STATES),
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
         counters = get_counters_procedure(date, code_number, area)
 
         procedures = []
@@ -137,7 +136,7 @@ def get_counters_procedure(date=None, code_number=None, area=None):
         id__in=[procedure["procedure"] for procedure in procedures_finished]
     )
     procedures_finished = get_filter_procedures_by_area(procedures_finished, area)
-    counters["finished"]["total"] = len(get_finished_procedures())
+    counters["finished"]["total"] = len(procedures_finished)
 
     if date:
         procedures_started = procedures_started.filter(
