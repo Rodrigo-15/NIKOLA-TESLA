@@ -66,7 +66,6 @@ def get_procedures(request):
                 "Invalid state: " + str(STATES),
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
         counters = get_counters_procedure(date, code_number, area)
 
         procedures = []
@@ -137,7 +136,7 @@ def get_counters_procedure(date=None, code_number=None, area=None):
         id__in=[procedure["procedure"] for procedure in procedures_finished]
     )
     procedures_finished = get_filter_procedures_by_area(procedures_finished, area)
-    counters["finished"]["total"] = len(get_finished_procedures())
+    counters["finished"]["total"] = len(procedures_finished)
 
     if date:
         procedures_started = procedures_started.filter(
@@ -179,8 +178,7 @@ def get_counters_procedure(date=None, code_number=None, area=None):
         counters["finished"][
             "label"
         ] = f"{counters['finished']['count']}/{counters['finished']['total']}"
-    elif len(code_number) > 5:
-        print("code_number" + code_number)
+    elif code_number and len(code_number) > 5:
         counters["started"][
             "label"
         ] = f"{counters['started']['count']}/{counters['started']['total']}"
@@ -321,34 +319,18 @@ def get_dashboard_procedures(request):
     """Get count of procedures"""
 
     if request.method == "GET":
-        procedure_started_tracings = ProcedureTracing.objects.filter(
-            procedure_id__in=ProcedureTracing.objects.values("procedure_id")
-            .annotate(count=Count("procedure_id"))
-            .filter(count=1)
-            .values("procedure_id")
-        ).count()
-        procedure_in_progress_tracings = (
-            ProcedureTracing.objects.filter(
-                is_finished=False,
-                procedure_id__in=ProcedureTracing.objects.values(
-                    "procedure_id")
-                .annotate(count=Count("procedure_id"))
-                .filter(count__gt=1)
-                .values("procedure_id"),
-            )
-            .distinct("procedure_id")
-            .count()
-        )
-        procedure_fished = (
-            ProcedureTracing.objects.filter(is_finished=True)
-            .distinct("procedure_id")
-            .count()
-        )
+        counters = get_counters_procedure()
+
+        procedures_started = counters.get("started").get("count")
+        procedures_in_progress = counters.get("in_progress").get("count")
+        procedures_finished = counters.get("finished").get("count")
+
+
         return Response(
             {
-                "started": procedure_started_tracings,
-                "in_progress": procedure_in_progress_tracings,
-                "finished": procedure_fished,
+                "started": procedures_started,
+                "in_progress": procedures_in_progress,
+                "finished": procedures_finished,
             }
         )
 

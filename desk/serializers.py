@@ -189,7 +189,7 @@ class ProcedureListSerializer(serializers.Serializer):
         procedure_tracing = ProcedureTracing.objects.filter(
             procedure_id=obj.id).order_by("-created_at").first()
         if procedure_tracing:
-            return procedure_tracing.action
+            return procedure_tracing.action_log
         return "No registrado"
 
     def get_state(self, obj):
