@@ -17,7 +17,7 @@ from desk.views import (
     get_areas,
     get_user_for_area,
     finally_trace_procedure,
-    get_procedures_requeriments
+    get_procedures_requirements
 )
 
 urlpatterns = [
@@ -37,5 +37,5 @@ urlpatterns = [
     path("get_areas", get_areas, name="get_areas"),
     path("get_user_for_area", get_user_for_area, name="get_user_for_area"),
     path("finally_trace_procedure", finally_trace_procedure, name="finally_trace_procedure"),
-    path("get_procedures_requeriments", get_procedures_requeriments, name="get_procedures_requeriments"),
+    path("get_procedures_requirements", get_procedures_requirements, name="get_procedures_requirements"),
 ]

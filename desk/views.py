@@ -221,7 +221,7 @@ def login(request):
 
             app = Apps.objects.filter(name=app_name).first()
             menu = Menu.objects.filter(app=app).first()
-
+            
             is_group_valid_app = False
             for group in groups:
                 if group in menu.groups.all():
@@ -244,8 +244,9 @@ def login(request):
             from backend.settings import DEBUG, URL_LOCAL, URL_PROD
             url = URL_LOCAL if DEBUG else URL_PROD
             path = person_data["foto"]
-            path = path.replace("/media", "media")
-            person_data["foto"] = url + path
+            if path:
+                path = path.replace("/media", "media")
+                person_data["foto"] = url + path
             return Response(
                 {
                     "user": UserSerializer(user).data,
@@ -647,13 +648,13 @@ def get_procedure_by_id(request, procedure_id):
         return Response(data)
     
 @api_view(["POST"])
-def get_procedures_requeriments(request):
+def get_procedures_requirements(request):
     if request.method == "POST":
         procedure_type_id = request.data["procedure_type_id"]
-        requiriments = Procedure_ProcReq.objects.filter( procedure_type_id=procedure_type_id, is_active=True)
-        obj_requeriments = []
-        for r in requiriments:
-            requit = ProcedureRequirement.objects.filter(id=r.requirement_id).values('id','description')
-            obj_requeriments.append(requit[0])
-        return Response(obj_requeriments) 
+        requirements = Procedure_ProcReq.objects.filter( procedure_type_id=procedure_type_id, is_active=True)
+        obj_requirements = []
+        for r in requirements:
+            requirement = ProcedureRequirement.objects.filter(id=r.requirement_id).values('id','description')
+            obj_requirements.append(requirement[0])
+        return Response(obj_requirements) 
 
