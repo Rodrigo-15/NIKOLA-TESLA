@@ -80,6 +80,7 @@ class Procedure(models.Model):
     headquarter = models.ForeignKey(Headquarter, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
     updated_at = models.DateTimeField(auto_now_add=False, auto_now=True)
+    number_of_sheets = models.IntegerField(default=0)
 
     class Meta:
         verbose_name = "procedure"

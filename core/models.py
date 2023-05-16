@@ -38,6 +38,7 @@ class Persona(models.Model):
     )
     foto = models.ImageField(upload_to="fotos", null=True, blank=True)
     celular = models.CharField(max_length=20, null=True, blank=True)
+    full_name = models.CharField(max_length=100, null=True, blank=True)
 
     def get_full_name(self):
         return f"{self.nombres} {self.apellido_paterno} {self.apellido_materno}"

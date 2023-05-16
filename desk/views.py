@@ -373,6 +373,11 @@ def save_procedure(request):
         headquarter_id = headquarter["headquarter_id"]
         if not headquarter:
             headquarter_id = 1
+
+        number_of_sheets = request.data["number_of_sheets"]
+        if not number_of_sheets:
+            number_of_sheets = 0
+
         area_user = CargoArea.objects.filter(persona__user_id=user_id).first()
         file = File.objects.filter(person_id=person_id).first()
 
@@ -386,6 +391,7 @@ def save_procedure(request):
             reference_doc_number=reference_doc_number,
             headquarter_id=headquarter_id,
             user_id=user_id,
+            number_of_sheets=number_of_sheets,
         )
 
         ProcedureTracing.objects.create(
@@ -408,6 +414,7 @@ def update_procedure(request):
             subject = request.data["subject"]
             description = request.data["description"]
             reference_doc_number = request.data["reference_doc_number"]
+            number_of_sheets = request.data["number_of_sheets"]
         except KeyError:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
@@ -418,6 +425,7 @@ def update_procedure(request):
                         "subject",
                         "description",
                         "reference_doc_number",
+                        "number_of_sheets",
                     ],
                 },
             )
@@ -435,6 +443,7 @@ def update_procedure(request):
         procedure.subject = subject
         procedure.description = description
         procedure.reference_doc_number = reference_doc_number
+        procedure.number_of_sheets = number_of_sheets
         procedure.save()
 
         data = ProcedureSerializer(procedure).data
@@ -488,7 +497,8 @@ def save_derive_procedure(request):
                 procedure_id=procedure_id).last().id
         )
         assigned_user_id = request.data["assigned_user_id"]
-        # to_area_id != none
+        if assigned_user_id == 0:
+            assigned_user_id = None
 
         procedure_tracing = ProcedureTracing.objects.filter(
             is_approved=False, procedure_id=procedure_id
