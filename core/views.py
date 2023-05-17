@@ -63,16 +63,16 @@ def get_person_list(request):
         query = request.data.get("query")
         if query.isdigit():
             persons = Persona.objects.filter(numero_documento__icontains=query)[:10]
-        else:
-            persons = Persona.objects.filter(
-                reduce(
-                    lambda x, y: x | y,
-                    [Q(nombres__icontains=word) for word in query.split(" ")]
-                ) | reduce(
-                    lambda x, y: x | y,
-                    [Q(apellido_paterno__icontains=word) for word in query.split(" ")]
-                )
-            )[:10]
+        # else:
+        #     persons = Persona.objects.filter(
+        #         reduce(
+        #             lambda x, y: x | y,
+        #             [Q(nombres__icontains=word) for word in query.split(" ")]
+        #         ) | reduce(
+        #             lambda x, y: x | y,
+        #             [Q(apellido_paterno__icontains=word) for word in query.split(" ")]
+        #         )
+        #     )[:10]
 
         if not persons:
             return Response([])
