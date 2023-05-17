@@ -61,6 +61,7 @@ def paths(request):
 def get_person_list(request):
     if request.method == "POST":
         query = request.data.get("query")
+        persons = []
         if query.isdigit():
             persons = Persona.objects.filter(numero_documento__icontains=query)[:10]
         # else:
@@ -74,7 +75,7 @@ def get_person_list(request):
         #         )
         #     )[:10]
 
-        if not persons:
+        if len(persons) <= 0:
             return Response([])
 
         serializer = PersonListSerializer(persons, many=True)
