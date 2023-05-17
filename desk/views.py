@@ -219,7 +219,7 @@ def login(request):
 
             app = Apps.objects.filter(name=app_name).first()
             menu = Menu.objects.filter(app=app).first()
-            
+
             is_group_valid_app = False
             for group in groups:
                 if group in menu.groups.all():
@@ -487,6 +487,8 @@ def save_derive_procedure(request):
     if request.method == "POST":
         procedure_id = request.data["procedure_id"]
         user_id = request.data["user_id"]
+        number_of_sheets = request.data["number_of_sheets"] if "number_of_sheets" in request.data else 0
+
         from_area_id = (
             CargoArea.objects.filter(persona__user_id=user_id).first().area_id
         )
@@ -507,6 +509,10 @@ def save_derive_procedure(request):
         if procedure_tracing:
             return Response(status=status.HTTP_202_ACCEPTED,
                             data={"message": "El tramite esta pendiente de aprobación por favor revise su bandeja de entrada"})
+
+        procedure = Procedure.objects.filter(id=procedure_id).first()
+        procedure.number_of_sheets = number_of_sheets
+        procedure.save()
 
         if assigned_user_id != None:
             ProcedureTracing.objects.create(
@@ -638,7 +644,7 @@ def get_procedure_by_id(request, procedure_id):
         procedure = Procedure.objects.filter(id=procedure_id).first()
         data = ProcedureSerializer(procedure).data
         return Response(data)
-    
+
 @api_view(["POST"])
 def get_procedures_requirements(request):
     if request.method == "POST":
@@ -650,3 +656,31 @@ def get_procedures_requirements(request):
             obj_requirements.append(requirement[0])
         return Response(obj_requirements) 
 
+@api_view(["GET"])
+@check_is_auth()
+def get_user_profile(request):
+    if request.method == "GET":
+        user_id = request.user.id
+        user = User.objects.filter(id=user_id).first()
+        groups = user.groups.all()
+        person = Persona.objects.get(user_id=user.id)
+        headquarter = (
+            CargoArea.objects.filter(persona_id=person.id)
+            .values("headquarter_id", "headquarter__name")
+            .first()
+        )
+        person_data = PersonSerializer(person).data
+        from backend.settings import DEBUG, URL_LOCAL, URL_PROD
+        url = URL_LOCAL if DEBUG else URL_PROD
+        path = person_data["foto"]
+        if path:
+            path = path.replace("/media", "media")
+            person_data["foto"] = url + path
+        return Response(
+            {
+                "user": UserSerializer(user).data,
+                "groups": GroupSerializer(groups, many=True).data,
+                "person": person_data,
+                "headquarter": headquarter,
+            }
+        )

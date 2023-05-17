@@ -49,6 +49,7 @@ urls_dict = {
         "get_procedures_requirements": f"{url}desk/get_procedures_requirements", # post
         # post
         "finally_trace_procedure": f"{url}desk/finally_trace_procedure",
+        "get_user_profile": f"{url}desk/get_user_profile",  # get
     },
     "get_menu": f"{url}core/get_menu",
     "person": {
