@@ -79,3 +79,22 @@ def get_person_list(request):
 
         serializer = PersonListSerializer(persons, many=True)
     return Response(serializer.data)
+
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import permission_classes
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def change_profile_image(request):
+    if request.method == "POST":
+        user_id = request.user.id
+        user = User.objects.get(id=user_id)
+        person = Persona.objects.get(user=user)
+        foto = request.FILES.get("foto")
+        if not foto:
+            return Response({"message": "No se ha enviado ninguna imagen"}, status=400)
+        person.foto = foto
+        person.save()
+        return Response({"message": "Imagen de perfil actualizada"}, status=200)

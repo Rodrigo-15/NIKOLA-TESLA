@@ -57,5 +57,6 @@ urls_dict = {
         "get": f"{url}core/persona/id/",  # get
         "create": f"{url}core/persona/",  # post
         "update": f"{url}core/persona/id/",  # put
+        "change_profile_image": f"{url}core/change_profile_image",
     },
 }

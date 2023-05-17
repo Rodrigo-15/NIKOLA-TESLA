@@ -11,5 +11,5 @@ urlpatterns = [
     path("get_menu", get_menu, name="get_menu"),
     path("paths", paths, name="paths"),
     path("get_person_list", get_person_list, name="get_person_list"),
-
+    path("change_profile_image", change_profile_image, name="change_profile_image"),
 ]
