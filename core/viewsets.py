@@ -8,6 +8,7 @@ from rest_framework.response import Response
 class PersonaViewSet(ModelViewSet):
     queryset = Persona.objects.all()
     serializer_class = PersonSerializer
+
 class AreaViewSet(ModelViewSet):
     queryset = Area.objects.all()
     serializer_class = AreaSerializer
