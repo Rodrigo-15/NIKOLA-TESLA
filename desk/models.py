@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from django.db import models
 
-from core.models import Area, Persona
+from core.models import Area, BaseModel, Persona
 
 # Create your models here.
 
@@ -27,7 +27,6 @@ class File(models.Model):
     class Meta:
         verbose_name = "file"
         verbose_name_plural = "files"
-
 
     @staticmethod
     def get_last_file_id():
@@ -75,7 +74,6 @@ class Procedure(models.Model):
     )
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
     reference_doc_number = models.CharField(max_length=20, null=True, blank=True)
-    # user who registered the procedure
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     headquarter = models.ForeignKey(Headquarter, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
@@ -173,7 +171,7 @@ class ProcedureTracing(models.Model):
         if self.from_area and not self.to_area and not self.is_finished:
             self.action_log = self.get_received_message(self)
             self.action = self.get_received_message(self)
-        if self.from_area and self.is_finished :
+        if self.from_area and self.is_finished:
             self.action_log = self.get_finished_message(self)
             self.action = self.action
         if not self.ref_procedure_tracking:

@@ -1,4 +1,8 @@
-from desk.serializers import ProcedureSerializer
+from desk.serializers import (
+    ProcedureSerializer,
+    ProcedureTracingSerializer,
+    ProcedureTracingsList,
+)
 from .deskpart import get_process_tracking_sheet
 from weasyprint import HTML
 from django.template.loader import render_to_string
@@ -10,7 +14,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from academicos.models import CursoGrupo, Cursos, PlanEstudio
 import datetime
-from desk.models import Procedure
+from desk.models import Procedure, ProcedureTracing
 from xlsxwriter.workbook import Workbook
 from io import BytesIO
 from rest_framework.decorators import api_view
@@ -19,7 +23,10 @@ from django.template.defaulttags import register
 from django.shortcuts import render
 from academicos.models import Matricula, Programa
 from admision.models import Expediente
-from admision.serializers.expediente import ExpedienteReportSerializer, ExpedienteSerializer
+from admision.serializers.expediente import (
+    ExpedienteReportSerializer,
+    ExpedienteSerializer,
+)
 from core.models import Periodo, Persona, CargoArea
 from economicos.models import Concepto, Pago
 from django.db.models import Sum, Max, Min
@@ -29,7 +36,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 
 def DefaultTemplate(request):
-    return render(request, 'index.html')
+    return render(request, "index.html")
 
 
 @register.filter
@@ -48,19 +55,20 @@ def reporte_matricula_alumno(request):
     periodo_id = 1
     #
     expediente = reporte_matricula_alumno_function(expediente_id, periodo_id)
-    return render(request, 'reports/reporte-matricula.html', expediente)
+    return render(request, "reports/reporte-matricula.html", expediente)
 
 
 def reporte_economico_alumno(request):
-    expediente = Expediente.objects.filter(
-        persona__numero_documento='73134712').first()
+    expediente = Expediente.objects.filter(persona__numero_documento="73134712").first()
     # COSTO TOTAL PENSION
     if not expediente:
         return Response(
             {
-                'error': 'No se encontró el expediente para el alumno con número de documento {}'.format(numero_documento)
+                "error": "No se encontró el expediente para el alumno con número de documento {}".format(
+                    numero_documento
+                )
             },
-            status=status.HTTP_404_NOT_FOUND
+            status=status.HTTP_404_NOT_FOUND,
         )
     costo = expediente.programa.costo
     cuotas = expediente.programa.cuotas
@@ -69,7 +77,8 @@ def reporte_economico_alumno(request):
     # COSTO TOTAL MATRICULA
     cantidad_matriculas = expediente.programa.tipo.cantidad_matriculas
     concepto = Concepto.objects.filter(
-        codigo='531', nombre="MATRICULA MAESTRIA Y DOCTORADOS").first()
+        codigo="531", nombre="MATRICULA MAESTRIA Y DOCTORADOS"
+    ).first()
     precio_matricula = 0
 
     if concepto:
@@ -85,22 +94,21 @@ def reporte_economico_alumno(request):
     pagos = Pago.get_pagos_by_expediente(expediente)
     pagos_programa = pagos.filter(concepto__programa=expediente.programa)
     cantidad_pagos_programa = pagos_programa.count()
-    suma_pagos_programa = pagos_programa.aggregate(Sum('monto'))[
-        "monto__sum"] or 0
+    suma_pagos_programa = pagos_programa.aggregate(Sum("monto"))["monto__sum"] or 0
     # PAGOS DE MATRICULA
     pagos_matricula = pagos.filter(concepto__id=concepto_matricula_id)
     cantidad_pagos_matricula = pagos_matricula.count()
-    suma_pagos_matricula = pagos_matricula.aggregate(Sum('monto'))[
-        "monto__sum"] or 0
+    suma_pagos_matricula = pagos_matricula.aggregate(Sum("monto"))["monto__sum"] or 0
     # PAGOS DE OTROS CONCEPTOS
     pagos_otros = pagos.exclude(concepto__id=concepto_matricula_id).exclude(
-        concepto__programa=expediente.programa)
-    suma_pagos_otros = pagos_otros.aggregate(Sum('monto'))[
-        "monto__sum"] or 0
+        concepto__programa=expediente.programa
+    )
+    suma_pagos_otros = pagos_otros.aggregate(Sum("monto"))["monto__sum"] or 0
     # PAGOS TOTAL
     pagos_totales = suma_pagos_programa + suma_pagos_matricula + suma_pagos_otros
     # FECHA DE REPORTE
     from datetime import datetime
+
     date_now = datetime.now()
     fecha_reporte = date_now.strftime("%d/%m/%Y")
     hora_reporte = date_now.strftime("%H:%M %p")
@@ -118,14 +126,14 @@ def reporte_economico_alumno(request):
         pagos_programa_list.append(
             {
                 "anio_operacion": pago.fecha_operacion.year,
-                'fecha_operacion': pago.fecha_operacion.strftime("%d/%m/%Y"),
+                "fecha_operacion": pago.fecha_operacion.strftime("%d/%m/%Y"),
                 "numero_conciliacion": pago.numero_conciliacion,
                 "numero_operacion": pago.numero_operacion,
                 "nro_cuota": str(nro_cuota).zfill(2),
                 "concepto": pago.concepto.nombre,
-                "monto_cuota": str(pago.concepto.precio).replace(',', '.'),
-                "monto_pagado": str(monto_pagado).replace(',', '.'),
-                "saldo": str(saldo).replace(',', '.'),
+                "monto_cuota": str(pago.concepto.precio).replace(",", "."),
+                "monto_pagado": str(monto_pagado).replace(",", "."),
+                "saldo": str(saldo).replace(",", "."),
             }
         )
         pago_anterior = monto_pagado
@@ -143,14 +151,14 @@ def reporte_economico_alumno(request):
         pagos_matricula_list.append(
             {
                 "anio_operacion": pago.fecha_operacion.year,
-                'fecha_operacion': pago.fecha_operacion.strftime("%d/%m/%Y"),
+                "fecha_operacion": pago.fecha_operacion.strftime("%d/%m/%Y"),
                 "numero_conciliacion": pago.numero_conciliacion,
                 "numero_operacion": pago.numero_operacion,
                 "nro_cuota": str(nro_cuota).zfill(2),
                 "concepto": pago.concepto.nombre,
-                "monto_cuota": str(pago.concepto.precio).replace(',', '.'),
-                "monto_pagado": str(monto_pagado).replace(',', '.'),
-                "saldo": str(saldo).replace(',', '.'),
+                "monto_cuota": str(pago.concepto.precio).replace(",", "."),
+                "monto_pagado": str(monto_pagado).replace(",", "."),
+                "saldo": str(saldo).replace(",", "."),
             }
         )
         pago_anterior = monto_pagado
@@ -163,93 +171,107 @@ def reporte_economico_alumno(request):
         pagos_otros_list.append(
             {
                 "anio_operacion": pago.fecha_operacion.year,
-                'fecha_operacion': pago.fecha_operacion.strftime("%d/%m/%Y"),
+                "fecha_operacion": pago.fecha_operacion.strftime("%d/%m/%Y"),
                 "numero_conciliacion": pago.numero_conciliacion,
                 "numero_operacion": pago.numero_operacion,
                 "concepto": pago.concepto.nombre,
-                "monto_cuota": str(pago.concepto.precio).replace(',', '.'),
+                "monto_cuota": str(pago.concepto.precio).replace(",", "."),
             }
         )
         total_pago_otros_lista += pago.monto
 
-    return render(request, 'reports/reporte-economico.html',
-                  {
-                      'expediente': expediente,
-                      'costo_total_pension': str(costo_total_pension).replace(',', '.'),
-                      "cuotas": cuotas,
-                      'pension': str(costo).replace(',', '.'),
-                      "cantidad_matriculas": cantidad_matriculas,
-                      'costo_total_matricula': str(costo_total_matricula).replace(',', '.'),
-                      "precio_matricula": str(precio_matricula).replace(',', '.'),
-                      "costo_total_total": str(costo_total_total).replace(',', '.'),
-                      "cantidad_pagos_programa": cantidad_pagos_programa,
-                      "suma_pagos_programa": str(suma_pagos_programa).replace(',', '.'),
-                      "cantidad_pagos_matricula": cantidad_pagos_matricula,
-                      "suma_pagos_matricula": str(suma_pagos_matricula).replace(',', '.'),
-                      "total_otros": str(total_pago_otros_lista).replace(',', '.'),
-                      "pagos_totales": str(pagos_totales).replace(',', '.'),
-                      "fecha_reporte": fecha_reporte,
-                      "hora_reporte": hora_reporte,
-                      "pagos_programa": pagos_programa_list,
-                      "pagos_matricula": pagos_matricula_list,
-                      "pagos_otros": pagos_otros_list,
-                      "total_debe_pension": str(costo_total_pension - total_pago_pension_lista).replace(',', '.'),
-                      "total_debe_matricula": str(costo_total_matricula - total_pago_matricula_lista).replace(',', '.'),
-                  })
+    return render(
+        request,
+        "reports/reporte-economico.html",
+        {
+            "expediente": expediente,
+            "costo_total_pension": str(costo_total_pension).replace(",", "."),
+            "cuotas": cuotas,
+            "pension": str(costo).replace(",", "."),
+            "cantidad_matriculas": cantidad_matriculas,
+            "costo_total_matricula": str(costo_total_matricula).replace(",", "."),
+            "precio_matricula": str(precio_matricula).replace(",", "."),
+            "costo_total_total": str(costo_total_total).replace(",", "."),
+            "cantidad_pagos_programa": cantidad_pagos_programa,
+            "suma_pagos_programa": str(suma_pagos_programa).replace(",", "."),
+            "cantidad_pagos_matricula": cantidad_pagos_matricula,
+            "suma_pagos_matricula": str(suma_pagos_matricula).replace(",", "."),
+            "total_otros": str(total_pago_otros_lista).replace(",", "."),
+            "pagos_totales": str(pagos_totales).replace(",", "."),
+            "fecha_reporte": fecha_reporte,
+            "hora_reporte": hora_reporte,
+            "pagos_programa": pagos_programa_list,
+            "pagos_matricula": pagos_matricula_list,
+            "pagos_otros": pagos_otros_list,
+            "total_debe_pension": str(
+                costo_total_pension - total_pago_pension_lista
+            ).replace(",", "."),
+            "total_debe_matricula": str(
+                costo_total_matricula - total_pago_matricula_lista
+            ).replace(",", "."),
+        },
+    )
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 def get_reporte_programas_api(request):
     # Type,Date = request.GET.get('dataFetch').split(':')
-    Type = 'Y'
-    Date = '2022'
+    Type = "Y"
+    Date = "2022"
     # expediente = reporte_matricula_alumno_function(expediente_id, periodo_id)
     data = Pago.objects.filter(id=20)
     output = BytesIO()
-    workbook = Workbook(output, {'in_memory': True})
+    workbook = Workbook(output, {"in_memory": True})
     worksheet = workbook.add_worksheet()
-    formatFecha = workbook.add_format({'num_format': 'dd/mm/yyyy'})
-    formatMoney = workbook.add_format({'num_format': '#,##0'})
+    formatFecha = workbook.add_format({"num_format": "dd/mm/yyyy"})
+    formatMoney = workbook.add_format({"num_format": "#,##0"})
     worksheet.set_column(2, 2, cell_format=formatFecha)
     worksheet.set_column(3, 3, cell_format=formatMoney)
     # worksheet.write(fila, columna, 'Some Data')
-    header = ('Nombre Completo', 'DNI', 'Fecha de Pago', 'Monto',
-              'Concepto', 'Número de conciliación', 'Programa')
+    header = (
+        "Nombre Completo",
+        "DNI",
+        "Fecha de Pago",
+        "Monto",
+        "Concepto",
+        "Número de conciliación",
+        "Programa",
+    )
     worksheet.write_row(0, 0, header)
 
-    if Type == 'Y':
+    if Type == "Y":
         getYear = Date
         Pagos = Pago.get_pagos_by_anio(anio=getYear).values_list(
-            'nombre_cliente',
-            'numero_documento',
-            'fecha_operacion',
-            'monto',
-            'concepto__codigo',
-            'numero_conciliacion',
-            'concepto__programa__nombre'
+            "nombre_cliente",
+            "numero_documento",
+            "fecha_operacion",
+            "monto",
+            "concepto__codigo",
+            "numero_conciliacion",
+            "concepto__programa__nombre",
         )
 
-    if Type == 'M':
-        getYear, getMonth = Date.split('-')
+    if Type == "M":
+        getYear, getMonth = Date.split("-")
         Pagos = Pago.get_pagos_by_anio_and_mes(anio=getYear, mes=getMonth).values_list(
-            'nombre_cliente',
-            'numero_documento',
-            'fecha_operacion',
-            'monto',
-            'concepto__codigo',
-            'numero_conciliacion',
-            'concepto__programa__nombre'
+            "nombre_cliente",
+            "numero_documento",
+            "fecha_operacion",
+            "monto",
+            "concepto__codigo",
+            "numero_conciliacion",
+            "concepto__programa__nombre",
         )
 
-    if Type == 'D':
+    if Type == "D":
         Pagos = Pago.get_pagos_del_dia(dia=Date).values_list(
-            'nombre_cliente',
-            'numero_documento',
-            'fecha_operacion',
-            'monto',
-            'concepto__codigo',
-            'numero_conciliacion',
-            'concepto__programa__nombre'
+            "nombre_cliente",
+            "numero_documento",
+            "fecha_operacion",
+            "monto",
+            "concepto__codigo",
+            "numero_conciliacion",
+            "concepto__programa__nombre",
         )
     rowDefiner = 1
     for pag in Pagos:
@@ -257,30 +279,37 @@ def get_reporte_programas_api(request):
         rowDefiner += 1
     workbook.close()
     output.seek(0)
-    response = HttpResponse(output.read(
-    ), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment;filename="reporte-programa-{}.xlsx"'.format(
-        Date)
+    response = HttpResponse(
+        output.read(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response[
+        "Content-Disposition"
+    ] = 'attachment;filename="reporte-programa-{}.xlsx"'.format(Date)
     return response
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 def get_reporte_programas_excel(request):
     # Type,Date = request.GET.get('dataFetch').split(':')
-    programa_id = request.GET.get('programa_id')
-    promocion = request.GET.get('promocion')
-    anio = request.GET.get('anio')
-    mes = request.GET.get('mes')
-    dia = request.GET.get('dia')
+    programa_id = request.GET.get("programa_id")
+    promocion = request.GET.get("promocion")
+    anio = request.GET.get("anio")
+    mes = request.GET.get("mes")
+    dia = request.GET.get("dia")
     # path
 
     milisecond = str(int(round(time.time() * 1000)))
     media_root = settings.MEDIA_ROOT
-    excel_folder = os.path.join(media_root, 'economicos')
+    excel_folder = os.path.join(media_root, "economicos")
     if not os.path.exists(excel_folder):
         os.makedirs(excel_folder)
     excel_file_name = os.path.join(
-        excel_folder, 'reporte-programa-{}-{}-{}-{}-{}.xlsx'.format(programa_id, anio, mes, dia, milisecond))
+        excel_folder,
+        "reporte-programa-{}-{}-{}-{}-{}.xlsx".format(
+            programa_id, anio, mes, dia, milisecond
+        ),
+    )
     if os.path.exists(excel_file_name):
         os.remove(excel_file_name)
 
@@ -291,12 +320,20 @@ def get_reporte_programas_excel(request):
     # formatMoney=workbook.add_format({'num_format': '#,##0'})
     # worksheet.set_column(2,2,cell_format=formatFecha)
     # worksheet.set_column(3,3,cell_format=formatMoney)
-    header = ('Nombre Completo', 'DNI', 'N° Operacion', 'N° conciliación',
-              'Fecha de Pago', 'Monto', 'Concepto', 'Programa', 'Promocion')
+    header = (
+        "Nombre Completo",
+        "DNI",
+        "N° Operacion",
+        "N° conciliación",
+        "Fecha de Pago",
+        "Monto",
+        "Concepto",
+        "Programa",
+        "Promocion",
+    )
     worksheet.write_row(0, 0, header)
 
-    Pagos_data = reporte_programa_function(
-        programa_id, promocion, anio, mes, dia)
+    Pagos_data = reporte_programa_function(programa_id, promocion, anio, mes, dia)
 
     rowDefiner = 1
     monto_total = 0
@@ -305,107 +342,142 @@ def get_reporte_programas_excel(request):
         rowDefiner += 1
         monto_total = monto_total + float(pag[5])
 
-    merge_format = workbook.add_format({
-        'bold': 1,
-        'border': 1,
-        'align': 'center',
-        'valign': 'vcenter',
-        'fg_color': 'yellow',
-        'num_format': '#,##0'})
-    linea = rowDefiner+1
-    worksheet.merge_range('A{}:E{}'.format(linea, linea),
-                          ' MONTO TOTAL', merge_format)
-    worksheet.merge_range('F{}:I{}'.format(linea, linea),
-                          monto_total, merge_format)
+    merge_format = workbook.add_format(
+        {
+            "bold": 1,
+            "border": 1,
+            "align": "center",
+            "valign": "vcenter",
+            "fg_color": "yellow",
+            "num_format": "#,##0",
+        }
+    )
+    linea = rowDefiner + 1
+    worksheet.merge_range("A{}:E{}".format(linea, linea), " MONTO TOTAL", merge_format)
+    worksheet.merge_range("F{}:I{}".format(linea, linea), monto_total, merge_format)
     workbook.close()
 
     # return
-    path_return = os.path.join(settings.MEDIA_URL, 'economicos',
-                               'reporte-programa-{}-{}-{}-{}-{}.xlsx'.format(programa_id, anio, mes, dia, milisecond))
-    path_return = path_return.replace('\\', '/')
-    return Response({'path': path_return, 'cantidad': len(Pagos_data)})
+    path_return = os.path.join(
+        settings.MEDIA_URL,
+        "economicos",
+        "reporte-programa-{}-{}-{}-{}-{}.xlsx".format(
+            programa_id, anio, mes, dia, milisecond
+        ),
+    )
+    path_return = path_return.replace("\\", "/")
+    return Response({"path": path_return, "cantidad": len(Pagos_data)})
 
 
 def reporte_programa_function(programa_id, promocion, anio, mes, dia):
-    if programa_id == '':
-        if dia == '':
+    if programa_id == "":
+        if dia == "":
             pagos_data = Pago.objects.filter(
-                fecha_operacion__year__contains=anio, fecha_operacion__month__contains=mes, )
+                fecha_operacion__year__contains=anio,
+                fecha_operacion__month__contains=mes,
+            )
         else:
-            pagos_data = Pago.objects.filter(expendiente__promocion__contains=promocion,
-                                             fecha_operacion__year__contains=anio, fecha_operacion__month__contains=mes, fecha_operacion__day=dia)
+            pagos_data = Pago.objects.filter(
+                expendiente__promocion__contains=promocion,
+                fecha_operacion__year__contains=anio,
+                fecha_operacion__month__contains=mes,
+                fecha_operacion__day=dia,
+            )
 
     else:
-        if dia == '':
-            pagos_data = Pago.objects.filter(expendiente__programa_id=programa_id, expendiente__promocion__contains=promocion,
-                                             fecha_operacion__year__contains=anio, fecha_operacion__month__contains=mes, )
+        if dia == "":
+            pagos_data = Pago.objects.filter(
+                expendiente__programa_id=programa_id,
+                expendiente__promocion__contains=promocion,
+                fecha_operacion__year__contains=anio,
+                fecha_operacion__month__contains=mes,
+            )
         else:
-            pagos_data = Pago.objects.filter(expendiente__programa_id=programa_id, expendiente__promocion__contains=promocion,
-                                             fecha_operacion__year__contains=anio, fecha_operacion__month__contains=mes, fecha_operacion__day=dia)
+            pagos_data = Pago.objects.filter(
+                expendiente__programa_id=programa_id,
+                expendiente__promocion__contains=promocion,
+                fecha_operacion__year__contains=anio,
+                fecha_operacion__month__contains=mes,
+                fecha_operacion__day=dia,
+            )
     pagos = []
     for pago in pagos_data:
         if bool(pago.expendiente):
-
             programa_str = pago.expendiente.programa.nombre
             promocion_str = pago.expendiente.promocion
         else:
-            programa_str = ''
-            promocion_str = ''
-        data = pago.nombre_cliente, pago.numero_documento, pago.numero_operacion, pago.numero_conciliacion, pago.fecha_operacion.strftime(
-            '%d/%m/%Y'), pago.monto.__str__(), pago.concepto.nombre, programa_str, promocion_str
+            programa_str = ""
+            promocion_str = ""
+        data = (
+            pago.nombre_cliente,
+            pago.numero_documento,
+            pago.numero_operacion,
+            pago.numero_conciliacion,
+            pago.fecha_operacion.strftime("%d/%m/%Y"),
+            pago.monto.__str__(),
+            pago.concepto.nombre,
+            programa_str,
+            promocion_str,
+        )
         pagos.append(data)
 
-    return (pagos)
+    return pagos
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 def get_reporte_ingresos_api(request):
-    Type, Date = request.GET.get('dataFetch').split(':')
+    Type, Date = request.GET.get("dataFetch").split(":")
     # expediente = reporte_matricula_alumno_function(expediente_id, periodo_id)
     data = Pago.objects.filter(id=20)
     print(data)
     output = BytesIO()
-    workbook = Workbook(output, {'in_memory': True})
+    workbook = Workbook(output, {"in_memory": True})
     worksheet = workbook.add_worksheet()
-    formatFecha = workbook.add_format({'num_format': 'dd/mm/yyyy'})
-    formatMoney = workbook.add_format({'num_format': '#,##0'})
+    formatFecha = workbook.add_format({"num_format": "dd/mm/yyyy"})
+    formatMoney = workbook.add_format({"num_format": "#,##0"})
     worksheet.set_column(2, 2, cell_format=formatFecha)
     worksheet.set_column(3, 3, cell_format=formatMoney)
     # worksheet.write(fila, columna, 'Some Data')
-    header = ('Nombre Completo', 'DNI', 'Fecha de Pago',
-              'Monto', 'Concepto', 'Número de conciliación')
+    header = (
+        "Nombre Completo",
+        "DNI",
+        "Fecha de Pago",
+        "Monto",
+        "Concepto",
+        "Número de conciliación",
+    )
     worksheet.write_row(0, 0, header)
 
-    if Type == 'Y':
+    if Type == "Y":
         getYear = Date
         Pagos = Pago.get_pagos_by_anio(anio=getYear).values_list(
-            'nombre_cliente',
-            'numero_documento',
-            'fecha_operacion',
-            'monto',
-            'concepto__codigo',
-            'numero_conciliacion'
+            "nombre_cliente",
+            "numero_documento",
+            "fecha_operacion",
+            "monto",
+            "concepto__codigo",
+            "numero_conciliacion",
         )
 
-    if Type == 'M':
-        getYear, getMonth = Date.split('-')
+    if Type == "M":
+        getYear, getMonth = Date.split("-")
         Pagos = Pago.get_pagos_by_anio_and_mes(anio=getYear, mes=getMonth).values_list(
-            'nombre_cliente',
-            'numero_documento',
-            'fecha_operacion',
-            'monto',
-            'concepto__codigo',
-            'numero_conciliacion'
+            "nombre_cliente",
+            "numero_documento",
+            "fecha_operacion",
+            "monto",
+            "concepto__codigo",
+            "numero_conciliacion",
         )
 
-    if Type == 'D':
+    if Type == "D":
         Pagos = Pago.get_pagos_del_dia(dia=Date).values_list(
-            'nombre_cliente',
-            'numero_documento',
-            'fecha_operacion',
-            'monto',
-            'concepto__codigo',
-            'numero_conciliacion'
+            "nombre_cliente",
+            "numero_documento",
+            "fecha_operacion",
+            "monto",
+            "concepto__codigo",
+            "numero_conciliacion",
         )
     rowDefiner = 1
     for pag in Pagos:
@@ -413,30 +485,33 @@ def get_reporte_ingresos_api(request):
         rowDefiner += 1
     workbook.close()
     output.seek(0)
-    response = HttpResponse(output.read(
-    ), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment;filename="reporte-ingreso-{}.xlsx"'.format(
-        Date)
+    response = HttpResponse(
+        output.read(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response[
+        "Content-Disposition"
+    ] = 'attachment;filename="reporte-ingreso-{}.xlsx"'.format(Date)
     return response
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 def get_reporte_matricula_pdf(request):
-    expediente_id = request.data.get('expediente')
-    periodo_id = request.data.get('periodo')
+    expediente_id = request.data.get("expediente")
+    periodo_id = request.data.get("periodo")
     expediente = reporte_matricula_alumno_function(expediente_id, periodo_id)
     #
     media_root = settings.MEDIA_ROOT
-    pdf_folder = os.path.join(media_root, 'pdf')
+    pdf_folder = os.path.join(media_root, "pdf")
     if not os.path.exists(pdf_folder):
         os.makedirs(pdf_folder)
     #
-    html_string = render_to_string(
-        'reports/reporte-matricula.html', expediente)
+    html_string = render_to_string("reports/reporte-matricula.html", expediente)
     html = HTML(string=html_string)
     milisecond = str(int(round(time.time() * 1000)))
     pdf_file_name = os.path.join(
-        pdf_folder, 'reporte-matricula-{}-{}.pdf'.format(expediente_id, milisecond))
+        pdf_folder, "reporte-matricula-{}-{}.pdf".format(expediente_id, milisecond)
+    )
     if os.path.exists(pdf_file_name):
         os.remove(pdf_file_name)
     html.write_pdf(target=pdf_file_name)
@@ -447,9 +522,12 @@ def get_reporte_matricula_pdf(request):
     #
     print("Termino de nvia correo!!")
     path_return = os.path.join(
-        settings.MEDIA_URL, 'pdf', 'reporte-matricula-{}-{}.pdf'.format(expediente_id, milisecond))
-    path_return = path_return.replace('\\', '/')
-    return Response({'path': path_return})
+        settings.MEDIA_URL,
+        "pdf",
+        "reporte-matricula-{}-{}.pdf".format(expediente_id, milisecond),
+    )
+    path_return = path_return.replace("\\", "/")
+    return Response({"path": path_return})
 
 
 def reporte_matricula_alumno_function(expediente_id, periodo_id):
@@ -459,8 +537,11 @@ def reporte_matricula_alumno_function(expediente_id, periodo_id):
     periodo = Periodo.objects.get(id=periodo_id)
     #
     expendiente = Expediente.objects.get(id=expediente_id)
-    apellidos = expendiente.persona.apellido_paterno + \
-        ' ' + expendiente.persona.apellido_materno
+    apellidos = (
+        expendiente.persona.apellido_paterno
+        + " "
+        + expendiente.persona.apellido_materno
+    )
     nombres = expendiente.persona.nombres
     numero_documento = expendiente.persona.numero_documento
     correo = expendiente.persona.correo
@@ -472,7 +553,8 @@ def reporte_matricula_alumno_function(expediente_id, periodo_id):
     programa_nombre = programa.nombre
     #
     matriculas = Matricula.objects.filter(
-        expediente=expediente_id, periodo=periodo_id, is_retirado=False)
+        expediente=expediente_id, periodo=periodo_id, is_retirado=False
+    )
     cursos = []
     for matricula in matriculas:
         curso = Cursos.objects.get(id=matricula.curso_grupo.curso.id)
@@ -485,39 +567,39 @@ def reporte_matricula_alumno_function(expediente_id, periodo_id):
     fecha_actual_str = f"{dia} de {mes_name} de {anio}"
 
     return {
-        'expediente':
-            {
-                "periodo": periodo,
-                'apellidos': apellidos,
-                'nombres': nombres,
-                "numero_documento": numero_documento,
-                "correo": correo,
-                "num_expediente": num_expediente,
-                "promocion": promocion,
-                "programa_nombre": programa_nombre,
-                "cursos": cursos,
-                "fecha_actual_str": fecha_actual_str,
-                "correo_persona": expendiente.persona.correo,
-            }
+        "expediente": {
+            "periodo": periodo,
+            "apellidos": apellidos,
+            "nombres": nombres,
+            "numero_documento": numero_documento,
+            "correo": correo,
+            "num_expediente": num_expediente,
+            "promocion": promocion,
+            "programa_nombre": programa_nombre,
+            "cursos": cursos,
+            "fecha_actual_str": fecha_actual_str,
+            "correo_persona": expendiente.persona.correo,
+        }
     }
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 def get_reporte_actanotas_pdf(request):
-    cursogrupo_id = request.data.get('curso_grupo_id')
-    periodo_id = request.data.get('periodo_id')
+    cursogrupo_id = request.data.get("curso_grupo_id")
+    periodo_id = request.data.get("periodo_id")
     actanotas = reporte_acta_function(cursogrupo_id, periodo_id)
     #
     media_root = settings.MEDIA_ROOT
-    pdf_folder = os.path.join(media_root, 'pdf')
+    pdf_folder = os.path.join(media_root, "pdf")
     if not os.path.exists(pdf_folder):
         os.makedirs(pdf_folder)
     #
-    html_string = render_to_string('reports/reporte-actanotas.html', actanotas)
+    html_string = render_to_string("reports/reporte-actanotas.html", actanotas)
     html = HTML(string=html_string)
     milisecond = str(int(round(time.time() * 1000)))
     pdf_file_name = os.path.join(
-        pdf_folder, 'reporte-actanotas-{}-{}.pdf'.format(cursogrupo_id, milisecond))
+        pdf_folder, "reporte-actanotas-{}-{}.pdf".format(cursogrupo_id, milisecond)
+    )
     if os.path.exists(pdf_file_name):
         os.remove(pdf_file_name)
     html.write_pdf(target=pdf_file_name)
@@ -528,13 +610,15 @@ def get_reporte_actanotas_pdf(request):
     #
     # print("Termino de nvia correo!!")
     path_return = os.path.join(
-        settings.MEDIA_URL, 'pdf', 'reporte-actanotas-{}-{}.pdf'.format(cursogrupo_id, milisecond))
-    path_return = path_return.replace('\\', '/')
-    return Response({'path': path_return})
+        settings.MEDIA_URL,
+        "pdf",
+        "reporte-actanotas-{}-{}.pdf".format(cursogrupo_id, milisecond),
+    )
+    path_return = path_return.replace("\\", "/")
+    return Response({"path": path_return})
 
 
 def reporte_acta_function(cursogrupo_id, periodo_id):
-
     periodo = Periodo.objects.get(id=periodo_id)
     #
     cursogrupo = CursoGrupo.objects.get(id=cursogrupo_id)
@@ -547,8 +631,11 @@ def reporte_acta_function(cursogrupo_id, periodo_id):
     fecha_termino = cursogrupo.fecha_termino
     resolucion = cursogrupo.resolucion
     docentenombre = cursogrupo.docente.persona.nombres
-    docenteapellidos = cursogrupo.docente.persona.apellido_paterno + \
-        ' ' + cursogrupo.docente.persona.apellido_materno
+    docenteapellidos = (
+        cursogrupo.docente.persona.apellido_paterno
+        + " "
+        + cursogrupo.docente.persona.apellido_materno
+    )
     #
     programa = cursogrupo.curso.plan_estudio.programa.nombre
     #
@@ -563,89 +650,100 @@ def reporte_acta_function(cursogrupo_id, periodo_id):
         expedientes.append(obj_expediente)
     alumnos = []
     num_orden = 0
-    numeros_letras = [{"nombre": 'Cero'},
-                      {"nombre": 'Uno'},
-                      {"nombre": 'Dos'},
-                      {"nombre": 'Tres'},
-                      {"nombre": 'Cuatro'},
-                      {"nombre": 'Cinco'},
-                      {"nombre": 'Seis'},
-                      {"nombre": 'Siete'},
-                      {"nombre": 'Ocho'},
-                      {"nombre": 'Nueve'},
-                      {"nombre": 'Diez'},
-                      {"nombre": 'Once'},
-                      {"nombre": 'Doce'},
-                      {"nombre": 'Trece'},
-                      {"nombre": 'Catorce'},
-                      {"nombre": 'Quince'},
-                      {"nombre": 'Dieciseis'},
-                      {"nombre": 'Diecisiete'},
-                      {"nombre": 'Dieciocho'},
-                      {"nombre": 'Diecinueve'},
-                      {"nombre": 'Veinte'}]
+    numeros_letras = [
+        {"nombre": "Cero"},
+        {"nombre": "Uno"},
+        {"nombre": "Dos"},
+        {"nombre": "Tres"},
+        {"nombre": "Cuatro"},
+        {"nombre": "Cinco"},
+        {"nombre": "Seis"},
+        {"nombre": "Siete"},
+        {"nombre": "Ocho"},
+        {"nombre": "Nueve"},
+        {"nombre": "Diez"},
+        {"nombre": "Once"},
+        {"nombre": "Doce"},
+        {"nombre": "Trece"},
+        {"nombre": "Catorce"},
+        {"nombre": "Quince"},
+        {"nombre": "Dieciseis"},
+        {"nombre": "Diecisiete"},
+        {"nombre": "Dieciocho"},
+        {"nombre": "Diecinueve"},
+        {"nombre": "Veinte"},
+    ]
     for expediente in expedientes:
         num_orden += 1
-        alumno = Expediente.get_alumno_by_expediente_id(
-            expediente["expediente_id"])
+        alumno = Expediente.get_alumno_by_expediente_id(expediente["expediente_id"])
         promedio_final = expediente["promedio_final"]
         promedio_letra = numeros_letras[int(promedio_final)].get("nombre")
-        alumnos.append({"alumno": alumno, "promedio_final": promedio_final,
-                       "num_orden": num_orden, "promedio_letra": promedio_letra})
+        alumnos.append(
+            {
+                "alumno": alumno,
+                "promedio_final": promedio_final,
+                "num_orden": num_orden,
+                "promedio_letra": promedio_letra,
+            }
+        )
 
     dia = datetime.datetime.now().day
     anio = datetime.datetime.now().year
     #
     mes_id = datetime.datetime.now().strftime("%m")
-    mes_array = [{"nombre": 'Enero'},
-                 {"nombre": 'Febrero'},
-                 {"nombre": 'Marzo'},
-                 {"nombre": 'Abril'},
-                 {"nombre": 'Mayo'},
-                 {"nombre": 'Junio'},
-                 {"nombre": 'Julio'},
-                 {"nombre": 'Agosto'},
-                 {"nombre": 'Septiembre'},
-                 {"nombre": 'Octubre'},
-                 {"nombre": 'Noviembre'},
-                 {"nombre": 'Diciembre'}]
-    mes_name = mes_array[int(mes_id)-1].get("nombre")
+    mes_array = [
+        {"nombre": "Enero"},
+        {"nombre": "Febrero"},
+        {"nombre": "Marzo"},
+        {"nombre": "Abril"},
+        {"nombre": "Mayo"},
+        {"nombre": "Junio"},
+        {"nombre": "Julio"},
+        {"nombre": "Agosto"},
+        {"nombre": "Septiembre"},
+        {"nombre": "Octubre"},
+        {"nombre": "Noviembre"},
+        {"nombre": "Diciembre"},
+    ]
+    mes_name = mes_array[int(mes_id) - 1].get("nombre")
     fecha_actual_str = f"{dia} de {mes_name} de {anio}"
-    grupo_id = str(cursogrupo_id).rjust(5, '0')
+    grupo_id = str(cursogrupo_id).rjust(5, "0")
     return {
-        'actanotas':
-            {
-                "cursogrupo_id": grupo_id,
-                "periodo": periodo,
-                'cursonombre': cursonombre,
-                'creditos': creditos,
-                "docentenombre": docentenombre,
-                "docenteapellidos": docenteapellidos,
-                "programa_nombre": programa,
-                "grupo": grupo,
-                "alumnos": alumnos,
-                "fecha_inicio": fecha_inicio,
-                "fecha_termino": fecha_termino,
-                "resolucion": resolucion,
-                "fecha_actual_str": fecha_actual_str,
-            }
+        "actanotas": {
+            "cursogrupo_id": grupo_id,
+            "periodo": periodo,
+            "cursonombre": cursonombre,
+            "creditos": creditos,
+            "docentenombre": docentenombre,
+            "docenteapellidos": docenteapellidos,
+            "programa_nombre": programa,
+            "grupo": grupo,
+            "alumnos": alumnos,
+            "fecha_inicio": fecha_inicio,
+            "fecha_termino": fecha_termino,
+            "resolucion": resolucion,
+            "fecha_actual_str": fecha_actual_str,
+        }
     }
 
 
 @api_view(["GET"])
 def reporte_economico_alumno_api(request):
-    if request.method == 'GET':
-        numero_documento = request.GET.get('numero_documento')
+    if request.method == "GET":
+        numero_documento = request.GET.get("numero_documento")
 
         expediente = Expediente.objects.filter(
-            persona__numero_documento=numero_documento, is_active=True).first()
+            persona__numero_documento=numero_documento, is_active=True
+        ).first()
         # COSTO TOTAL PENSION
         if not expediente:
             return Response(
                 {
-                    'error': 'No se encontró el expediente para el alumno con número de documento {}'.format(numero_documento)
+                    "error": "No se encontró el expediente para el alumno con número de documento {}".format(
+                        numero_documento
+                    )
                 },
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
         costo = expediente.programa.costo
         cuotas = expediente.programa.cuotas
@@ -654,7 +752,8 @@ def reporte_economico_alumno_api(request):
         # COSTO TOTAL MATRICULA
         cantidad_matriculas = expediente.programa.tipo.cantidad_matriculas
         concepto = Concepto.objects.filter(
-            codigo='531', nombre="MATRICULA MAESTRIA Y DOCTORADOS").first()
+            codigo="531", nombre="MATRICULA MAESTRIA Y DOCTORADOS"
+        ).first()
         precio_matricula = 0
 
         if concepto:
@@ -669,24 +768,26 @@ def reporte_economico_alumno_api(request):
         # PAGOS DE PENSION
         pagos = Pago.get_pagos_by_expediente(expediente)
         pagos_programa = pagos.filter(
-            concepto__programa__codigo=expediente.programa.codigo)
+            concepto__programa__codigo=expediente.programa.codigo
+        )
         cantidad_pagos_programa = pagos_programa.count()
-        suma_pagos_programa = pagos_programa.aggregate(Sum('monto'))[
-            "monto__sum"] or 0
+        suma_pagos_programa = pagos_programa.aggregate(Sum("monto"))["monto__sum"] or 0
         # PAGOS DE MATRICULA
         pagos_matricula = pagos.filter(concepto__id=concepto_matricula_id)
         cantidad_pagos_matricula = pagos_matricula.count()
-        suma_pagos_matricula = pagos_matricula.aggregate(Sum('monto'))[
-            "monto__sum"] or 0
+        suma_pagos_matricula = (
+            pagos_matricula.aggregate(Sum("monto"))["monto__sum"] or 0
+        )
         # PAGOS DE OTROS CONCEPTOS
         pagos_otros = pagos.exclude(concepto__id=concepto_matricula_id).exclude(
-            concepto__programa__codigo=expediente.programa.codigo)
-        suma_pagos_otros = pagos_otros.aggregate(Sum('monto'))[
-            "monto__sum"] or 0
+            concepto__programa__codigo=expediente.programa.codigo
+        )
+        suma_pagos_otros = pagos_otros.aggregate(Sum("monto"))["monto__sum"] or 0
         # PAGOS TOTAL
         pagos_totales = suma_pagos_programa + suma_pagos_matricula + suma_pagos_otros
         # FECHA DE REPORTE
         from datetime import datetime
+
         date_now = datetime.now()
         fecha_reporte = date_now.strftime("%d/%m/%Y")
         hora_reporte = date_now.strftime("%H:%M %p")
@@ -704,14 +805,14 @@ def reporte_economico_alumno_api(request):
             pagos_programa_list.append(
                 {
                     "anio_operacion": pago.fecha_operacion.year,
-                    'fecha_operacion': pago.fecha_operacion.strftime("%d/%m/%Y"),
+                    "fecha_operacion": pago.fecha_operacion.strftime("%d/%m/%Y"),
                     "numero_conciliacion": pago.numero_conciliacion,
                     "numero_operacion": pago.numero_operacion,
                     "nro_cuota": str(nro_cuota).zfill(2),
                     "concepto": pago.concepto.nombre,
-                    "monto_cuota": str(pago.monto).replace(',', '.'),
-                    "monto_pagado": str(monto_pagado).replace(',', '.'),
-                    "saldo": str(saldo).replace(',', '.'),
+                    "monto_cuota": str(pago.monto).replace(",", "."),
+                    "monto_pagado": str(monto_pagado).replace(",", "."),
+                    "saldo": str(saldo).replace(",", "."),
                 }
             )
             pago_anterior = monto_pagado
@@ -729,14 +830,14 @@ def reporte_economico_alumno_api(request):
             pagos_matricula_list.append(
                 {
                     "anio_operacion": pago.fecha_operacion.year,
-                    'fecha_operacion': pago.fecha_operacion.strftime("%d/%m/%Y"),
+                    "fecha_operacion": pago.fecha_operacion.strftime("%d/%m/%Y"),
                     "numero_conciliacion": pago.numero_conciliacion,
                     "numero_operacion": pago.numero_operacion,
                     "nro_cuota": str(nro_cuota).zfill(2),
                     "concepto": pago.concepto.nombre,
-                    "monto_cuota": str(pago.concepto.precio).replace(',', '.'),
-                    "monto_pagado": str(monto_pagado).replace(',', '.'),
-                    "saldo": str(saldo).replace(',', '.'),
+                    "monto_cuota": str(pago.concepto.precio).replace(",", "."),
+                    "monto_pagado": str(monto_pagado).replace(",", "."),
+                    "saldo": str(saldo).replace(",", "."),
                 }
             )
             pago_anterior = monto_pagado
@@ -749,59 +850,64 @@ def reporte_economico_alumno_api(request):
             pagos_otros_list.append(
                 {
                     "anio_operacion": pago.fecha_operacion.year,
-                    'fecha_operacion': pago.fecha_operacion.strftime("%d/%m/%Y"),
+                    "fecha_operacion": pago.fecha_operacion.strftime("%d/%m/%Y"),
                     "numero_conciliacion": pago.numero_conciliacion,
                     "numero_operacion": pago.numero_operacion,
                     "concepto": pago.concepto.nombre,
-                    "monto_cuota": str(pago.monto).replace(',', '.'),
+                    "monto_cuota": str(pago.monto).replace(",", "."),
                 }
             )
             total_pago_otros_lista += pago.monto
 
         return Response(
             {
-                'expediente': ExpedienteReportSerializer(expediente).data,
-                'costo_total_pension': str(costo_total_pension).replace(',', '.'),
+                "expediente": ExpedienteReportSerializer(expediente).data,
+                "costo_total_pension": str(costo_total_pension).replace(",", "."),
                 "cuotas": cuotas,
-                'pension': str(costo).replace(',', '.'),
+                "pension": str(costo).replace(",", "."),
                 "cantidad_matriculas": cantidad_matriculas,
-                'costo_total_matricula': str(costo_total_matricula).replace(',', '.'),
-                "precio_matricula": str(precio_matricula).replace(',', '.'),
-                "costo_total_total": str(costo_total_total).replace(',', '.'),
+                "costo_total_matricula": str(costo_total_matricula).replace(",", "."),
+                "precio_matricula": str(precio_matricula).replace(",", "."),
+                "costo_total_total": str(costo_total_total).replace(",", "."),
                 "cantidad_pagos_programa": cantidad_pagos_programa,
-                "suma_pagos_programa": str(suma_pagos_programa).replace(',', '.'),
+                "suma_pagos_programa": str(suma_pagos_programa).replace(",", "."),
                 "cantidad_pagos_matricula": cantidad_pagos_matricula,
-                "suma_pagos_matricula": str(suma_pagos_matricula).replace(',', '.'),
-                "total_otros": str(total_pago_otros_lista).replace(',', '.'),
-                "pagos_totales": str(pagos_totales).replace(',', '.'),
+                "suma_pagos_matricula": str(suma_pagos_matricula).replace(",", "."),
+                "total_otros": str(total_pago_otros_lista).replace(",", "."),
+                "pagos_totales": str(pagos_totales).replace(",", "."),
                 "fecha_reporte": fecha_reporte,
                 "hora_reporte": hora_reporte,
                 "pagos_programa": pagos_programa_list,
                 "pagos_matricula": pagos_matricula_list,
                 "pagos_otros": pagos_otros_list,
-                "total_debe_pension": str(costo_total_pension - total_pago_pension_lista).replace(',', '.'),
-                "total_debe_matricula": str(costo_total_matricula - total_pago_matricula_lista).replace(',', '.'),
+                "total_debe_pension": str(
+                    costo_total_pension - total_pago_pension_lista
+                ).replace(",", "."),
+                "total_debe_matricula": str(
+                    costo_total_matricula - total_pago_matricula_lista
+                ).replace(",", "."),
             }
         )
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 def get_reporte_economico_alumno_pdf(request):
-    if request.method == 'POST':
-        numero_documento = request.data.get('numero_documento')
+    if request.method == "POST":
+        numero_documento = request.data.get("numero_documento")
         economicos = reporte_economico_function(numero_documento)
         # media
         media_root = settings.MEDIA_ROOT
-        pdf_folder = os.path.join(media_root, 'pdf')
+        pdf_folder = os.path.join(media_root, "pdf")
         if not os.path.exists(pdf_folder):
             os.makedirs(pdf_folder)
         #
-        html_string = render_to_string(
-            'reports/reporte-economico.html', economicos)
+        html_string = render_to_string("reports/reporte-economico.html", economicos)
         html = HTML(string=html_string)
         milisecond = str(int(round(time.time() * 1000)))
         pdf_file_name = os.path.join(
-            pdf_folder, 'reporte-economico-{}-{}.pdf'.format(numero_documento, milisecond))
+            pdf_folder,
+            "reporte-economico-{}-{}.pdf".format(numero_documento, milisecond),
+        )
         if os.path.exists(pdf_file_name):
             os.remove(pdf_file_name)
         html.write_pdf(target=pdf_file_name)
@@ -811,21 +917,27 @@ def get_reporte_economico_alumno_pdf(request):
         #
         # print("Termino de nvia correo!!")
         path_return = os.path.join(
-            settings.MEDIA_URL, 'pdf', 'reporte-economico-{}-{}.pdf'.format(numero_documento, milisecond))
-        path_return = path_return.replace('\\', '/')
-        return Response({'path': path_return})
+            settings.MEDIA_URL,
+            "pdf",
+            "reporte-economico-{}-{}.pdf".format(numero_documento, milisecond),
+        )
+        path_return = path_return.replace("\\", "/")
+        return Response({"path": path_return})
 
 
 def reporte_economico_function(numero_documento):
     expediente = Expediente.objects.filter(
-        persona__numero_documento=numero_documento, is_active=True).first()
+        persona__numero_documento=numero_documento, is_active=True
+    ).first()
     # COSTO TOTAL PENSION
     if not expediente:
         return Response(
             {
-                'error': 'No se encontró el expediente para el alumno con número de documento {}'.format(numero_documento)
+                "error": "No se encontró el expediente para el alumno con número de documento {}".format(
+                    numero_documento
+                )
             },
-            status=status.HTTP_404_NOT_FOUND
+            status=status.HTTP_404_NOT_FOUND,
         )
     costo = expediente.programa.costo
     cuotas = expediente.programa.cuotas
@@ -834,7 +946,8 @@ def reporte_economico_function(numero_documento):
     # COSTO TOTAL MATRICULA
     cantidad_matriculas = expediente.programa.tipo.cantidad_matriculas
     concepto = Concepto.objects.filter(
-        codigo='531', nombre="MATRICULA MAESTRIA Y DOCTORADOS").first()
+        codigo="531", nombre="MATRICULA MAESTRIA Y DOCTORADOS"
+    ).first()
     precio_matricula = 0
 
     if concepto:
@@ -850,22 +963,21 @@ def reporte_economico_function(numero_documento):
     pagos = Pago.get_pagos_by_expediente(expediente)
     pagos_programa = pagos.filter(concepto__programa__codigo=expediente.programa.codigo)
     cantidad_pagos_programa = pagos_programa.count()
-    suma_pagos_programa = pagos_programa.aggregate(Sum('monto'))[
-        "monto__sum"] or 0
+    suma_pagos_programa = pagos_programa.aggregate(Sum("monto"))["monto__sum"] or 0
     # PAGOS DE MATRICULA
     pagos_matricula = pagos.filter(concepto__id=concepto_matricula_id)
     cantidad_pagos_matricula = pagos_matricula.count()
-    suma_pagos_matricula = pagos_matricula.aggregate(Sum('monto'))[
-        "monto__sum"] or 0
+    suma_pagos_matricula = pagos_matricula.aggregate(Sum("monto"))["monto__sum"] or 0
     # PAGOS DE OTROS CONCEPTOS
     pagos_otros = pagos.exclude(concepto__id=concepto_matricula_id).exclude(
-        concepto__programa=expediente.programa)
-    suma_pagos_otros = pagos_otros.aggregate(Sum('monto'))[
-        "monto__sum"] or 0
+        concepto__programa=expediente.programa
+    )
+    suma_pagos_otros = pagos_otros.aggregate(Sum("monto"))["monto__sum"] or 0
     # PAGOS TOTAL
     pagos_totales = suma_pagos_programa + suma_pagos_matricula + suma_pagos_otros
     # FECHA DE REPORTE
     from datetime import datetime
+
     date_now = datetime.now()
     fecha_reporte = date_now.strftime("%d/%m/%Y")
     hora_reporte = date_now.strftime("%H:%M %p")
@@ -883,14 +995,14 @@ def reporte_economico_function(numero_documento):
         pagos_programa_list.append(
             {
                 "anio_operacion": pago.fecha_operacion.year,
-                'fecha_operacion': pago.fecha_operacion.strftime("%d/%m/%Y"),
+                "fecha_operacion": pago.fecha_operacion.strftime("%d/%m/%Y"),
                 "numero_conciliacion": pago.numero_conciliacion,
                 "numero_operacion": pago.numero_operacion,
                 "nro_cuota": str(nro_cuota).zfill(2),
                 "concepto": pago.concepto.nombre,
-                "monto_cuota": str(pago.monto).replace(',', '.'),
-                "monto_pagado": str(monto_pagado).replace(',', '.'),
-                "saldo": str(saldo).replace(',', '.'),
+                "monto_cuota": str(pago.monto).replace(",", "."),
+                "monto_pagado": str(monto_pagado).replace(",", "."),
+                "saldo": str(saldo).replace(",", "."),
             }
         )
         pago_anterior = monto_pagado
@@ -908,14 +1020,14 @@ def reporte_economico_function(numero_documento):
         pagos_matricula_list.append(
             {
                 "anio_operacion": pago.fecha_operacion.year,
-                'fecha_operacion': pago.fecha_operacion.strftime("%d/%m/%Y"),
+                "fecha_operacion": pago.fecha_operacion.strftime("%d/%m/%Y"),
                 "numero_conciliacion": pago.numero_conciliacion,
                 "numero_operacion": pago.numero_operacion,
                 "nro_cuota": str(nro_cuota).zfill(2),
                 "concepto": pago.concepto.nombre,
-                "monto_cuota": str(pago.concepto.precio).replace(',', '.'),
-                "monto_pagado": str(monto_pagado).replace(',', '.'),
-                "saldo": str(saldo).replace(',', '.'),
+                "monto_cuota": str(pago.concepto.precio).replace(",", "."),
+                "monto_pagado": str(monto_pagado).replace(",", "."),
+                "saldo": str(saldo).replace(",", "."),
             }
         )
         pago_anterior = monto_pagado
@@ -928,115 +1040,130 @@ def reporte_economico_function(numero_documento):
         pagos_otros_list.append(
             {
                 "anio_operacion": pago.fecha_operacion.year,
-                'fecha_operacion': pago.fecha_operacion.strftime("%d/%m/%Y"),
+                "fecha_operacion": pago.fecha_operacion.strftime("%d/%m/%Y"),
                 "numero_conciliacion": pago.numero_conciliacion,
                 "numero_operacion": pago.numero_operacion,
                 "concepto": pago.concepto.nombre,
-                "monto_cuota": str(pago.monto).replace(',', '.'),
+                "monto_cuota": str(pago.monto).replace(",", "."),
             }
         )
         total_pago_otros_lista += pago.monto
 
     return {
-        'expediente': expediente,
-        'costo_total_pension': str(costo_total_pension).replace(',', '.'),
+        "expediente": expediente,
+        "costo_total_pension": str(costo_total_pension).replace(",", "."),
         "cuotas": cuotas,
-        'pension': str(costo).replace(',', '.'),
+        "pension": str(costo).replace(",", "."),
         "cantidad_matriculas": cantidad_matriculas,
-        'costo_total_matricula': str(costo_total_matricula).replace(',', '.'),
-        "precio_matricula": str(precio_matricula).replace(',', '.'),
-        "costo_total_total": str(costo_total_total).replace(',', '.'),
+        "costo_total_matricula": str(costo_total_matricula).replace(",", "."),
+        "precio_matricula": str(precio_matricula).replace(",", "."),
+        "costo_total_total": str(costo_total_total).replace(",", "."),
         "cantidad_pagos_programa": cantidad_pagos_programa,
-        "suma_pagos_programa": str(suma_pagos_programa).replace(',', '.'),
+        "suma_pagos_programa": str(suma_pagos_programa).replace(",", "."),
         "cantidad_pagos_matricula": cantidad_pagos_matricula,
-        "suma_pagos_matricula": str(suma_pagos_matricula).replace(',', '.'),
-        "total_otros": str(total_pago_otros_lista).replace(',', '.'),
-        "pagos_totales": str(pagos_totales).replace(',', '.'),
+        "suma_pagos_matricula": str(suma_pagos_matricula).replace(",", "."),
+        "total_otros": str(total_pago_otros_lista).replace(",", "."),
+        "pagos_totales": str(pagos_totales).replace(",", "."),
         "fecha_reporte": fecha_reporte,
         "hora_reporte": hora_reporte,
         "pagos_programa": pagos_programa_list,
         "pagos_matricula": pagos_matricula_list,
         "pagos_otros": pagos_otros_list,
-        "total_debe_pension": str(costo_total_pension - total_pago_pension_lista).replace(',', '.'),
-        "total_debe_matricula": str(costo_total_matricula - total_pago_matricula_lista).replace(',', '.'),
+        "total_debe_pension": str(
+            costo_total_pension - total_pago_pension_lista
+        ).replace(",", "."),
+        "total_debe_matricula": str(
+            costo_total_matricula - total_pago_matricula_lista
+        ).replace(",", "."),
     }
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 def get_reporte_academico_alumno_pdf(request):
-    if request.method == 'POST':
-        expediente_id = request.data.get('expediente_id')
+    if request.method == "POST":
+        expediente_id = request.data.get("expediente_id")
         academico = reporte_academico_function(expediente_id)
         # media
         media_root = settings.MEDIA_ROOT
-        pdf_folder = os.path.join(media_root, 'pdf')
+        pdf_folder = os.path.join(media_root, "pdf")
         if not os.path.exists(pdf_folder):
             os.makedirs(pdf_folder)
         #
-        html_string = render_to_string(
-            'reports/reporte-academico.html', academico)
+        html_string = render_to_string("reports/reporte-academico.html", academico)
         html = HTML(string=html_string)
         milisecond = str(int(round(time.time() * 1000)))
         pdf_file_name = os.path.join(
-            pdf_folder, 'reporte-academico-{}-{}.pdf'.format(expediente_id, milisecond))
+            pdf_folder, "reporte-academico-{}-{}.pdf".format(expediente_id, milisecond)
+        )
         if os.path.exists(pdf_file_name):
             os.remove(pdf_file_name)
         html.write_pdf(target=pdf_file_name)
 
         path_return = os.path.join(
-            settings.MEDIA_URL, 'pdf', 'reporte-academico-{}-{}.pdf'.format(expediente_id, milisecond))
-        path_return = path_return.replace('\\', '/')
-        return Response({'path': path_return})
+            settings.MEDIA_URL,
+            "pdf",
+            "reporte-academico-{}-{}.pdf".format(expediente_id, milisecond),
+        )
+        path_return = path_return.replace("\\", "/")
+        return Response({"path": path_return})
 
 
 def reporte_academico_function(expediente_id):
     # DATOS DE EXPEDIENTE
-    expediente = Expediente.objects.filter(
-        id=expediente_id).first()
+    expediente = Expediente.objects.filter(id=expediente_id).first()
     # fecha ejecucion y condicion
     obj_ejecucion = Matricula.objects.filter(
-        expediente_id=expediente_id, is_retirado=False)
-    fecha_inicio = obj_ejecucion.aggregate(
-        Min('fecha'))["fecha__min"].strftime("%d/%m/%Y")
-    fecha_final = ''
-    condicion = 'ESTUDIANTE'
+        expediente_id=expediente_id, is_retirado=False
+    )
+    fecha_inicio = obj_ejecucion.aggregate(Min("fecha"))["fecha__min"].strftime(
+        "%d/%m/%Y"
+    )
+    fecha_final = ""
+    condicion = "ESTUDIANTE"
     if expediente.is_graduate == True:
-        fecha_final = obj_ejecucion.aggregate(
-            Max('fecha'))["fecha__max"].strftime("%d/%m/%Y")
-        condicion = 'GRADUADO'
+        fecha_final = obj_ejecucion.aggregate(Max("fecha"))["fecha__max"].strftime(
+            "%d/%m/%Y"
+        )
+        condicion = "GRADUADO"
     # DATOS CURSOS
-    obj_curso = Cursos.objects.filter(
-        plan_estudio__programa__id=expediente.programa.id)
+    obj_curso = Cursos.objects.filter(plan_estudio__programa__id=expediente.programa.id)
     cursos = []
     total_creditos = 0
     for curso in obj_curso:
-        obj_nota = Matricula.objects.filter(
-            curso_grupo__curso_id=curso.id, expediente_id=expediente_id, is_retirado=False).order_by('-promedio_final').first()
+        obj_nota = (
+            Matricula.objects.filter(
+                curso_grupo__curso_id=curso.id,
+                expediente_id=expediente_id,
+                is_retirado=False,
+            )
+            .order_by("-promedio_final")
+            .first()
+        )
         if obj_nota != None:
-            if obj_nota.promedio_final !=None :
-                num_acta=str(obj_nota.curso_grupo.id).zfill(6)
-                periodo=obj_nota.curso_grupo.periodo.nombre
+            if obj_nota.promedio_final != None:
+                num_acta = str(obj_nota.curso_grupo.id).zfill(6)
+                periodo = obj_nota.curso_grupo.periodo.nombre
                 if obj_nota.is_aplazado == True:
                     if obj_nota.promedio_final_aplazado != None:
                         nota = obj_nota.promedio_final_aplazado
-                        det_acta='APLAZADO'
+                        det_acta = "APLAZADO"
                     else:
                         nota = ""
-                        det_acta='APLAZADO'
+                        det_acta = "APLAZADO"
                 else:
                     nota = obj_nota.promedio_final
-                    det_acta='REGULAR'
-                
-            else: 
-                nota = ''
-                num_acta = ''
-                det_acta = ''
-                periodo = ''
+                    det_acta = "REGULAR"
+
+            else:
+                nota = ""
+                num_acta = ""
+                det_acta = ""
+                periodo = ""
         else:
-            nota = ''
-            num_acta = ''
-            det_acta = ''
-            periodo = ''
+            nota = ""
+            num_acta = ""
+            det_acta = ""
+            periodo = ""
         cursos.append(
             {
                 "nombre": curso.nombre,
@@ -1045,7 +1172,7 @@ def reporte_academico_function(expediente_id):
                 "nota": nota,
                 "num_acta": num_acta,
                 "det_acta": det_acta,
-                "periodo": periodo
+                "periodo": periodo,
             }
         )
         total_creditos = total_creditos + curso.creditos
@@ -1053,28 +1180,38 @@ def reporte_academico_function(expediente_id):
     dia = datetime.datetime.now().day
     anio = datetime.datetime.now().year
     mes_id = datetime.datetime.now().strftime("%m")
-    mes_array = [{"nombre": 'Enero'},
-                 {"nombre": 'Febrero'},
-                 {"nombre": 'Marzo'},
-                 {"nombre": 'Abril'},
-                 {"nombre": 'Mayo'},
-                 {"nombre": 'Junio'},
-                 {"nombre": 'Julio'},
-                 {"nombre": 'Agosto'},
-                 {"nombre": 'Septiembre'},
-                 {"nombre": 'Octubre'},
-                 {"nombre": 'Noviembre'},
-                 {"nombre": 'Diciembre'}]
-    mes_name = mes_array[int(mes_id)-1].get("nombre")
+    mes_array = [
+        {"nombre": "Enero"},
+        {"nombre": "Febrero"},
+        {"nombre": "Marzo"},
+        {"nombre": "Abril"},
+        {"nombre": "Mayo"},
+        {"nombre": "Junio"},
+        {"nombre": "Julio"},
+        {"nombre": "Agosto"},
+        {"nombre": "Septiembre"},
+        {"nombre": "Octubre"},
+        {"nombre": "Noviembre"},
+        {"nombre": "Diciembre"},
+    ]
+    mes_name = mes_array[int(mes_id) - 1].get("nombre")
     fecha_actual_str = f"{dia} de {mes_name} de {anio}"
     # PPS Y PPG
-    obj_periodo = Matricula.objects.filter(expediente_id= expediente_id).distinct('periodo_id')
-    promedios_x_ciclo= []
-    promedio_graduado= '-'
-    notas_total=0
-    creditos_total=0
-    for periodo in obj_periodo:                                                                    
-        obj_nota = Matricula.objects.filter(expediente_id=expediente_id, periodo_id=periodo.periodo.id,is_retirado=False,is_cerrado=True,periodo__is_active=False).order_by('curso_grupo__curso__codigo')
+    obj_periodo = Matricula.objects.filter(expediente_id=expediente_id).distinct(
+        "periodo_id"
+    )
+    promedios_x_ciclo = []
+    promedio_graduado = "-"
+    notas_total = 0
+    creditos_total = 0
+    for periodo in obj_periodo:
+        obj_nota = Matricula.objects.filter(
+            expediente_id=expediente_id,
+            periodo_id=periodo.periodo.id,
+            is_retirado=False,
+            is_cerrado=True,
+            periodo__is_active=False,
+        ).order_by("curso_grupo__curso__codigo")
         ppc = 0
         creditos = 0
         for p in obj_nota:
@@ -1082,11 +1219,11 @@ def reporte_academico_function(expediente_id):
                 if p.promedio_final_aplazado == None:
                     promedio_final = p.promedio_final
                 else:
-                    promedio_final =p.promedio_final_aplazado
+                    promedio_final = p.promedio_final_aplazado
             else:
                 promedio_final = p.promedio_final
-            
-            ppc += (promedio_final*p.curso_grupo.curso.creditos)
+
+            ppc += promedio_final * p.curso_grupo.curso.creditos
             creditos += p.curso_grupo.curso.creditos
         notas_total += ppc
         creditos_total += creditos
@@ -1094,44 +1231,41 @@ def reporte_academico_function(expediente_id):
             promedios_x_ciclo.append(
                 {
                     "periodo": periodo.periodo.nombre,
-                    "promedio": (ppc/creditos),
-
+                    "promedio": (ppc / creditos),
                 }
             )
-            promedio_graduado = (notas_total/creditos_total)
+            promedio_graduado = notas_total / creditos_total
         else:
             promedios_x_ciclo.append(
                 {
-                    "periodo": '-',
-                    "promedio": '-',
-
+                    "periodo": "-",
+                    "promedio": "-",
                 }
             )
 
-    # ENCARGADO OFICINA
+        # ENCARGADO OFICINA
         obj_cargoarea = CargoArea.objects.filter(
-            area__id=1, cargo__id=1, is_active=True).first()
+            area__id=1, cargo__id=1, is_active=True
+        ).first()
 
     #
     return {
-        'expediente': expediente,
-        'cursos': cursos,
-        'promedios_x_ciclo': promedios_x_ciclo,
-        'promedio_graduado': promedio_graduado,
-        'total_creditos': total_creditos,
-        'fecha_inicio': fecha_inicio,
-        'fecha_final': fecha_final,
-        'condicion': condicion,
-        'fecha_actual': fecha_actual_str,
-        'cargoarea': obj_cargoarea,
+        "expediente": expediente,
+        "cursos": cursos,
+        "promedios_x_ciclo": promedios_x_ciclo,
+        "promedio_graduado": promedio_graduado,
+        "total_creditos": total_creditos,
+        "fecha_inicio": fecha_inicio,
+        "fecha_final": fecha_final,
+        "condicion": condicion,
+        "fecha_actual": fecha_actual_str,
+        "cargoarea": obj_cargoarea,
     }
 
 
 def roman_number(number):
-    num = [1, 4, 5, 9, 10, 40, 50, 90,
-           100, 400, 500, 900, 1000]
-    sym = ["I", "IV", "V", "IX", "X", "XL",
-           "L", "XC", "C", "CD", "D", "CM", "M"]
+    num = [1, 4, 5, 9, 10, 40, 50, 90, 100, 400, 500, 900, 1000]
+    sym = ["I", "IV", "V", "IX", "X", "XL", "L", "XC", "C", "CD", "D", "CM", "M"]
     romano = []
     i = 12
     valor = number
@@ -1146,46 +1280,61 @@ def roman_number(number):
     return "".join(romano)
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 def get_process_tracking_sheet_pdf(request):
-    procedure_id = request.GET.get('procedure_id')
+    procedure_id = request.GET.get("procedure_id")
     if procedure_id == None:
-        return Response({'error': 'No se encontro el procedimiento'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"error": "No se encontro el procedimiento"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     procedure = Procedure.objects.filter(id=procedure_id).first()
     if procedure == None:
-        return Response({'error': 'No se encontro el procedimiento'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"error": "No se encontro el procedimiento"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
-    path = get_process_tracking_sheet(ProcedureSerializer(procedure).data)
+    trackins = ProcedureTracing.objects.filter(procedure_id=procedure_id)
+    final_data = {
+        "procedure": ProcedureSerializer(procedure).data,
+        "trackins": ProcedureTracingsList(trackins, many=True).data,
+    }
+    path = get_process_tracking_sheet(final_data)
     from backend.settings import DEBUG, URL_LOCAL, URL_PROD
+
     url = URL_LOCAL if DEBUG else URL_PROD
     path = path.replace("/media", "media")
     path = url + path
-    return Response({'path': path}, status=status.HTTP_200_OK)
+    return Response({"path": path}, status=status.HTTP_200_OK)
+
 
 @api_view(["GET"])
 def reporte_economico_expediente_api(request):
-    if request.method == 'GET':
-        expediente_id = request.GET.get('expediente')
+    if request.method == "GET":
+        expediente_id = request.GET.get("expediente")
 
-        expediente = Expediente.objects.filter(
-            id = expediente_id  , is_active=True).first()
-        #COSTO TOTAL PENSION
+        expediente = Expediente.objects.filter(id=expediente_id, is_active=True).first()
+        # COSTO TOTAL PENSION
         if not expediente:
             return Response(
                 {
-                    'error': 'No se encontró el expediente para el alumno con número de Expediente {}'.format(expediente_id )
+                    "error": "No se encontró el expediente para el alumno con número de Expediente {}".format(
+                        expediente_id
+                    )
                 },
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
         costo = expediente.programa.costo
         cuotas = expediente.programa.cuotas
         costo_total_pension = cuotas * costo
 
-        #COSTO TOTAL MATRICULA
+        # COSTO TOTAL MATRICULA
         cantidad_matriculas = expediente.programa.tipo.cantidad_matriculas
         concepto = Concepto.objects.filter(
-            codigo='531', nombre="MATRICULA MAESTRIA Y DOCTORADOS").first()
+            codigo="531", nombre="MATRICULA MAESTRIA Y DOCTORADOS"
+        ).first()
         precio_matricula = 0
 
         if concepto:
@@ -1194,32 +1343,36 @@ def reporte_economico_expediente_api(request):
 
         costo_total_matricula = cantidad_matriculas * precio_matricula
 
-        #COSTO TOTAL DEL PROGRAMA
+        # COSTO TOTAL DEL PROGRAMA
         costo_total_total = costo_total_pension + costo_total_matricula
 
-        #PAGOS DE PENSION
+        # PAGOS DE PENSION
         pagos = Pago.get_pagos_by_expediente(expediente)
-        pagos_programa = pagos.filter(concepto__programa__codigo=expediente.programa.codigo)
+        pagos_programa = pagos.filter(
+            concepto__programa__codigo=expediente.programa.codigo
+        )
         cantidad_pagos_programa = pagos_programa.count()
-        suma_pagos_programa = pagos_programa.aggregate(Sum('monto'))[
-            "monto__sum"] or 0
+        suma_pagos_programa = pagos_programa.aggregate(Sum("monto"))["monto__sum"] or 0
         # PAGOS DE MATRICULA
         pagos_matricula = pagos.filter(concepto__id=concepto_matricula_id)
         cantidad_pagos_matricula = pagos_matricula.count()
-        suma_pagos_matricula = pagos_matricula.aggregate(Sum('monto'))[
-            "monto__sum"] or 0
+        suma_pagos_matricula = (
+            pagos_matricula.aggregate(Sum("monto"))["monto__sum"] or 0
+        )
         # PAGOS DE OTROS CONCEPTOS
-        pagos_otros = pagos.exclude(concepto__id=concepto_matricula_id).exclude(concepto__programa__codigo=expediente.programa.codigo)
-        suma_pagos_otros = pagos_otros.aggregate(Sum('monto'))[
-            "monto__sum"] or 0
+        pagos_otros = pagos.exclude(concepto__id=concepto_matricula_id).exclude(
+            concepto__programa__codigo=expediente.programa.codigo
+        )
+        suma_pagos_otros = pagos_otros.aggregate(Sum("monto"))["monto__sum"] or 0
         # PAGOS TOTAL
         pagos_totales = suma_pagos_programa + suma_pagos_matricula + suma_pagos_otros
         # FECHA DE REPORTE
         from datetime import datetime
+
         date_now = datetime.now()
         fecha_reporte = date_now.strftime("%d/%m/%Y")
         hora_reporte = date_now.strftime("%H:%M %p")
-        #LISTA DE PAGOS POR PENSION
+        # LISTA DE PAGOS POR PENSION
         pagos_programa_list = []
         nro_cuota = 0
         saldo = 0
@@ -1233,19 +1386,19 @@ def reporte_economico_expediente_api(request):
             pagos_programa_list.append(
                 {
                     "anio_operacion": pago.fecha_operacion.year,
-                    'fecha_operacion': pago.fecha_operacion.strftime("%d/%m/%Y"),
+                    "fecha_operacion": pago.fecha_operacion.strftime("%d/%m/%Y"),
                     "numero_conciliacion": pago.numero_conciliacion,
                     "numero_operacion": pago.numero_operacion,
                     "nro_cuota": str(nro_cuota).zfill(2),
                     "concepto": pago.concepto.nombre,
-                    "monto_cuota": str(pago.monto).replace(',', '.'),
-                    "monto_pagado": str(monto_pagado).replace(',', '.'),
-                    "saldo": str(saldo).replace(',', '.'),
+                    "monto_cuota": str(pago.monto).replace(",", "."),
+                    "monto_pagado": str(monto_pagado).replace(",", "."),
+                    "saldo": str(saldo).replace(",", "."),
                 }
             )
             pago_anterior = monto_pagado
             total_pago_pension_lista += pago.monto
-        #LISTA DE PAGOS POR MATRICULA
+        # LISTA DE PAGOS POR MATRICULA
         pagos_matricula_list = []
         total_pago_matricula_lista = 0
         pago_anterior = 0
@@ -1258,19 +1411,19 @@ def reporte_economico_expediente_api(request):
             pagos_matricula_list.append(
                 {
                     "anio_operacion": pago.fecha_operacion.year,
-                    'fecha_operacion': pago.fecha_operacion.strftime("%d/%m/%Y"),
+                    "fecha_operacion": pago.fecha_operacion.strftime("%d/%m/%Y"),
                     "numero_conciliacion": pago.numero_conciliacion,
                     "numero_operacion": pago.numero_operacion,
                     "nro_cuota": str(nro_cuota).zfill(2),
                     "concepto": pago.concepto.nombre,
-                    "monto_cuota": str(pago.concepto.precio).replace(',', '.'),
-                    "monto_pagado": str(monto_pagado).replace(',', '.'),
-                    "saldo": str(saldo).replace(',', '.'),
+                    "monto_cuota": str(pago.concepto.precio).replace(",", "."),
+                    "monto_pagado": str(monto_pagado).replace(",", "."),
+                    "saldo": str(saldo).replace(",", "."),
                 }
             )
             pago_anterior = monto_pagado
             total_pago_matricula_lista += pago.monto
-        #LISTA DE PAGOS POR OTROS CONCEPTOS
+        # LISTA DE PAGOS POR OTROS CONCEPTOS
         pagos_otros_list = []
         total_pago_otros_lista = 0
         monto_pagado = 0
@@ -1278,37 +1431,41 @@ def reporte_economico_expediente_api(request):
             pagos_otros_list.append(
                 {
                     "anio_operacion": pago.fecha_operacion.year,
-                    'fecha_operacion': pago.fecha_operacion.strftime("%d/%m/%Y"),
+                    "fecha_operacion": pago.fecha_operacion.strftime("%d/%m/%Y"),
                     "numero_conciliacion": pago.numero_conciliacion,
                     "numero_operacion": pago.numero_operacion,
                     "concepto": pago.concepto.nombre,
-                    "monto_cuota": str(pago.monto).replace(',', '.'),
+                    "monto_cuota": str(pago.monto).replace(",", "."),
                 }
             )
             total_pago_otros_lista += pago.monto
 
         return Response(
             {
-                'expediente': ExpedienteReportSerializer(expediente).data,
-                'costo_total_pension': str(costo_total_pension).replace(',', '.'),
+                "expediente": ExpedienteReportSerializer(expediente).data,
+                "costo_total_pension": str(costo_total_pension).replace(",", "."),
                 "cuotas": cuotas,
-                'pension': str(costo).replace(',', '.'),
+                "pension": str(costo).replace(",", "."),
                 "cantidad_matriculas": cantidad_matriculas,
-                'costo_total_matricula': str(costo_total_matricula).replace(',', '.'),
-                "precio_matricula": str(precio_matricula).replace(',', '.'),
-                "costo_total_total": str(costo_total_total).replace(',', '.'),
+                "costo_total_matricula": str(costo_total_matricula).replace(",", "."),
+                "precio_matricula": str(precio_matricula).replace(",", "."),
+                "costo_total_total": str(costo_total_total).replace(",", "."),
                 "cantidad_pagos_programa": cantidad_pagos_programa,
-                "suma_pagos_programa": str(suma_pagos_programa).replace(',', '.'),
+                "suma_pagos_programa": str(suma_pagos_programa).replace(",", "."),
                 "cantidad_pagos_matricula": cantidad_pagos_matricula,
-                "suma_pagos_matricula": str(suma_pagos_matricula).replace(',', '.'),
-                "total_otros": str(total_pago_otros_lista).replace(',', '.'),
-                "pagos_totales": str(pagos_totales).replace(',', '.'),
+                "suma_pagos_matricula": str(suma_pagos_matricula).replace(",", "."),
+                "total_otros": str(total_pago_otros_lista).replace(",", "."),
+                "pagos_totales": str(pagos_totales).replace(",", "."),
                 "fecha_reporte": fecha_reporte,
                 "hora_reporte": hora_reporte,
                 "pagos_programa": pagos_programa_list,
                 "pagos_matricula": pagos_matricula_list,
                 "pagos_otros": pagos_otros_list,
-                "total_debe_pension": str(costo_total_pension- total_pago_pension_lista).replace(',', '.'),
-                "total_debe_matricula": str(costo_total_matricula - total_pago_matricula_lista).replace(',', '.'),
+                "total_debe_pension": str(
+                    costo_total_pension - total_pago_pension_lista
+                ).replace(",", "."),
+                "total_debe_matricula": str(
+                    costo_total_matricula - total_pago_matricula_lista
+                ).replace(",", "."),
             }
         )
