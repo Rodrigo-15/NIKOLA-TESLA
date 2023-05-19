@@ -1,6 +1,11 @@
 from rest_framework.permissions import IsAuthenticated
 from backend.settings import URL_LOCAL, URL_PROD
-from core.serializers import PersonSerializer, AreaSerializer, CargoAreaPersonSerializer
+from core.serializers import (
+    CargoAreaSerializer,
+    PersonSerializer,
+    AreaSerializer,
+    CargoAreaPersonSerializer,
+)
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from desk.NAMES import APP_NAME
@@ -247,6 +252,12 @@ def login(request):
             if path:
                 path = path.replace("/media", "media")
                 person_data["foto"] = url + path
+
+            cargo_area = CargoArea.objects.filter(persona=person).first()
+            if not cargo_area:
+                area = {}
+            area = AreaSerializer(cargo_area.area).data
+
             return Response(
                 {
                     "user": UserSerializer(user).data,
@@ -254,6 +265,7 @@ def login(request):
                     "token": token.key,
                     "person": person_data,
                     "headquarter": headquarter,
+                    "area": area,
                 }
             )
         else:
@@ -693,11 +705,18 @@ def get_user_profile(request):
         if path:
             path = path.replace("/media", "media")
             person_data["foto"] = url + path
+
+        cargo_area = CargoArea.objects.filter(persona=person).first()
+        if not cargo_area:
+            area = {}
+        area = AreaSerializer(cargo_area.area).data
+
         return Response(
             {
                 "user": UserSerializer(user).data,
                 "groups": GroupSerializer(groups, many=True).data,
                 "person": person_data,
                 "headquarter": headquarter,
+                "area": area,
             }
         )
