@@ -1,10 +1,13 @@
 {
-  "python.formatting.provider": "none",
-  "python.linting.enabled": true,
   "python.linting.pylintEnabled": true,
-  "python.linting.pylintArgs": [
-    "--disable=C0111",
-    "--load-plugins=pylint_django",
-    "--django-settings-module=backend.settings"
-  ]
+  "python.linting.enabled": true,
+  "python.pythonPath": "venv\\Scripts\\python.exe",
+  "python.linting.pylintArgs": ["--load-plugins"],
+  "python.formatting.provider": "none",
+  "editor.formatOnSave": true,
+  "files.autoSave": "afterDelay",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "python.analysis.typeCheckingMode": "off"
 }
