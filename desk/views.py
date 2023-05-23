@@ -568,7 +568,13 @@ def save_derive_procedure(request):
 def get_tracings_to_approved(request):
     if request.method == "POST":
         user_id = request.data["user_id"]
-        area_id = CargoArea.objects.filter(persona__user_id=user_id).first().area_id
+        area_id = CargoArea.objects.filter(persona__user_id=user_id).first()
+        if not area_id:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={"message": "El usuario no tiene un area asignada"},
+            )
+        area_id = area_id.area_id
         tracings_for_area = ProcedureTracing.objects.filter(
             to_area_id=area_id, is_approved=False, assigned_user_id=None
         ).order_by("-created_at")
