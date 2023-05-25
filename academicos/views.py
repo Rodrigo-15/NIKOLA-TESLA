@@ -593,7 +593,7 @@ def get_progreso_academico_by_expediente_id(request):
         cursos = (
             Matricula.get_progreso_academico_by_expediente(expediente_id)
             .exclude(is_retirado=True)
-            .order_by("curso_grupo__curso__codigo")
+            .order_by("periodo","curso_grupo__curso__codigo")
         )
         data = []
 

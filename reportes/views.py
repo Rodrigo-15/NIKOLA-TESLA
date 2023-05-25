@@ -1006,7 +1006,7 @@ def reporte_academico_function(expediente_id):
         condicion = 'GRADUADO'
     # DATOS CURSOS
     obj_curso = Cursos.objects.filter(
-        plan_estudio__programa__id=expediente.programa.id)
+        plan_estudio__programa__id=expediente.programa.id).order_by('codigo')
     cursos = []
     total_creditos = 0
     for curso in obj_curso:
@@ -1023,6 +1023,9 @@ def reporte_academico_function(expediente_id):
                     else:
                         nota = ""
                         det_acta='APLAZADO'
+                elif obj_nota.is_dirigido == True:
+                    nota = obj_nota.promedio_final
+                    det_acta='DIRIGIDO'
                 else:
                     nota = obj_nota.promedio_final
                     det_acta='REGULAR'

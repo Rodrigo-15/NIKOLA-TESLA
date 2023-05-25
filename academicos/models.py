@@ -110,6 +110,7 @@ class CursoGrupo(models.Model):
         ("F", "F"),
         ("G", "G"),
         ("H", "H"),
+        ("DI", "DI"),
 
     )
     periodo = models.ForeignKey('core.Periodo', on_delete=models.CASCADE)
@@ -172,6 +173,24 @@ class Horario(models.Model):
         return f"{self.get_full_horario()} - {curso_nombre} - {grupo_nombre}"
 
 
+class Aplazado(models.Model):
+    MODALIDAD = (
+        ("P", "PRESENCIAL"),
+        ("V", "VIRTUAL"),
+
+    )
+
+    docente = models.ForeignKey(Docente, on_delete=models.CASCADE, null=True, blank=True)
+    resolucion = models.CharField(max_length=50, null=True, blank=True)
+    fecha = models.DateField(null=True, blank=True)
+    observacion = models.CharField(max_length=50, null=True, blank=True)
+    modalidad = models.CharField(max_length=50, choices=MODALIDAD)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.docente.full_name()} - {self.fecha} - {self.modalidad}"
+
+
 class Matricula(models.Model):
     expediente = models.ForeignKey(
         "admision.Expediente", on_delete=models.CASCADE)
@@ -181,7 +200,8 @@ class Matricula(models.Model):
     is_publicado = models.BooleanField(default=False)
     is_cerrado = models.BooleanField(default=False)  
     is_retirado = models.BooleanField(default=False) 
-    is_aplazado = models.BooleanField(default=False) 
+    is_aplazado = models.BooleanField(default=False)
+    is_dirigido = models.BooleanField(default=False)
     promedio_final_aplazado = models.DecimalField(max_digits=4,decimal_places=2,null=True, blank=True)
     obs_aplazado = models.CharField(max_length=100,null=True, blank=True)
     fecha_aplazado = models.DateField(auto_now=False,auto_now_add=False,null=True, blank=True)
@@ -215,5 +235,6 @@ class Matricula(models.Model):
     @staticmethod
     def get_progreso_academico_by_expediente(expediente_id):
         return Matricula.objects.filter(expediente__id=expediente_id,is_retirado=False,is_cerrado=True)
+
 
 
