@@ -13,6 +13,7 @@ from academicos.models import (
     Matricula,
     Programa,
     RequisitoCurso,
+    Aplazado,
 )
 from academicos.serializers import (
     CursoGrupoSerializer,
@@ -101,7 +102,9 @@ def get_cursos_by_programa_id(request):
         if tipo_programa == 1:
             matriculas = (
                 Matricula.objects.filter(
-                    Q(promedio_final__isnull=True) | Q(promedio_final__gte=14) | Q(promedio_final_aplazado__gte=14),
+                    Q(promedio_final__isnull=True)
+                    | Q(promedio_final__gte=14)
+                    | Q(promedio_final_aplazado__gte=14),
                     expediente_id=expediente_id,
                 )
                 .exclude(is_retirado=True)
@@ -111,7 +114,9 @@ def get_cursos_by_programa_id(request):
         elif tipo_programa == 2:
             matriculas = (
                 Matricula.objects.filter(
-                    Q(promedio_final__isnull=True) | Q(promedio_final__gte=15) | Q(promedio_final_aplazado__gte=15),
+                    Q(promedio_final__isnull=True)
+                    | Q(promedio_final__gte=15)
+                    | Q(promedio_final_aplazado__gte=15),
                     expediente_id=expediente_id,
                 )
                 .exclude(is_retirado=True)
@@ -593,7 +598,7 @@ def get_progreso_academico_by_expediente_id(request):
         cursos = (
             Matricula.get_progreso_academico_by_expediente(expediente_id)
             .exclude(is_retirado=True)
-            .order_by("curso_grupo__curso__codigo")
+            .order_by("periodo", "curso_grupo__curso__codigo")
         )
         data = []
 
@@ -637,6 +642,7 @@ def get_periodos_by_expediente_id(request):
             "periodo__is_active_matricula",
         )
         .distinct()
+        .order_by("periodo__id")
     )
     obj_periodos = []
     for periodo in periodos:
@@ -650,3 +656,198 @@ def get_periodos_by_expediente_id(request):
         }
         obj_periodos.append(obj_periodo)
     return Response(obj_periodos)
+
+
+@api_view(["POST"])
+def get_periodos_by_docente_id(request):
+    persona_id = request.data.get("persona_id")
+    periodos = (
+        Matricula.objects.filter(curso_grupo__docente__persona__id=persona_id)
+        .values(
+            "periodo__id",
+            "periodo__nombre",
+            "periodo__fecha_inicio",
+            "periodo__fecha_fin",
+            "periodo__is_active",
+            "periodo__is_active_matricula",
+        )
+        .distinct()
+        .order_by("periodo__id")
+    )
+    obj_periodos = []
+    for periodo in periodos:
+        obj_periodo = {
+            "id": periodo["periodo__id"],
+            "nombre": periodo["periodo__nombre"],
+            "fecha_inicio": periodo["periodo__fecha_inicio"],
+            "fecha_fin": periodo["periodo__fecha_fin"],
+            "is_active": periodo["periodo__is_active"],
+            "is_active_matricula": periodo["periodo__is_active_matricula"],
+        }
+        obj_periodos.append(obj_periodo)
+    return Response(obj_periodos)
+
+
+@api_view(["POST"])
+def get_periodos_by_aplazado_by_docente_id(request):
+    persona_id = request.data.get("persona_id")
+    periodos = (
+        Matricula.objects.filter(
+            aplazado__docente__persona__id=persona_id, is_aplazado=True
+        )
+        .values(
+            "periodo__id",
+            "periodo__nombre",
+            "periodo__fecha_inicio",
+            "periodo__fecha_fin",
+            "periodo__is_active",
+            "periodo__is_active_matricula",
+        )
+        .distinct()
+        .order_by("periodo__id")
+    )
+    obj_periodos = []
+    for periodo in periodos:
+        obj_periodo = {
+            "id": periodo["periodo__id"],
+            "nombre": periodo["periodo__nombre"],
+            "fecha_inicio": periodo["periodo__fecha_inicio"],
+            "fecha_fin": periodo["periodo__fecha_fin"],
+            "is_active": periodo["periodo__is_active"],
+            "is_active_matricula": periodo["periodo__is_active_matricula"],
+        }
+        obj_periodos.append(obj_periodo)
+    return Response(obj_periodos)
+
+
+@api_view(["GET"])
+def get_cursos_aplazado_by_docente(request):
+    if request.method == "GET":
+        persona_id = request.GET.get("persona_id")
+        periodo_id = request.GET.get("periodo_id")
+        cursos = (
+            Matricula.objects.filter(
+                aplazado__docente__persona_id=persona_id,
+                periodo_id=periodo_id,
+                is_aplazado=True,
+            )
+            .distinct("curso_grupo_id")
+            .values(
+                "curso_grupo_id",
+                "curso_grupo__curso__id",
+                "curso_grupo__curso__nombre",
+                "curso_grupo__grupo",
+                "curso_grupo__curso__plan_estudio__programa__nombre",
+                "aplazado_id",
+            )
+        )
+        obj_cursos = []
+        for curso in cursos:
+            obj_curso = {
+                "id": curso["curso_grupo_id"],
+                "curso_id": curso["curso_grupo__curso__id"],
+                "curso_nombre": curso["curso_grupo__curso__nombre"],
+                "grupo": curso["curso_grupo__grupo"],
+                "programa_nombre": curso[
+                    "curso_grupo__curso__plan_estudio__programa__nombre"
+                ],
+                "aplazado_id": curso["aplazado_id"],
+            }
+            obj_cursos.append(obj_curso)
+        return Response(obj_cursos)
+
+
+@api_view(["GET"])
+def get_alumnos_aplazado_curso_grupo_by_id(request):
+    if request.method == "GET":
+        curso_grupo_id = request.GET.get("curso_grupo_id")
+        persona_id = request.GET.get("persona_id")
+        matriculas = Matricula.objects.filter(
+            curso_grupo_id=curso_grupo_id,
+            aplazado__docente__persona_id=persona_id,
+            is_aplazado=True,
+        )
+        expedientes = []
+        for matricula in matriculas:
+            obj_expediente = {
+                "expediente_id": matricula.expediente.id,
+                "promedio_final_aplazado": matricula.promedio_final_aplazado,
+            }
+
+            expedientes.append(obj_expediente)
+        alumnos = []
+        for expediente in expedientes:
+            alumno = Expediente.get_alumno_by_expediente_id(expediente["expediente_id"])
+            promedio_final_aplazado = expediente["promedio_final_aplazado"]
+            serializer = ExpedienteAlumnoSerializer(alumno)
+            alumnos.append(
+                {**serializer.data, "promedio_final_aplazado": promedio_final_aplazado}
+            )
+        return Response(alumnos)
+
+
+@api_view(["PUT"])
+def save_notas_aplazado(request):
+    if request.method == "PUT":
+        data = request.data
+        periodo_id = data.get("periodo_id")
+        curso_grupo_id = data.get("curso_grupo_id")
+        alumnos = data.get("alumnos")
+        for alumno in alumnos:
+            if alumno["promedio_final_aplazado"] is not None:
+                if (
+                    float(alumno["promedio_final_aplazado"]) >= 0.0
+                    and float(alumno["promedio_final_aplazado"]) <= 20.0
+                ):
+                    matricula_obj = Matricula.objects.filter(
+                        periodo_id=periodo_id,
+                        curso_grupo_id=curso_grupo_id,
+                        expediente_id=alumno["id"],
+                        is_aplazado=True,
+                    )
+                    for matricula in matricula_obj:
+                        matricula.promedio_final_aplazado = float(
+                            alumno["promedio_final_aplazado"]
+                        )
+                        matricula.save()
+                else:
+                    return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_estado_notas_curso_aplazado_by_id(request):
+    if request.method == "GET":
+        aplazado_id = request.GET.get("aplazado_id")
+        aplazado_obj = Aplazado.objects.filter(id=aplazado_id).first()
+        if aplazado_obj:
+            return Response(
+                {
+                    "is_cerrado": aplazado_obj.is_cerrado,
+                    "is_publicado": aplazado_obj.is_publicado,
+                }
+            )
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(["POST"])
+def publicar_notas_aplazado(request):
+    if request.method == "POST":
+        data = request.data
+        aplazado_id = data.get("aplazado_id")
+        aplazado_obj = Aplazado.objects.filter(id=aplazado_id).first()
+        aplazado_obj.is_publicado = True
+        aplazado_obj.save()
+        return Response(status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def cerrar_acta_aplazado(request):
+    if request.method == "POST":
+        data = request.data
+        aplazado_id = data.get("aplazado_id")
+        aplazado_obj = Aplazado.objects.filter(id=aplazado_id).first()
+        aplazado_obj.is_cerrado = True
+        aplazado_obj.save()
+        return Response(status=status.HTTP_200_OK)

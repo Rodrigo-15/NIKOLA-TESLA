@@ -12,7 +12,7 @@ from pickle import TRUE
 import time
 from django.conf import settings
 from django.http import HttpResponse
-from academicos.models import CursoGrupo, Cursos, PlanEstudio
+from academicos.models import CursoGrupo, Cursos, Aplazado
 import datetime
 from desk.models import Procedure, ProcedureTracing
 from xlsxwriter.workbook import Workbook
@@ -75,7 +75,7 @@ def reporte_economico_alumno(request):
     costo_total_pension = cuotas * costo
 
     # COSTO TOTAL MATRICULA
-    cantidad_matriculas = expediente.programa.tipo.cantidad_matriculas
+    cantidad_matriculas = expediente.programa.cantidad_matriculas
     concepto = Concepto.objects.filter(
         codigo="531", nombre="MATRICULA MAESTRIA Y DOCTORADOS"
     ).first()
@@ -627,7 +627,6 @@ def reporte_acta_function(cursogrupo_id, periodo_id):
     creditos = cursogrupo.curso.creditos
     grupo = cursogrupo.grupo
     fecha_inicio = cursogrupo.fecha_inicio
-    print(grupo)
     fecha_termino = cursogrupo.fecha_termino
     resolucion = cursogrupo.resolucion
     docentenombre = cursogrupo.docente.persona.nombres
@@ -750,7 +749,7 @@ def reporte_economico_alumno_api(request):
         costo_total_pension = cuotas * costo
 
         # COSTO TOTAL MATRICULA
-        cantidad_matriculas = expediente.programa.tipo.cantidad_matriculas
+        cantidad_matriculas = expediente.programa.cantidad_matriculas
         concepto = Concepto.objects.filter(
             codigo="531", nombre="MATRICULA MAESTRIA Y DOCTORADOS"
         ).first()
@@ -944,7 +943,7 @@ def reporte_economico_function(numero_documento):
     costo_total_pension = cuotas * costo
 
     # COSTO TOTAL MATRICULA
-    cantidad_matriculas = expediente.programa.tipo.cantidad_matriculas
+    cantidad_matriculas = expediente.programa.cantidad_matriculas
     concepto = Concepto.objects.filter(
         codigo="531", nombre="MATRICULA MAESTRIA Y DOCTORADOS"
     ).first()
@@ -1126,7 +1125,9 @@ def reporte_academico_function(expediente_id):
         )
         condicion = "GRADUADO"
     # DATOS CURSOS
-    obj_curso = Cursos.objects.filter(plan_estudio__programa__id=expediente.programa.id)
+    obj_curso = Cursos.objects.filter(
+        plan_estudio__programa__id=expediente.programa.id
+    ).order_by("codigo")
     cursos = []
     total_creditos = 0
     for curso in obj_curso:
@@ -1150,6 +1151,9 @@ def reporte_academico_function(expediente_id):
                     else:
                         nota = ""
                         det_acta = "APLAZADO"
+                elif obj_nota.is_dirigido == True:
+                    nota = obj_nota.promedio_final
+                    det_acta = "DIRIGIDO"
                 else:
                     nota = obj_nota.promedio_final
                     det_acta = "REGULAR"
@@ -1469,3 +1473,150 @@ def reporte_economico_expediente_api(request):
                 ).replace(",", "."),
             }
         )
+
+
+@api_view(["POST"])
+def get_reporte_actanotas_aplazado_pdf(request):
+    aplazado_id = request.data.get("aplazado_id")
+    cursogrupo_id = request.data.get("cursogrupo_id")
+    periodo_id = request.data.get("periodo_id")
+    actanotas = reporte_acta_aplazado_function(cursogrupo_id, aplazado_id, periodo_id)
+    #
+    media_root = settings.MEDIA_ROOT
+    pdf_folder = os.path.join(media_root, "pdf")
+    if not os.path.exists(pdf_folder):
+        os.makedirs(pdf_folder)
+    #
+    html_string = render_to_string("reports/reporte-actanotas-aplazado.html", actanotas)
+    html = HTML(string=html_string)
+    milisecond = str(int(round(time.time() * 1000)))
+    pdf_file_name = os.path.join(
+        pdf_folder,
+        "reporte-actanotas-aplazado-{}-{}-{}.pdf".format(
+            cursogrupo_id, aplazado_id, milisecond
+        ),
+    )
+    if os.path.exists(pdf_file_name):
+        os.remove(pdf_file_name)
+    html.write_pdf(target=pdf_file_name)
+    path_return = os.path.join(
+        settings.MEDIA_URL,
+        "pdf",
+        "reporte-actanotas-aplazado-{}-{}-{}.pdf".format(
+            cursogrupo_id, aplazado_id, milisecond
+        ),
+    )
+    path_return = path_return.replace("\\", "/")
+    return Response({"path": path_return})
+
+
+def reporte_acta_aplazado_function(cursogrupo_id, aplazado_id, periodo_id):
+
+    periodo = Periodo.objects.get(id=periodo_id)
+    cursogrupo = CursoGrupo.objects.get(id=cursogrupo_id)
+    aplazado = Aplazado.objects.get(id=aplazado_id)
+    #
+    cursonombre = cursogrupo.curso.nombre
+    creditos = cursogrupo.curso.creditos
+    grupo = cursogrupo.grupo
+
+    # aplazado
+    fecha = aplazado.fecha
+    resolucion = aplazado.resolucion
+    docentenombre = aplazado.docente.persona.nombres
+    docenteapellidos = (
+        aplazado.docente.persona.apellido_paterno
+        + " "
+        + aplazado.docente.persona.apellido_materno
+    )
+    num_acta = aplazado.num_acta
+    #
+
+    programa = cursogrupo.curso.plan_estudio.programa.nombre
+    #
+    matriculas = Matricula.get_curso_grupo_aplazado_by_id(cursogrupo_id, aplazado_id)
+    expedientes = []
+    for matricula in matriculas:
+        obj_expediente = {
+            "expediente_id": matricula.expediente.id,
+            "promedio_final": matricula.promedio_final_aplazado,
+        }
+
+        expedientes.append(obj_expediente)
+    alumnos = []
+    num_orden = 0
+    numeros_letras = [
+        {"nombre": "Cero"},
+        {"nombre": "Uno"},
+        {"nombre": "Dos"},
+        {"nombre": "Tres"},
+        {"nombre": "Cuatro"},
+        {"nombre": "Cinco"},
+        {"nombre": "Seis"},
+        {"nombre": "Siete"},
+        {"nombre": "Ocho"},
+        {"nombre": "Nueve"},
+        {"nombre": "Diez"},
+        {"nombre": "Once"},
+        {"nombre": "Doce"},
+        {"nombre": "Trece"},
+        {"nombre": "Catorce"},
+        {"nombre": "Quince"},
+        {"nombre": "Dieciseis"},
+        {"nombre": "Diecisiete"},
+        {"nombre": "Dieciocho"},
+        {"nombre": "Diecinueve"},
+        {"nombre": "Veinte"},
+    ]
+    for expediente in expedientes:
+        num_orden += 1
+        alumno = Expediente.get_alumno_by_expediente_id(expediente["expediente_id"])
+        promedio_final = expediente["promedio_final"]
+        promedio_letra = numeros_letras[int(promedio_final)].get("nombre")
+        alumnos.append(
+            {
+                "alumno": alumno,
+                "promedio_final": promedio_final,
+                "num_orden": num_orden,
+                "promedio_letra": promedio_letra,
+            }
+        )
+
+    dia = datetime.datetime.now().day
+    anio = datetime.datetime.now().year
+    #
+    mes_id = datetime.datetime.now().strftime("%m")
+    mes_array = [
+        {"nombre": "Enero"},
+        {"nombre": "Febrero"},
+        {"nombre": "Marzo"},
+        {"nombre": "Abril"},
+        {"nombre": "Mayo"},
+        {"nombre": "Junio"},
+        {"nombre": "Julio"},
+        {"nombre": "Agosto"},
+        {"nombre": "Septiembre"},
+        {"nombre": "Octubre"},
+        {"nombre": "Noviembre"},
+        {"nombre": "Diciembre"},
+    ]
+    mes_name = mes_array[int(mes_id) - 1].get("nombre")
+    fecha_actual_str = f"{dia} de {mes_name} de {anio}"
+    grupo_id = str(cursogrupo_id).rjust(5, "0")
+    return {
+        "actanotas": {
+            "cursogrupo_id": grupo_id,
+            "periodo": periodo,
+            "cursonombre": cursonombre,
+            "creditos": creditos,
+            "docentenombre": docentenombre,
+            "docenteapellidos": docenteapellidos,
+            "programa_nombre": programa,
+            "grupo": grupo,
+            "alumnos": alumnos,
+            "fecha": fecha,
+            "resolucion": resolucion,
+            "num_acta": num_acta,
+            "fecha_actual_str": fecha_actual_str,
+        }
+    }

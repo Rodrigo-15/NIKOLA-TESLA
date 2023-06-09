@@ -1,4 +1,3 @@
-
 from django.db import models
 
 from core.models import Periodo
@@ -21,14 +20,13 @@ class Facultad(models.Model):
 
 class TipoPrograma(models.Model):
     nombre = models.CharField(max_length=50)
-    cantidad_matriculas = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
         self.nombre = self.nombre.upper()
         super(TipoPrograma, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.nombre} - {self.cantidad_matriculas}"
+        return f"{self.nombre}"
 
 
 class Programa(models.Model):
@@ -38,6 +36,7 @@ class Programa(models.Model):
     tipo = models.ForeignKey(TipoPrograma, on_delete=models.CASCADE)
     facultad = models.ForeignKey(Facultad, on_delete=models.CASCADE)
     costo = models.DecimalField(max_digits=10, decimal_places=2)
+    cantidad_matriculas = models.IntegerField(default=0)
     cuotas = models.IntegerField(default=1)
 
     def __str__(self):
@@ -46,8 +45,6 @@ class Programa(models.Model):
     @staticmethod
     def get_programa_by_id(programa_id):
         return Programa.objects.filter(id=programa_id).first()
-
-    
 
 
 class PlanEstudio(models.Model):
@@ -68,17 +65,26 @@ class Cursos(models.Model):
     codigo = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.id}. {self.nombre} - {self.ciclo} - {self.creditos} - {self.codigo}"
-    
+        return (
+            f"{self.id}. {self.nombre} - {self.ciclo} - {self.creditos} - {self.codigo}"
+        )
+
     @staticmethod
     def get_cursos_by_programa_id(programa_id):
         return Cursos.objects.filter(plan_estudio__programa_id=programa_id)
-    
+
+
 class RequisitoCurso(models.Model):
-      curso = models.ForeignKey(Cursos,null=False, on_delete=models.CASCADE,related_name='curso_set')
-      requisito = models.ForeignKey(Cursos,null=False, on_delete=models.CASCADE,related_name='requisito_set')
-      def __str__(self):
+    curso = models.ForeignKey(
+        Cursos, null=False, on_delete=models.CASCADE, related_name="curso_set"
+    )
+    requisito = models.ForeignKey(
+        Cursos, null=False, on_delete=models.CASCADE, related_name="requisito_set"
+    )
+
+    def __str__(self):
         return f"{self.curso.codigo}-{self.curso.nombre}|{self.requisito.codigo}-{self.requisito.nombre}"
+
 
 class Docente(models.Model):
     GRADOS = (
@@ -87,10 +93,10 @@ class Docente(models.Model):
         ("P", "Postdoctorado"),
     )
 
-    persona = models.OneToOneField('core.Persona', on_delete=models.CASCADE)
+    persona = models.OneToOneField("core.Persona", on_delete=models.CASCADE)
     grado_academico = models.CharField(max_length=50, choices=GRADOS)
     is_active = models.BooleanField(default=True)
-     
+
     def full_name(self):
         if not self.persona:
             return ""
@@ -98,7 +104,7 @@ class Docente(models.Model):
 
     def __str__(self):
         return f"{self.full_name()} - {self.grado_academico}"
-       
+
 
 class CursoGrupo(models.Model):
     GRUPOS = (
@@ -110,12 +116,14 @@ class CursoGrupo(models.Model):
         ("F", "F"),
         ("G", "G"),
         ("H", "H"),
-
+        ("DI", "DI"),
     )
-    periodo = models.ForeignKey('core.Periodo', on_delete=models.CASCADE)
+    periodo = models.ForeignKey("core.Periodo", on_delete=models.CASCADE)
     curso = models.ForeignKey(Cursos, on_delete=models.CASCADE)
     grupo = models.CharField(max_length=50, choices=GRUPOS)
-    docente = models.ForeignKey(Docente, on_delete=models.CASCADE, null=True, blank=True)
+    docente = models.ForeignKey(
+        Docente, on_delete=models.CASCADE, null=True, blank=True
+    )
     limite_registros = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
     fecha_inicio = models.DateField(null=True, blank=True)
@@ -123,21 +131,23 @@ class CursoGrupo(models.Model):
     resolucion = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
-        docente = self.docente.full_name() if self.docente else 'No asignado'
+        docente = self.docente.full_name() if self.docente else "No asignado"
         return f"{self.id} - {self.curso.nombre} - {self.grupo} - {docente} (Programa: {self.curso.plan_estudio.programa.nombre})"
-    
+
     @staticmethod
-    def get_cursos_grupos_by_curso(curso_id,periodo_id):
+    def get_cursos_grupos_by_curso(curso_id, periodo_id):
         return CursoGrupo.objects.filter(curso__id=curso_id, periodo__id=periodo_id)
-    
+
     @staticmethod
     def get_cursos_grupos_by_cursos(cursos_ids):
         return CursoGrupo.objects.filter(curso_id__in=cursos_ids).order_by("grupo")
-    
+
     @staticmethod
     def get_cursos_by_docente(persona_id, periodo_id):
-        return CursoGrupo.objects.filter(docente__persona_id=persona_id, periodo_id=periodo_id).order_by("grupo")
-    
+        return CursoGrupo.objects.filter(
+            docente__persona_id=persona_id, periodo_id=periodo_id
+        ).order_by("grupo")
+
 
 class Horario(models.Model):
     DIAS = (
@@ -148,15 +158,17 @@ class Horario(models.Model):
         (5, "Viernes"),
         (6, "Sabado"),
         (7, "Domingo"),
-    )     
-    curso_grupo = models.ForeignKey(CursoGrupo, on_delete=models.CASCADE, null=True, blank=True)
+    )
+    curso_grupo = models.ForeignKey(
+        CursoGrupo, on_delete=models.CASCADE, null=True, blank=True
+    )
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
-    dia = models.IntegerField(choices=DIAS)     
+    dia = models.IntegerField(choices=DIAS)
     is_active = models.BooleanField(default=True)
-    
+
     def get_dia(self):
-        return self.DIAS[self.dia - 1][1]     
+        return self.DIAS[self.dia - 1][1]
 
     def get_full_horario(self):
         return f"{self.get_dia()} - {self.hora_inicio} - {self.hora_fin}"
@@ -165,29 +177,65 @@ class Horario(models.Model):
     def get_horarios_by_curso_grupo(curso_grupo_id):
         return Horario.objects.filter(curso_grupo__id=curso_grupo_id)
 
-
-    def __str__(self):         
-        curso_nombre = self.curso_grupo.curso.nombre if self.curso_grupo else 'No asignado'
-        grupo_nombre = self.curso_grupo.grupo if self.curso_grupo else 'No asignado'
+    def __str__(self):
+        curso_nombre = (
+            self.curso_grupo.curso.nombre if self.curso_grupo else "No asignado"
+        )
+        grupo_nombre = self.curso_grupo.grupo if self.curso_grupo else "No asignado"
         return f"{self.get_full_horario()} - {curso_nombre} - {grupo_nombre}"
 
 
-class Matricula(models.Model):
-    expediente = models.ForeignKey(
-        "admision.Expediente", on_delete=models.CASCADE)
-    curso_grupo = models.ForeignKey(CursoGrupo, on_delete=models.CASCADE, null=True, blank=True)
-    periodo = models.ForeignKey(Periodo, on_delete=models.CASCADE)
-    promedio_final = models.DecimalField(max_digits=4,decimal_places=2,null=True, blank=True, )
+class Aplazado(models.Model):
+    MODALIDAD = (
+        ("P", "PRESENCIAL"),
+        ("V", "VIRTUAL"),
+    )
+
+    docente = models.ForeignKey(
+        Docente, on_delete=models.CASCADE, null=True, blank=True
+    )
+    resolucion = models.CharField(max_length=50, null=True, blank=True)
+    fecha = models.DateField(null=True, blank=True)
+    observacion = models.CharField(max_length=50, null=True, blank=True)
+    modalidad = models.CharField(max_length=50, choices=MODALIDAD)
+    num_acta = models.CharField(max_length=50, null=True, blank=True)
     is_publicado = models.BooleanField(default=False)
-    is_cerrado = models.BooleanField(default=False)  
-    is_retirado = models.BooleanField(default=False) 
-    is_aplazado = models.BooleanField(default=False) 
-    promedio_final_aplazado = models.DecimalField(max_digits=4,decimal_places=2,null=True, blank=True)
-    obs_aplazado = models.CharField(max_length=100,null=True, blank=True)
-    fecha_aplazado = models.DateField(auto_now=False,auto_now_add=False,null=True, blank=True)
-    fecha = models.DateField(auto_now_add=True,null=True, blank=True)
-    fecha_cierre_acta = models.DateField(auto_now=False,auto_now_add=False,null=True, blank=True)
-    fecha_modified = models.DateTimeField(auto_now=True,null=True, blank=True)
+    is_cerrado = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.docente.full_name()} - {self.fecha} - {self.modalidad}"
+
+
+class Matricula(models.Model):
+    expediente = models.ForeignKey("admision.Expediente", on_delete=models.CASCADE)
+    curso_grupo = models.ForeignKey(
+        CursoGrupo, on_delete=models.CASCADE, null=True, blank=True
+    )
+    periodo = models.ForeignKey(Periodo, on_delete=models.CASCADE)
+    promedio_final = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    is_publicado = models.BooleanField(default=False)
+    is_cerrado = models.BooleanField(default=False)
+    is_retirado = models.BooleanField(default=False)
+    is_aplazado = models.BooleanField(default=False)
+    is_dirigido = models.BooleanField(default=False)
+    aplazado = models.ForeignKey(
+        Aplazado, on_delete=models.CASCADE, null=True, blank=True
+    )
+    promedio_final_aplazado = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True
+    )
+    observacion = models.CharField(max_length=100, null=True, blank=True)
+    fecha = models.DateField(auto_now_add=True, null=True, blank=True)
+    fecha_cierre_acta = models.DateField(
+        auto_now=False, auto_now_add=False, null=True, blank=True
+    )
+    fecha_modified = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.id:
@@ -196,24 +244,50 @@ class Matricula(models.Model):
         super(Matricula, self).save(*args, **kwargs)
 
     def __str__(self):
-        curso_nombre = self.curso_grupo.curso.nombre if self.curso_grupo else 'No asignado'
-        grupo_nombre = self.curso_grupo.grupo if self.curso_grupo else 'No asignado'
+        curso_nombre = (
+            self.curso_grupo.curso.nombre if self.curso_grupo else "No asignado"
+        )
+        grupo_nombre = self.curso_grupo.grupo if self.curso_grupo else "No asignado"
         return f"{self.id} - Grupo: {grupo_nombre} - Curso: {curso_nombre} ({self.periodo.nombre}) {self.expediente.id}"
 
     @staticmethod
     def get_numero_registros_by_curso_grupo_periodo(curso_grupo_id, periodo_id):
-        return Matricula.objects.filter(curso_grupo__id=curso_grupo_id, periodo__id=periodo_id).count()
-    
+        return Matricula.objects.filter(
+            curso_grupo__id=curso_grupo_id, periodo__id=periodo_id
+        ).count()
+
     @staticmethod
     def get_matricula_by_expediente_periodo(expediente_id, periodo_id):
-        return Matricula.objects.filter(expediente__id=expediente_id, periodo__id=periodo_id,is_retirado=False)
-    
+        return Matricula.objects.filter(
+            expediente__id=expediente_id, periodo__id=periodo_id, is_retirado=False
+        )
+
     @staticmethod
     def get_curso_grupo_by_id(curso_grupo_id):
-        return Matricula.objects.filter(curso_grupo__id =curso_grupo_id, expediente__is_active=True, is_retirado = False).order_by('expediente__persona__apellido_paterno', 'expediente__persona__apellido_materno')
-    
+        return Matricula.objects.filter(
+            curso_grupo__id=curso_grupo_id,
+            expediente__is_active=True,
+            is_retirado=False,
+        ).order_by(
+            "expediente__persona__apellido_paterno",
+            "expediente__persona__apellido_materno",
+        )
+
     @staticmethod
     def get_progreso_academico_by_expediente(expediente_id):
-        return Matricula.objects.filter(expediente__id=expediente_id,is_retirado=False,is_cerrado=True)
+        return Matricula.objects.filter(
+            expediente__id=expediente_id, is_retirado=False, is_cerrado=True
+        )
 
-
+    @staticmethod
+    def get_curso_grupo_aplazado_by_id(curso_grupo_id, aplazado_id):
+        return Matricula.objects.filter(
+            curso_grupo__id=curso_grupo_id,
+            aplazado__id=aplazado_id,
+            expediente__is_active=True,
+            is_retirado=False,
+            is_aplazado=True,
+        ).order_by(
+            "expediente__persona__apellido_paterno",
+            "expediente__persona__apellido_materno",
+        )
