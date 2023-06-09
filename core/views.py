@@ -61,21 +61,35 @@ def paths(request):
 def get_person_list(request):
     if request.method == "POST":
         query = request.data.get("query")
-        if query.isdigit():
-            persons = Persona.objects.filter(numero_documento__icontains=query)[:10]
-        else:
-            persons = Persona.objects.filter(
-                reduce(
-                    lambda x, y: x | y,
-                    [Q(nombres__icontains=word) for word in query.split(" ")]
-                ) | reduce(
-                    lambda x, y: x | y,
-                    [Q(apellido_paterno__icontains=word) for word in query.split(" ")]
-                )
-            )[:10]
+        persons = []
 
-        if not persons:
+        if query.isdigit():
+            persons = Persona.objects.filter(numero_documento=query)[:10]
+        else:
+            query = query.upper()
+            persons = Persona.objects.filter(full_name__contains=query)[:10]
+
+        if len(persons) <= 0:
             return Response([])
 
         serializer = PersonListSerializer(persons, many=True)
     return Response(serializer.data)
+
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import permission_classes
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def change_profile_image(request):
+    if request.method == "POST":
+        user_id = request.user.id
+        user = User.objects.get(id=user_id)
+        person = Persona.objects.get(user=user)
+        foto = request.FILES.get("foto")
+        if not foto:
+            return Response({"message": "No se ha enviado ninguna imagen"}, status=400)
+        person.foto = foto
+        person.save()
+        return Response({"message": "Imagen de perfil actualizada"}, status=200)

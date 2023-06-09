@@ -241,7 +241,7 @@
 
         <main>
             <div class="subtitulo">
-                <p id="Reporte"><b><h1>ACTA DE NOTAS N°:{{actanotas.cursogrupo_id}}</h1></b></p>
+                <p id="Reporte"><b><h1>ACTA DE NOTAS N°:{{actanotas.cursogrupo_id}}-A{{actanotas.num_acta}}</h1></b></p>
             </div>
             <div class="container">
                 <div class="concepto">
@@ -272,7 +272,7 @@
                     <P>Grupo:</P>
                 </div>
                 <div class="datospersonal">
-                    <p>{{actanotas.grupo}}</p>
+                    <p>Aplazado</p>
                 </div>
             </div>
             <hr>
@@ -300,14 +300,12 @@
                 </tbody>
             </table>
             <br>
-            <div class="container" style="margin-top: 20px">
-                <div class="concepto">
+            <div class="container" style="margin-top: 10px">
+                <div class="concepto ">
                     <P>Resolucion:</P>
                     <p style="margin-left: 15px; font-size: 12px;">{{ actanotas.resolucion }}</p>
-                    <P>F. Inicio:</P>
-                    <p style="margin-left: 15px; font-size: 12px;">{{ actanotas.fecha_inicio }}</p>
-                    <P >F. Termino:</P>
-                    <p style="margin-left: 15px; font-size: 12px;">{{ actanotas.fecha_termino }}</p>
+                    <P>Fecha:</P>
+                    <p style="margin-left: 15px; font-size: 12px;">{{ actanotas.fecha }}</p>
                 </div>
                 <div class="datospersonal ">
                     <p></p>
@@ -320,7 +318,7 @@
                 <p>----------------------------------------</p>
                 <p>Firma del Docente</p>
                 <br>
-                <p>Iquitos, {{actanotas.fecha_actual_str}}</p>
+                <p>Iquitos, {{actanotas.fecha}}</p>
             </div>
             <br>
             <br>
@@ -329,7 +327,7 @@
             <br>
             <div style="font-size: 10px; ">
                 
-                <p><b>Este documento se ha impreso del sistema de notas de la escuela de postgrado con código : {{actanotas.cursogrupo_id}}</b></p>
+                <p><b>Este documento se ha impreso del sistema de notas de la escuela de postgrado con código : {{actanotas.cursogrupo_id}}-A{{actanotas.num_acta}}, con fecha {{actanotas.fecha_actual_str}}</b></p>
             </div>
         </main>
     </section>

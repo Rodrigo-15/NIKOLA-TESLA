@@ -70,4 +70,44 @@ urlpatterns = [
         get_periodos_by_expediente_id,
         name="get_periodos_by_expediente_id",
     ),
+    path(
+        "get_periodos_by_docente_id",
+        get_periodos_by_docente_id,
+        name="get_periodos_by_docente_id",
+    ),
+    path(
+        "get_periodos_by_aplazado_by_docente_id",
+        get_periodos_by_aplazado_by_docente_id,
+        name="get_periodos_by_aplazado_by_docente_id",
+    ),
+    path(
+        "get_cursos_aplazado_by_docente",
+        get_cursos_aplazado_by_docente,
+        name="get_cursos_aplazado_by_docente",
+    ),
+    path(
+        "get_alumnos_aplazado_curso_grupo_by_id",
+        get_alumnos_aplazado_curso_grupo_by_id,
+        name="get_alumnos_aplazado_curso_grupo_by_id",
+    ),
+    path(
+        "save_notas_aplazado",
+        save_notas_aplazado,
+        name="save_notas_aplazado",
+    ),
+    path(
+        "get_estado_notas_curso_aplazado_by_id",
+        get_estado_notas_curso_aplazado_by_id,
+        name="get_estado_notas_curso_aplazado_by_id",
+    ),
+    path(
+        "publicar_notas_aplazado",
+        publicar_notas_aplazado,
+        name="publicar_notas_aplazado",
+    ),
+    path(
+        "cerrar_acta_aplazado",
+        cerrar_acta_aplazado,
+        name="cerrar_acta_aplazado",
+    ),
 ]

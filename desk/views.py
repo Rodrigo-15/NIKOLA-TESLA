@@ -1,6 +1,11 @@
 from rest_framework.permissions import IsAuthenticated
 from backend.settings import URL_LOCAL, URL_PROD
-from core.serializers import PersonSerializer, AreaSerializer, CargoAreaPersonSerializer
+from core.serializers import (
+    CargoAreaSerializer,
+    PersonSerializer,
+    AreaSerializer,
+    CargoAreaPersonSerializer,
+)
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from desk.NAMES import APP_NAME
@@ -19,12 +24,16 @@ from core.models import Apps, Menu, Persona, Area
 from desk.serializers import ProcedureListSerializer, ProcedureSerializer
 from core.decorators import check_app_name, check_is_auth, check_credentials
 from core.models import Persona, CargoArea
-from desk.models import Procedure, ProcedureTracing, Procedure_ProcReq, ProcedureRequirement
+from desk.models import (
+    Procedure,
+    ProcedureTracing,
+    Procedure_ProcReq,
+    ProcedureRequirement,
+)
 from desk.serializers import (
     ProcedureSerializer,
     ProcedureTracingSerializer,
     ProcedureTracingsList,
-    ProcedureRequirementSerializer
 )
 
 # Create your views here.
@@ -69,6 +78,7 @@ def get_procedures(request):
         counters = get_counters_procedure(date, code_number, area)
 
         procedures = []
+
         if state == "started":
             procedures = get_started_procedures()
         elif state == "in_progress":
@@ -139,13 +149,11 @@ def get_counters_procedure(date=None, code_number=None, area=None):
     counters["finished"]["total"] = len(procedures_finished)
 
     if date:
-        procedures_started = procedures_started.filter(
-            created_at__icontains=date)
+        procedures_started = procedures_started.filter(created_at__icontains=date)
         procedures_in_progress = procedures_in_progress.filter(
             created_at__icontains=date
         )
-        procedures_finished = procedures_finished.filter(
-            created_at__icontains=date)
+        procedures_finished = procedures_finished.filter(created_at__icontains=date)
 
     if code_number:
         procedures_started = procedures_started.filter(
@@ -159,10 +167,8 @@ def get_counters_procedure(date=None, code_number=None, area=None):
         )
 
     serializer_started = ProcedureListSerializer(procedures_started, many=True)
-    serializer_in_progress = ProcedureListSerializer(
-        procedures_in_progress, many=True)
-    serializer_finished = ProcedureListSerializer(
-        procedures_finished, many=True)
+    serializer_in_progress = ProcedureListSerializer(procedures_in_progress, many=True)
+    serializer_finished = ProcedureListSerializer(procedures_finished, many=True)
 
     counters["started"]["count"] = len(serializer_started.data)
     counters["in_progress"]["count"] = len(serializer_in_progress.data)
@@ -219,7 +225,7 @@ def login(request):
 
             app = Apps.objects.filter(name=app_name).first()
             menu = Menu.objects.filter(app=app).first()
-            
+
             is_group_valid_app = False
             for group in groups:
                 if group in menu.groups.all():
@@ -240,11 +246,18 @@ def login(request):
             )
             person_data = PersonSerializer(person).data
             from backend.settings import DEBUG, URL_LOCAL, URL_PROD
+
             url = URL_LOCAL if DEBUG else URL_PROD
             path = person_data["foto"]
             if path:
                 path = path.replace("/media", "media")
                 person_data["foto"] = url + path
+
+            cargo_area = CargoArea.objects.filter(persona=person).first()
+            if not cargo_area:
+                area = {}
+            area = AreaSerializer(cargo_area.area).data
+
             return Response(
                 {
                     "user": UserSerializer(user).data,
@@ -252,6 +265,7 @@ def login(request):
                     "token": token.key,
                     "person": person_data,
                     "headquarter": headquarter,
+                    "area": area,
                 }
             )
         else:
@@ -270,6 +284,7 @@ def get_filter_procedures_by_area(procedures, area):
     )
     procedures = procedures.filter(id__in=procedure_ids_in_trackings)
     return procedures
+
 
 def get_started_procedures():
     """Get Procedures that have just one TracingProcedure and it is not finished"""
@@ -296,9 +311,9 @@ def get_in_progress_procedures():
         .filter(count__gt=1)
         .values("procedure_id"),
     ).exclude(
-        procedure_id__in=ProcedureTracing.objects.filter(
-            is_finished=True
-        ).values("procedure_id")
+        procedure_id__in=ProcedureTracing.objects.filter(is_finished=True).values(
+            "procedure_id"
+        )
     )
     serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
 
@@ -324,7 +339,6 @@ def get_dashboard_procedures(request):
         procedures_started = counters.get("started").get("count")
         procedures_in_progress = counters.get("in_progress").get("count")
         procedures_finished = counters.get("finished").get("count")
-
 
         return Response(
             {
@@ -373,6 +387,11 @@ def save_procedure(request):
         headquarter_id = headquarter["headquarter_id"]
         if not headquarter:
             headquarter_id = 1
+
+        number_of_sheets = request.data["number_of_sheets"]
+        if not number_of_sheets:
+            number_of_sheets = 0
+
         area_user = CargoArea.objects.filter(persona__user_id=user_id).first()
         file = File.objects.filter(person_id=person_id).first()
 
@@ -386,6 +405,7 @@ def save_procedure(request):
             reference_doc_number=reference_doc_number,
             headquarter_id=headquarter_id,
             user_id=user_id,
+            number_of_sheets=number_of_sheets,
         )
 
         ProcedureTracing.objects.create(
@@ -395,8 +415,7 @@ def save_procedure(request):
         )
 
         return Response(
-            status=status.HTTP_200_OK, data={
-                "code_number": procedure.code_number}
+            status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
         )
 
 
@@ -408,6 +427,7 @@ def update_procedure(request):
             subject = request.data["subject"]
             description = request.data["description"]
             reference_doc_number = request.data["reference_doc_number"]
+            number_of_sheets = request.data["number_of_sheets"]
         except KeyError:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
@@ -418,6 +438,7 @@ def update_procedure(request):
                         "subject",
                         "description",
                         "reference_doc_number",
+                        "number_of_sheets",
                     ],
                 },
             )
@@ -435,6 +456,7 @@ def update_procedure(request):
         procedure.subject = subject
         procedure.description = description
         procedure.reference_doc_number = reference_doc_number
+        procedure.number_of_sheets = number_of_sheets
         procedure.save()
 
         data = ProcedureSerializer(procedure).data
@@ -478,25 +500,43 @@ def save_derive_procedure(request):
     if request.method == "POST":
         procedure_id = request.data["procedure_id"]
         user_id = request.data["user_id"]
+        number_of_sheets = (
+            request.data["number_of_sheets"]
+            if "number_of_sheets" in request.data
+            else 0
+        )
+
         from_area_id = (
             CargoArea.objects.filter(persona__user_id=user_id).first().area_id
         )
         to_area_id = request.data["to_area_id"]
         action = request.data["action"]
         ref_procedure_tracking_id = (
-            ProcedureTracing.objects.filter(
-                procedure_id=procedure_id).last().id
+            ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
         )
         assigned_user_id = request.data["assigned_user_id"]
-        # to_area_id != none
+        if assigned_user_id == 0:
+            assigned_user_id = None
 
-        procedure_tracing = ProcedureTracing.objects.filter(
-            is_approved=False, procedure_id=procedure_id
-        ).exclude(to_area_id=None).first()
+        procedure_tracing = (
+            ProcedureTracing.objects.filter(
+                is_approved=False, procedure_id=procedure_id
+            )
+            .exclude(to_area_id=None)
+            .first()
+        )
 
         if procedure_tracing:
-            return Response(status=status.HTTP_202_ACCEPTED,
-                            data={"message": "El tramite esta pendiente de aprobación por favor revise su bandeja de entrada"})
+            return Response(
+                status=status.HTTP_202_ACCEPTED,
+                data={
+                    "message": "El tramite esta pendiente de aprobación por favor revise su bandeja de entrada"
+                },
+            )
+
+        procedure = Procedure.objects.filter(id=procedure_id).first()
+        procedure.number_of_sheets = number_of_sheets
+        procedure.save()
 
         if assigned_user_id != None:
             ProcedureTracing.objects.create(
@@ -528,8 +568,13 @@ def save_derive_procedure(request):
 def get_tracings_to_approved(request):
     if request.method == "POST":
         user_id = request.data["user_id"]
-        area_id = CargoArea.objects.filter(
-            persona__user_id=user_id).first().area_id
+        area_id = CargoArea.objects.filter(persona__user_id=user_id).first()
+        if not area_id:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={"message": "El usuario no tiene un area asignada"},
+            )
+        area_id = area_id.area_id
         tracings_for_area = ProcedureTracing.objects.filter(
             to_area_id=area_id, is_approved=False, assigned_user_id=None
         ).order_by("-created_at")
@@ -556,8 +601,9 @@ def approve_tracing(request):
         tracing_id = request.data["tracing_id"]
         user_id = request.data["user_id"]
 
-        procedure_id = ProcedureTracing.objects.filter(
-            id=tracing_id).first().procedure_id
+        procedure_id = (
+            ProcedureTracing.objects.filter(id=tracing_id).first().procedure_id
+        )
 
         ProcedureTracing.objects.filter(id=tracing_id).update(is_approved=True)
 
@@ -565,8 +611,7 @@ def approve_tracing(request):
             CargoArea.objects.filter(persona__user_id=user_id).first().area_id
         )
         ref_procedure_tracking_id = (
-            ProcedureTracing.objects.filter(
-                procedure_id=procedure_id).last().id
+            ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
         )
 
         ProcedureTracing.objects.create(
@@ -606,8 +651,7 @@ def finally_trace_procedure(request):
         )
         action = request.data["action"]
         ref_procedure_tracking_id = (
-            ProcedureTracing.objects.filter(
-                procedure_id=procedure_id).last().id
+            ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
         )
         ProcedureTracing.objects.create(
             procedure_id=procedure_id,
@@ -628,15 +672,57 @@ def get_procedure_by_id(request, procedure_id):
         procedure = Procedure.objects.filter(id=procedure_id).first()
         data = ProcedureSerializer(procedure).data
         return Response(data)
-    
+
+
 @api_view(["POST"])
 def get_procedures_requirements(request):
     if request.method == "POST":
         procedure_type_id = request.data["procedure_type_id"]
-        requirements = Procedure_ProcReq.objects.filter( procedure_type_id=procedure_type_id, is_active=True)
+        requirements = Procedure_ProcReq.objects.filter(
+            procedure_type_id=procedure_type_id, is_active=True
+        )
         obj_requirements = []
         for r in requirements:
-            requirement = ProcedureRequirement.objects.filter(id=r.requirement_id).values('id','description')
+            requirement = ProcedureRequirement.objects.filter(
+                id=r.requirement_id
+            ).values("id", "description")
             obj_requirements.append(requirement[0])
-        return Response(obj_requirements) 
+        return Response(obj_requirements)
 
+
+@api_view(["GET"])
+@check_is_auth()
+def get_user_profile(request):
+    if request.method == "GET":
+        user_id = request.user.id
+        user = User.objects.filter(id=user_id).first()
+        groups = user.groups.all()
+        person = Persona.objects.get(user_id=user.id)
+        headquarter = (
+            CargoArea.objects.filter(persona_id=person.id)
+            .values("headquarter_id", "headquarter__name")
+            .first()
+        )
+        person_data = PersonSerializer(person).data
+        from backend.settings import DEBUG, URL_LOCAL, URL_PROD
+
+        url = URL_LOCAL if DEBUG else URL_PROD
+        path = person_data["foto"]
+        if path:
+            path = path.replace("/media", "media")
+            person_data["foto"] = url + path
+
+        cargo_area = CargoArea.objects.filter(persona=person).first()
+        if not cargo_area:
+            area = {}
+        area = AreaSerializer(cargo_area.area).data
+
+        return Response(
+            {
+                "user": UserSerializer(user).data,
+                "groups": GroupSerializer(groups, many=True).data,
+                "person": person_data,
+                "headquarter": headquarter,
+                "area": area,
+            }
+        )

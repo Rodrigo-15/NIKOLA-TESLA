@@ -57,4 +57,9 @@ urlpatterns = [
         get_process_tracking_sheet_pdf,
         name="get_process_tracking_sheet_pdf",
     ),
+    path(
+        "get_reporte_actanotas_aplazado_pdf/",
+        get_reporte_actanotas_aplazado_pdf,
+        name="get_reporte_actanotas_aplazado_pdf",
+    ),
 ]

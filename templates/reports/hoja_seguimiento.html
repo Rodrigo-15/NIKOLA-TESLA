@@ -78,6 +78,33 @@
         padding-left: 10px;
         text-align: left;
       }
+
+      .linea {
+        border-top: 1px solid #000;
+        margin: 10px 0;
+      }
+
+      /* quitar margen entre filas y columnas */
+      table,
+      tr,
+      td {
+        border-collapse: collapse;
+        padding: 5px;
+        margin: 5px;
+      }
+      /* ponerle bordere a las filas y columnas */
+
+      .table-borders-all table,
+      .table-borders-all tr,
+      .table-borders-all td {
+        border: 1px solid #000;
+        /* bajar la fueentee */
+        font-size: 10px;
+      }
+
+      .breack-normal {
+        page-break-inside: avoid;
+      }
     </style>
   </head>
   <body style="font-size: small">
@@ -100,7 +127,7 @@
     </header>
     <main>
       <div class="subtitulo">
-        <p id="Reporte">DECRETO N°{{ code_number }}-EPG-UNAP</p>
+        <p id="Reporte">EXPEDIENTE N°{{procedure.code_number }}-EPG-UNAP</p>
       </div>
 
       <table style="padding: 0; margin: 0">
@@ -111,7 +138,7 @@
 
           <td class="column-rigth">
             <p class="">
-              <b>{{ procedure_type_description}} </b>
+              <b>{{procedure.procedure_type_description}} </b>
             </p>
           </td>
         </tr>
@@ -122,7 +149,7 @@
           </td>
 
           <td class="column-rigth">
-            <p class="">{{subject}}</p>
+            <p class="">{{procedure.subject}}</p>
           </td>
         </tr>
 
@@ -132,7 +159,7 @@
           </td>
 
           <td class="column-rigth">
-            <p class="">{{created_at}}</p>
+            <p class="">{{procedure.created_at}}</p>
           </td>
         </tr>
 
@@ -142,10 +169,43 @@
           </td>
 
           <td class="column-rigth">
-            <p class="">{{description}}</p>
+            <p class="">{{procedure.description}}</p>
           </td>
         </tr>
       </table>
+
+      <div class="linea"></div>
+
+      <!-- <ul>
+        {% for movement in trackins %}
+        <li style="margin-top: 20px; margin-bottom: 20px" class="breack-normal">
+          {{ movement.action_log }}
+        </li>
+        {% endfor %}
+      </ul> -->
+
+      {% if trackins|length > 1 %}
+
+      <h3>Historial de acciones realizadas en el expendiente</h3>
+
+      <table class="table-borders-all">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for movement in trackins %}
+          <tr>
+            <td>{{ movement.date }}</td>
+            <td>{{ movement.action_log }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% endif %}
     </main>
   </body>
 </html>
