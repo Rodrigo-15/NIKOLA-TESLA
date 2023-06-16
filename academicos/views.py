@@ -82,6 +82,8 @@ def get_cursos_by_programa_id(request):
             pagos_total = (4 * obj_programa["costo"]) * pago_ciclo
         elif obj_programa["cuotas"] == 18:
             pagos_total = (6 * obj_programa["costo"]) * pago_ciclo
+        elif obj_programa["cuotas"] == 20:
+            pagos_total = (5 * obj_programa["costo"]) * pago_ciclo
         elif obj_programa["cuotas"] == 24:
             pagos_total = (6 * obj_programa["costo"]) * pago_ciclo
         elif obj_programa["cuotas"] == 36:
