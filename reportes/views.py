@@ -1335,7 +1335,7 @@ def reporte_economico_expediente_api(request):
         costo_total_pension = cuotas * costo
 
         # COSTO TOTAL MATRICULA
-        cantidad_matriculas = expediente.programa.tipo.cantidad_matriculas
+        cantidad_matriculas = expediente.programa.cantidad_matriculas
         concepto = Concepto.objects.filter(
             codigo="531", nombre="MATRICULA MAESTRIA Y DOCTORADOS"
         ).first()
