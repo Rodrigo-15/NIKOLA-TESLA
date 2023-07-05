@@ -961,15 +961,16 @@ def reporte_economico_function(numero_documento):
     # PAGOS DE PENSION
     pagos = Pago.get_pagos_by_expediente(expediente)
     pagos_programa = pagos.filter(concepto__programa__codigo=expediente.programa.codigo)
-    cantidad_pagos_programa = pagos_programa.count()
     suma_pagos_programa = pagos_programa.aggregate(Sum("monto"))["monto__sum"] or 0
+    cantidad_pagos_programa = round((suma_pagos_programa / (costo - 1)), 0)
+    cuotas_x_ciclo = round(int(cuotas / expediente.programa.cantidad_matriculas), 0)
     # PAGOS DE MATRICULA
     pagos_matricula = pagos.filter(concepto__id=concepto_matricula_id)
     cantidad_pagos_matricula = pagos_matricula.count()
     suma_pagos_matricula = pagos_matricula.aggregate(Sum("monto"))["monto__sum"] or 0
     # PAGOS DE OTROS CONCEPTOS
     pagos_otros = pagos.exclude(concepto__id=concepto_matricula_id).exclude(
-        concepto__programa=expediente.programa
+        concepto__programa__codigo=expediente.programa.codigo
     )
     suma_pagos_otros = pagos_otros.aggregate(Sum("monto"))["monto__sum"] or 0
     # PAGOS TOTAL
@@ -998,6 +999,7 @@ def reporte_economico_function(numero_documento):
                 "numero_conciliacion": pago.numero_conciliacion,
                 "numero_operacion": pago.numero_operacion,
                 "nro_cuota": str(nro_cuota).zfill(2),
+                "cuotas": round((pago.monto / (costo - 1)), 0),
                 "concepto": pago.concepto.nombre,
                 "monto_cuota": str(pago.monto).replace(",", "."),
                 "monto_pagado": str(monto_pagado).replace(",", "."),
@@ -1048,6 +1050,10 @@ def reporte_economico_function(numero_documento):
         )
         total_pago_otros_lista += pago.monto
 
+    # ENCARGADO OFICINA
+    obj_cargoarea = CargoArea.objects.filter(
+        area__id=5, cargo__id=6, is_active=True
+    ).first()
     return {
         "expediente": expediente,
         "costo_total_pension": str(costo_total_pension).replace(",", "."),
@@ -1074,6 +1080,8 @@ def reporte_economico_function(numero_documento):
         "total_debe_matricula": str(
             costo_total_matricula - total_pago_matricula_lista
         ).replace(",", "."),
+        "cuotas_x_ciclo": cuotas_x_ciclo,
+        "cargoarea": obj_cargoarea,
     }
 
 
@@ -1511,7 +1519,6 @@ def get_reporte_actanotas_aplazado_pdf(request):
 
 
 def reporte_acta_aplazado_function(cursogrupo_id, aplazado_id, periodo_id):
-
     periodo = Periodo.objects.get(id=periodo_id)
     cursogrupo = CursoGrupo.objects.get(id=cursogrupo_id)
     aplazado = Aplazado.objects.get(id=aplazado_id)
