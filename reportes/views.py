@@ -558,7 +558,8 @@ def reporte_matricula_alumno_function(expediente_id, periodo_id):
     cursos = []
     for matricula in matriculas:
         curso = Cursos.objects.get(id=matricula.curso_grupo.curso.id)
-        cursos.append(curso)
+        grupo = matricula.curso_grupo.grupo
+        cursos.append({"curso": curso, "grupo": grupo})
 
     dia = datetime.datetime.now().day
     anio = datetime.datetime.now().year

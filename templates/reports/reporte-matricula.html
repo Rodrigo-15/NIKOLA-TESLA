@@ -277,6 +277,7 @@
                     <tr>
                         <th>CODIGO</th>
                         <th>ASIGNATURA</th>
+                        <th>GRUPO</th>
                         <th>CREDITOS</th>
                         <th>CICLO</th>
                         <th>PERIODO</th>
@@ -285,10 +286,11 @@
                 <tbody>
                     {% for curso in expediente.cursos %}
                     <tr>
-                        <td>{{ curso.codigo }}</td>
-                        <td>{{ curso.nombre }}</td>
-                        <td>{{ curso.creditos }}</td>
-                        <td>{{ curso.ciclo }}</td>
+                        <td>{{ curso.curso.codigo }}</td>
+                        <td>{{ curso.curso.nombre }}</td>
+                        <td>{{  curso.grupo}}</td>
+                        <td>{{ curso.curso.creditos }}</td>
+                        <td>{{ curso.curso.ciclo }}</td>
                         <td>{{ expediente.periodo.nombre }}</td>
                     </tr>
                     {% endfor %}
