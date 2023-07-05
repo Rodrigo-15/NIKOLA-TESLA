@@ -170,11 +170,18 @@
             text-align: right;
         }
         .firma {
-            margin-top: 10%;
+            margin-top: 5%;
             margin-left: auto;
             margin-right: auto;
             text-align: center;
             width: 100%;
+        }
+        .firma-p{ 
+            
+            font-size: 11px;
+            font-weight: bold;
+            margin: 0;
+            text-transform: capitalize;
         }
     </style>
 </head>
@@ -218,11 +225,13 @@
             <div class="">
                 <p>COSTO PENSION</p>
                 <p>MATRICULA</p>
+                <p>PAGOS PENSION X CICLO</p>
                 <p>COSTO TOTAL MAESTRIA</p>
             </div>
             <div id="monto">
                 <p>{{ costo_total_pension  }}</p>
                 <p>{{ costo_total_matricula }}</p>
+                <p>{{ cuotas_x_ciclo }} CUOTAS</p>
                 <p>{{ costo_total_total }}</p>
             </div>
             <div id="conceptomonto">
@@ -235,7 +244,7 @@
         <div class="costopersona">
             <div>
                 <p>PENSION A LA FECHA</p>
-                <p>MATRICULAS</p>
+                <p>MATRICULAS A LA FECHA</p>
                 <p>OTROS CONCEPTOS</p>
                 <p>(-) PAGOS TOTALES</p>
             </div>
@@ -247,15 +256,10 @@
             </div>
             <div id="conceptopersona">
                 <p>{{ cantidad_pagos_programa }} CUOTAS</p>
-                <p>{{cantidad_pagos_matricula}} MAT</p>
+                <p>{{cantidad_pagos_matricula}} MATRICULAS</p>
             </div>
         </div>
         <hr>
-        <!-- <div class="pagototal">
-            <p>(-) PAGOS</p>
-            <p id="numerototal">{{pagos_totales}}</p>
-        </div> -->
-        <br>
         <h2>Historial de pago</h2>
         <div class="caja">
             <div class="texto">
@@ -267,11 +271,12 @@
         <table style="font-size: x-small;" class="wrapper">
             <thead>
                 <tr>
+                    <th rowspan="2">Nº</th>
                     <th rowspan="2">AÑO</th>
                     <th rowspan="2">FECHA</th>
                     <th rowspan="2">Nº DOC/OGA</th>
                     <th rowspan="2">BCO. DE LA NACION</th>
-                    <th rowspan="2">Nº CUOTA</th>
+                    <th rowspan="2">CUOTAS</th>
                     <th>CONCEPTO</th>
                     <th rowspan="2">MONTO</th>
                     <th rowspan="2">PAGO</th>
@@ -279,18 +284,20 @@
                 </tr>
                 <tr>
                     <th>PENSION</th>
-                    <th class="num">S/{{costo_total_pension}}</th>
+                    <th class="num">{{costo_total_pension}}</th>
                 </tr>
             </thead>
             <tbody>
                 {% for pago in pagos_programa %}
                 <tr>
+                    
+                    <td>{{ pago.nro_cuota }}</td>
                     <td>{{ pago.anio_operacion }}</td>
                     <td>{{ pago.fecha_operacion }}</td>
                     <td>{{ pago.numero_conciliacion | default:'-' }}</td>
                     <td>{{ pago.numero_operacion }}</td>
-                    <td>{{ pago.nro_cuota }}</td>
-                    <td>{{ pago.concepto }}</td>
+                    <td>{{ pago.cuotas}}</td>
+                    <td>{{ pago.concepto }}</td> 
                     <td class="num">{{ pago.monto_cuota }}</td>
                     <td class="num">{{ pago.monto_pagado }}</td>
                     <td class="num">
@@ -307,7 +314,7 @@
                     <td></td>
                     <td></td>
                     <td class="conceptotabla">CONCEPTO</td>
-                    <td class="num">{{ costo_total_pension }}</td>
+                    <td class="num">S/ {{ costo_total_pension }}</td>
                     <td></td>
                     <td></td>
                 </tr>
@@ -318,7 +325,7 @@
                     <td></td>
                     <td></td>
                     <td class="conceptotabla">DEBE</td>
-                    <td class="num">{{ total_debe_pension }}</td>
+                    <td class="num">S/ {{ total_debe_pension }}</td>
                     <td></td>
                     <td></td>
                 </tr>
@@ -372,11 +379,11 @@
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td></td>
                     <td class="conceptotabla">CONCEPTO</td>
                     <td class="num">
-                        {{ costo_total_matricula }}
+                        S/ {{ costo_total_matricula }}
                     </td>
+                    <td></td>
                     <td></td>
                     <td></td>
                 </tr>
@@ -385,11 +392,11 @@
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td></td>
                     <td class="conceptotabla">DEBE</td>
                     <td class="num">
-                        {{ total_debe_matricula }}
+                       S/ {{ total_debe_matricula }}
                     </td>
+                    <td></td>
                     <td></td>
                     <td></td>
                 </tr>
@@ -434,10 +441,14 @@
                 </tr>
             </tfoot>
         </table>
-
+        <br>
+        <br>
+        <br>
+        <br>
         <div class="firma">
-            <p>........................................</p>
-            <p style="font-size: 15px;">Firma y sello </p>
+            <p class="firma-p">-------------------------------------------------------</p>
+            <p class="firma-p">{{cargoarea.grado_academico}} {{cargoarea.persona.nombres}} {{cargoarea.persona.apellido_paterno}} {{cargoarea.persona.apellido_materno}}</p>
+            <p class="firma-p">{{cargoarea.cargo.nombre}} De La {{cargoarea.area.nombre}}</p>
         </div>
         
         <div class="fecha">

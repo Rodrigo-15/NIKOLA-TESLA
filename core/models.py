@@ -7,6 +7,7 @@ from django.contrib.auth.models import User, Group
 
 # Create your models here.
 
+
 # crear una clase Abstracta para que se herede en los demas modelos
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
@@ -29,7 +30,9 @@ class Persona(BaseModel):
     tipo_documento = models.ForeignKey(
         TipoDocumento, on_delete=models.CASCADE, null=True, blank=True
     )
-    numero_documento = models.CharField(max_length=20, null=True, blank=True, unique=True)
+    numero_documento = models.CharField(
+        max_length=20, null=True, blank=True, unique=True
+    )
     nombres = models.CharField(max_length=50, null=True, blank=True)
     apellido_paterno = models.CharField(max_length=50, null=True, blank=True)
     apellido_materno = models.CharField(max_length=50, null=True, blank=True)
@@ -99,11 +102,11 @@ class Etapa(models.Model):
     programa = models.ForeignKey("academicos.Programa", on_delete=models.CASCADE)
     promocion = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
-    fecha_inicio = models.DateField( blank=True, null=True)
-    fecha_fin = models.DateField( blank=True, null=True)
-    fecha_extemporaneo_inicio = models.DateField( blank=True, null=True)
-    fecha_extemporaneo_fin = models.DateField( blank=True, null=True)
-    
+    fecha_inicio = models.DateField(blank=True, null=True)
+    fecha_fin = models.DateField(blank=True, null=True)
+    fecha_extemporaneo_inicio = models.DateField(blank=True, null=True)
+    fecha_extemporaneo_fin = models.DateField(blank=True, null=True)
+
     def __str__(self):
         return f"{self.descipcion} - Programa: {self.programa.nombre} - Periodo:{self.periodo.nombre}"
 
@@ -132,15 +135,15 @@ class Cargo(models.Model):
 
 
 class CargoArea(models.Model):
-    
     from desk.models import Headquarter
-    
+
     GRADOS = (
         ("Bach.", "Bachiller"),
         ("Lic.", "Licenciado"),
         ("Ing.", "Ingeniero"),
         ("Mtro.", "Maestro"),
         ("Dr.", "Doctorado"),
+        ("C.P.C.", "Contador Público"),
     )
 
     persona = models.ForeignKey(Persona, on_delete=models.CASCADE)
