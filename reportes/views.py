@@ -1052,7 +1052,7 @@ def reporte_economico_function(numero_documento):
 
     # ENCARGADO OFICINA
     obj_cargoarea = CargoArea.objects.filter(
-        area__id=5, cargo__id=6, is_active=True
+        area__id=5, cargo__id=5, is_active=True
     ).first()
     return {
         "expediente": expediente,
