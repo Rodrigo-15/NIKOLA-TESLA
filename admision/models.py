@@ -25,6 +25,7 @@ class Expediente(models.Model):
     is_active = models.BooleanField(default=True, null=True, blank=True)
     is_retired = models.BooleanField(default=False, null=True, blank=True)
     is_graduate = models.BooleanField(default=False, null=True, blank=True)
+    res_dir_retiro = models.CharField(max_length=100, null=True, blank=True, default="")
 
     def __str__(self):
         return f"{self.persona} {self.programa} {self.promocion}"
