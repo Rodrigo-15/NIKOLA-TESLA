@@ -1217,6 +1217,7 @@ def reporte_academico_function(expediente_id):
     promedio_graduado = "-"
     notas_total = 0
     creditos_total = 0
+    creditos_aprobados = 0
     for periodo in obj_periodo:
         obj_nota = Matricula.objects.filter(
             expediente_id=expediente_id,
@@ -1238,6 +1239,10 @@ def reporte_academico_function(expediente_id):
 
             ppc += promedio_final * p.curso_grupo.curso.creditos
             creditos += p.curso_grupo.curso.creditos
+            if promedio_final >= 14 and p.curso_grupo.curso.plan_estudio.programa.tipo_id == 1:
+                creditos_aprobados += p.curso_grupo.curso.creditos
+            if promedio_final >= 14 and p.curso_grupo.curso.plan_estudio.programa.tipo_id == 2:
+                creditos_aprobados += p.curso_grupo.curso.creditos
         notas_total += ppc
         creditos_total += creditos
         if len(obj_nota) > 0:
@@ -1268,6 +1273,7 @@ def reporte_academico_function(expediente_id):
         "promedios_x_ciclo": promedios_x_ciclo,
         "promedio_graduado": promedio_graduado,
         "total_creditos": total_creditos,
+        "creditos_aprobados": creditos_aprobados,
         "fecha_inicio": fecha_inicio,
         "fecha_final": fecha_final,
         "condicion": condicion,
