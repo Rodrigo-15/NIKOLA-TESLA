@@ -85,7 +85,7 @@
         }
         /** tabla cuerpo*/
         .div-cuerpo{ 
-            margin-bottom: 2.5em;
+            margin-bottom: .5em;
         }
         table.cuerpo,  table.cuerpo td,table.cuerpo th
         {
@@ -198,7 +198,7 @@
         }
         .td-condicion{ 
             width:80px;
-            text-align: left;
+            text-align: center;
             font-size: 10px;
             font-weight: bold;
         }
@@ -342,18 +342,6 @@
                         </tr>
                     {% endfor %}
                 </tbody>
-                <!-- <tfoot>
-                    <tr>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td class="td-cred">{{total_creditos}}</td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                </tfoot> -->
             </table>
         </div>
         <div class="div-pie">
@@ -380,6 +368,16 @@
                         <td class="td-ppc">PPG</td>
                         <td class="td-puntos-pie">:</td>
                         <td class="td-data-pie">{{promedio_graduado}}</td>
+                    </tr>
+                    <tr>
+                        <td class="td-ppc">CRED. TOTAL</td>
+                        <td class="td-puntos-pie">:</td>
+                        <td class="td-data-pie">{{total_creditos}}</td>
+                    </tr>
+                    <tr>
+                        <td class="td-ppc">CRED. APROB.</td>
+                        <td class="td-puntos-pie">:</td>
+                        <td class="td-data-pie">{{creditos_aprobados}}</td>
                     </tr>
                 </tbody>
             </table>
