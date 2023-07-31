@@ -296,7 +296,7 @@ def get_cursos_matriculados_by_expediente(request):
         periodo_id = request.GET.get("periodo_id")
         cursos_matriculados = Matricula.get_matricula_by_expediente_periodo(
             expediente_id, periodo_id
-        ).order_by("curso_grupo__curso__codigo")
+        ).order_by("curso_grupo__curso__id")
 
         data_final = []
 

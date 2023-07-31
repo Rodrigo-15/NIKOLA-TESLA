@@ -1136,7 +1136,7 @@ def reporte_academico_function(expediente_id):
     # DATOS CURSOS
     obj_curso = Cursos.objects.filter(
         plan_estudio__programa__id=expediente.programa.id
-    ).order_by("codigo")
+    ).order_by("id")
     cursos = []
     total_creditos = 0
     for curso in obj_curso:
