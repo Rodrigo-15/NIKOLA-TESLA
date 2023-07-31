@@ -1239,9 +1239,15 @@ def reporte_academico_function(expediente_id):
 
             ppc += promedio_final * p.curso_grupo.curso.creditos
             creditos += p.curso_grupo.curso.creditos
-            if promedio_final >= 14 and p.curso_grupo.curso.plan_estudio.programa.tipo_id == 1:
+            if (
+                promedio_final >= 14
+                and p.curso_grupo.curso.plan_estudio.programa.tipo_id == 1
+            ):
                 creditos_aprobados += p.curso_grupo.curso.creditos
-            if promedio_final >= 14 and p.curso_grupo.curso.plan_estudio.programa.tipo_id == 2:
+            if (
+                promedio_final >= 15
+                and p.curso_grupo.curso.plan_estudio.programa.tipo_id == 2
+            ):
                 creditos_aprobados += p.curso_grupo.curso.creditos
         notas_total += ppc
         creditos_total += creditos
@@ -1249,10 +1255,10 @@ def reporte_academico_function(expediente_id):
             promedios_x_ciclo.append(
                 {
                     "periodo": periodo.periodo.nombre,
-                    "promedio": (ppc / creditos),
+                    "promedio": round((ppc / creditos), 2),
                 }
             )
-            promedio_graduado = notas_total / creditos_total
+            promedio_graduado = round((notas_total / creditos_total), 2)
         else:
             promedios_x_ciclo.append(
                 {
@@ -1634,3 +1640,34 @@ def reporte_acta_aplazado_function(cursogrupo_id, aplazado_id, periodo_id):
             "fecha_actual_str": fecha_actual_str,
         }
     }
+
+
+@api_view(["GET"])
+def get_reporte_pensiones_programas_excel(request):
+    programa_id = request.GET.get("programa_id")
+    promocion = request.GET.get("promocion")
+
+    if programa_id == None:
+        return Response(
+            {"error": "No se encontro el programa"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # path
+    milisecond = str(int(round(time.time() * 1000)))
+    media_root = settings.MEDIA_ROOT
+    excel_folder = os.path.join(media_root, "economicos")
+    if not os.path.exists(excel_folder):
+        os.makedirs(excel_folder)
+    excel_file_name = os.path.join(
+        excel_folder,
+        "reporte-pensiones-programa-{}-{}-{}.xlsx".format(
+            programa_id, promocion, milisecond
+        ),
+    )
+    if os.path.exists(excel_file_name):
+        os.remove(excel_file_name)
+
+    # EXCEL
+    workbook = Workbook(excel_file_name)
+    worksheet = workbook.add_worksheet()
