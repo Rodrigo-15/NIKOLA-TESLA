@@ -160,6 +160,13 @@ def get_cursos_by_programa_id(request):
 def get_cursos_grupos_by_cursos(request):
     if request.method == "GET":
         cursos = request.GET.get("cursos")
+        expediente_id = request.GET.get("expediente_id")
+        programa = Expediente.objects.filter(id=expediente_id, is_active=True).values(
+            "programa_id", "promocion"
+        )
+        periodo = Periodo.get_periodo_by_etapa_active(
+            programa[0]["programa_id"], programa[0]["promocion"]
+        )
         cursos = cursos.split(",")
         if type(cursos) is list:
             cursos = list(cursos)
@@ -179,7 +186,7 @@ def get_cursos_grupos_by_cursos(request):
 
         for curso in cursos:
             curso_grupos = CursoGrupo.get_cursos_grupos_by_curso(
-                curso, Periodo.get_periodo_activo().id
+                curso, periodo.id
             ).order_by("id")
             if len(curso_grupos) > 0:
                 obj_curso = {
@@ -224,7 +231,13 @@ def get_cursos_grupos_by_cursos(request):
 def get_matricula_by_expediente_active(request):
     if request.method == "GET":
         expediente_id = request.GET.get("expediente")
-        periodo = Periodo.get_periodo_activo()
+        # periodo = Periodo.get_periodo_activo()
+        programa = Expediente.objects.filter(id=expediente_id, is_active=True).values(
+            "programa_id", "promocion"
+        )
+        periodo = Periodo.get_periodo_by_etapa_active(
+            programa[0]["programa_id"], programa[0]["promocion"]
+        )
         matricula = Matricula.get_matricula_by_expediente_periodo(
             expediente_id, periodo.id
         )
@@ -236,7 +249,12 @@ def get_matricula_by_expediente_active(request):
 def get_horarios_matriculados_by_expediente(request):
     if request.method == "GET":
         expediente_id = request.GET.get("expediente")
-        periodo = Periodo.get_periodo_activo()
+        programa = Expediente.objects.filter(id=expediente_id, is_active=True).values(
+            "programa_id", "promocion"
+        )
+        periodo = Periodo.get_periodo_by_etapa_active(
+            programa[0]["programa_id"], programa[0]["promocion"]
+        )
         cursos_matriculados = Matricula.get_matricula_by_expediente_periodo(
             expediente_id, periodo.id
         )

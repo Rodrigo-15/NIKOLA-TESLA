@@ -62,4 +62,9 @@ urlpatterns = [
         get_reporte_actanotas_aplazado_pdf,
         name="get_reporte_actanotas_aplazado_pdf",
     ),
+    path(
+        "get_reporte_pensiones_programas_excel/",
+        get_reporte_pensiones_programas_excel,
+        name="get_reporte_pensiones_programas_excel",
+    ),
 ]

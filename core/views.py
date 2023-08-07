@@ -12,24 +12,26 @@ from django.db.models import Q
 def DefaultTemplate(request):
     return render(request, "index.html")
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 def get_periodo_active(request):
     periodo = Periodo.get_periodo_activo()
     serializer = PeriodoSerializer(periodo)
     return Response(serializer.data)
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 def get_periodos(request):
     periodos = Periodo.get_periodos()
     serializer = PeriodoSerializer(periodos, many=True)
     return Response(serializer.data)
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 def get_etapa_active(request):
-    programa_id = request.GET.get('programa_id')
-    periodo_id = request.GET.get('periodo_id')
-    promocion = request.GET.get('promocion')
-    etapa = Etapa.get_etapa_activo(programa_id,periodo_id,promocion)
+    programa_id = request.GET.get("programa_id")
+    promocion = request.GET.get("promocion")
+    etapa = Etapa.get_etapa_activo(programa_id, promocion)
     serializer = EtapaSerializer(etapa)
     return Response(serializer.data)
 
@@ -93,3 +95,18 @@ def change_profile_image(request):
         person.foto = foto
         person.save()
         return Response({"message": "Imagen de perfil actualizada"}, status=200)
+
+
+@api_view(["GET"])
+def get_periodo_etapa_active(request):
+    from admision.models import Expediente
+
+    expediente_id = request.GET.get("expediente_id")
+    programa = Expediente.objects.filter(id=expediente_id, is_active=True).values(
+        "programa_id", "promocion"
+    )
+    periodo = Periodo.get_periodo_by_etapa_active(
+        programa[0]["programa_id"], programa[0]["promocion"]
+    )
+    serializer = PeriodoSerializer(periodo)
+    return Response(serializer.data)
