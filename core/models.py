@@ -91,6 +91,13 @@ class Periodo(models.Model):
         return periodo
 
     @staticmethod
+    def get_periodo_by_etapa_active(programa_id, promocion):
+        etapa = Etapa.objects.filter(
+            programa__id=programa_id, promocion=promocion, is_active=True
+        ).first()
+        return etapa.periodo
+
+    @staticmethod
     def get_periodos():
         periodos = Periodo.objects.all()
         return periodos
@@ -111,9 +118,9 @@ class Etapa(models.Model):
         return f"{self.descipcion} - Programa: {self.programa.nombre} - Periodo:{self.periodo.nombre}"
 
     @staticmethod
-    def get_etapa_activo(programa_id, periodo_id, promocion):
+    def get_etapa_activo(programa_id, promocion):
         return Etapa.objects.filter(
-            programa_id=programa_id, periodo_id=periodo_id, promocion=promocion
+            programa_id=programa_id, promocion=promocion, is_active=True
         ).first()
 
 

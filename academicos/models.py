@@ -238,8 +238,8 @@ class Matricula(models.Model):
     fecha_modified = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        if not self.id:
-            self.periodo = Periodo.get_periodo_activo()
+        # if not self.id:
+        #     # self.periodo = Periodo.get_periodo_by_etapa_active()
 
         super(Matricula, self).save(*args, **kwargs)
 
