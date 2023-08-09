@@ -201,7 +201,7 @@ def get_cursos_grupos_by_cursos(request):
                     limite_registros = grupo.limite_registros
                     numero_registros = (
                         Matricula.get_numero_registros_by_curso_grupo_periodo(
-                            grupo.id, Periodo.get_periodo_activo().id
+                            grupo.id, periodo.id
                         )
                     )
                     obj_grupo = {
