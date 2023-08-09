@@ -249,16 +249,10 @@ def get_matricula_by_expediente_active(request):
 def get_horarios_matriculados_by_expediente(request):
     if request.method == "GET":
         expediente_id = request.GET.get("expediente")
-        programa = Expediente.objects.filter(id=expediente_id, is_active=True).values(
-            "programa_id", "promocion"
-        )
-        periodo = Periodo.get_periodo_by_etapa_active(
-            programa[0]["programa_id"], programa[0]["promocion"]
-        )
+        periodo_id = request.GET.get("periodo")
         cursos_matriculados = Matricula.get_matricula_by_expediente_periodo(
-            expediente_id, periodo.id
+            expediente_id, periodo_id
         )
-
         data_final = []
         DIAS = [
             "",
