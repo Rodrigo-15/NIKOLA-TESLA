@@ -1703,7 +1703,7 @@ def get_reporte_pensiones_programas_excel(request):
     format_body = workbook.add_format({"border": 1})
     format_body_number = workbook.add_format({"num_format": "#,##0", "border": 1})
     format_body_money = workbook.add_format({"num_format": "#,##0.00", "border": 1})
-    
+
     worksheet.set_column("A:L", None, format_body)
     worksheet.set_column("I:I", None, format_body_money)
     worksheet.set_column("H:H", None, format_body_number)
