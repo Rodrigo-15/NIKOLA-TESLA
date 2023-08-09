@@ -546,7 +546,6 @@ def reporte_matricula_alumno_function(expediente_id, periodo_id):
     numero_documento = expendiente.persona.numero_documento
     correo = expendiente.persona.correo
     num_expediente = expediente_id
-    print(num_expediente)
     promocion = expendiente.promocion
     #
     programa = Programa.objects.get(id=expendiente.programa.id)
