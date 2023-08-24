@@ -520,7 +520,6 @@ def get_reporte_matricula_pdf(request):
     # print("Enviando correo!!")
     # send_mail(expediente["expediente"]["correo_persona"], pdf_file_name)
     #
-    print("Termino de nvia correo!!")
     path_return = os.path.join(
         settings.MEDIA_URL,
         "pdf",
