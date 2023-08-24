@@ -1223,7 +1223,6 @@ def reporte_academico_function(expediente_id):
             periodo_id=periodo.periodo.id,
             is_retirado=False,
             is_cerrado=True,
-            periodo__is_active=False,
         ).order_by("curso_grupo__curso__codigo")
         ppc = 0
         creditos = 0
