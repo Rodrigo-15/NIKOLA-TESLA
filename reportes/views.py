@@ -602,12 +602,6 @@ def get_reporte_actanotas_pdf(request):
     if os.path.exists(pdf_file_name):
         os.remove(pdf_file_name)
     html.write_pdf(target=pdf_file_name)
-    #
-    # from core.utils.email import send_mail
-    # print("Enviando correo!!")
-    # send_mail(expediente["expediente"]["correo_persona"], pdf_file_name)
-    #
-    # print("Termino de nvia correo!!")
     path_return = os.path.join(
         settings.MEDIA_URL,
         "pdf",
@@ -1865,7 +1859,7 @@ def get_listado_alumnos_excel(request):
     # return
     path_return = os.path.join(
         settings.MEDIA_URL,
-        "ecademicos",
+        "academicos",
         "Lista-alumnos-curso-{}-{}.xlsx".format(cursogrupo_id, milisecond),
     )
     path_return = path_return.replace("\\", "/")
