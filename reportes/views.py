@@ -1723,7 +1723,7 @@ def get_reporte_pensiones_programas_excel(request):
         ),
     )
     path_return = path_return.replace("\\", "/")
-    return Response({"path": path_return, "cantidad": len(Pagos_data)})
+    return Response({"path": path_return})
 
 
 def reporte_pensiones_programa_function(programa_id, promocion):
@@ -1795,6 +1795,114 @@ def reporte_pensiones_programa_function(programa_id, promocion):
             num_matriculas,
             monto_matriculas,
             observacion,
+        )
+        reportes.append(data)
+
+    return reportes
+
+
+@api_view(["GET"])
+def get_listado_alumnos_excel(request):
+    cursogrupo_id = request.GET.get("cursogrupo_id")
+    if cursogrupo_id == None:
+        return Response(
+            {"error": "No se encontro el curso"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # path
+    milisecond = str(int(round(time.time() * 1000)))
+    media_root = settings.MEDIA_ROOT
+    excel_folder = os.path.join(media_root, "academicos")
+    if not os.path.exists(excel_folder):
+        os.makedirs(excel_folder)
+    excel_file_name = os.path.join(
+        excel_folder,
+        "Lista-alumnos-curso-{}-{}.xlsx".format(cursogrupo_id, milisecond),
+    )
+    if os.path.exists(excel_file_name):
+        os.remove(excel_file_name)
+
+    # EXCEL
+    workbook = Workbook(excel_file_name)
+    worksheet = workbook.add_worksheet()
+    # header
+    format_header = workbook.add_format(
+        {
+            "bold": 1,
+            "border": 1,
+            "align": "center",
+            "valign": "vcenter",
+            "bg_color": "#D9D9D9",
+        }
+    )
+    header = (
+        "N°",
+        "N° Documento",
+        "Nombres",
+        "Primer Apellido",
+        "Segundo Apellido",
+        "Correo",
+        "celular",
+        "Programa",
+        "Promocion",
+    )
+    worksheet.write_row(0, 0, header, format_header)
+
+    # body
+    Pagos_data = reporte_list_curso(cursogrupo_id)
+    format_body = workbook.add_format({"border": 1})
+
+    worksheet.set_column("A:I", None, format_body)
+    # DATA
+    rowDefiner = 1
+    for pag in Pagos_data:
+        worksheet.write_row(rowDefiner, 0, pag)
+        rowDefiner += 1
+
+    workbook.close()
+
+    # return
+    path_return = os.path.join(
+        settings.MEDIA_URL,
+        "ecademicos",
+        "Lista-alumnos-curso-{}-{}.xlsx".format(cursogrupo_id, milisecond),
+    )
+    path_return = path_return.replace("\\", "/")
+    return Response({"path": path_return})
+
+
+def reporte_list_curso(cursogrupo_id):
+    if cursogrupo_id == None:
+        return Response(
+            {"error": "No se encontro el curso"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    expedientes_data = Matricula.objects.filter(
+        curso_grupo_id=cursogrupo_id, is_retirado=False
+    ).order_by(
+        "expediente__persona__apellido_paterno",
+        "expediente__persona__apellido_materno",
+    )
+
+    reportes = []
+    num = 0
+    for exp in expedientes_data:
+        # num
+        num += 1
+
+        # data
+        data = (
+            num,
+            exp.expediente.persona.numero_documento,
+            exp.expediente.persona.nombres,
+            exp.expediente.persona.apellido_paterno,
+            exp.expediente.persona.apellido_materno,
+            exp.expediente.persona.correo,
+            exp.expediente.persona.celular,
+            exp.expediente.programa.nombre,
+            exp.expediente.promocion,
         )
         reportes.append(data)
 

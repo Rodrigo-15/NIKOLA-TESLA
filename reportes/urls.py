@@ -67,4 +67,9 @@ urlpatterns = [
         get_reporte_pensiones_programas_excel,
         name="get_reporte_pensiones_programas_excel",
     ),
+    path(
+        "get_listado_alumnos_excel/",
+        get_listado_alumnos_excel,
+        name="get_listado_alumnos_excel",
+    ),
 ]
