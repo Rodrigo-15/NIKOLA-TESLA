@@ -161,11 +161,16 @@ def get_cursos_grupos_by_cursos(request):
     if request.method == "GET":
         cursos = request.GET.get("cursos")
         expediente_id = request.GET.get("expediente_id")
+        is_academico = request.GET.get("is_academico")
+        if is_academico:
+            is_academico = True
+        else:
+            is_academico = False
         programa = Expediente.objects.filter(id=expediente_id, is_active=True).values(
             "programa_id", "promocion"
         )
         periodo = Periodo.get_periodo_by_etapa_active(
-            programa[0]["programa_id"], programa[0]["promocion"]
+            programa[0]["programa_id"], programa[0]["promocion"], is_academico
         )
         cursos = cursos.split(",")
         if type(cursos) is list:
@@ -231,12 +236,18 @@ def get_cursos_grupos_by_cursos(request):
 def get_matricula_by_expediente_active(request):
     if request.method == "GET":
         expediente_id = request.GET.get("expediente")
+        is_academico = request.GET.get("is_academico")
+        if is_academico:
+            is_academico = True
+        else:
+            is_academico = False
+
         # periodo = Periodo.get_periodo_activo()
         programa = Expediente.objects.filter(id=expediente_id, is_active=True).values(
             "programa_id", "promocion"
         )
         periodo = Periodo.get_periodo_by_etapa_active(
-            programa[0]["programa_id"], programa[0]["promocion"]
+            programa[0]["programa_id"], programa[0]["promocion"], is_academico
         )
         matricula = Matricula.get_matricula_by_expediente_periodo(
             expediente_id, periodo.id

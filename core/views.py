@@ -102,11 +102,17 @@ def get_periodo_etapa_active(request):
     from admision.models import Expediente
 
     expediente_id = request.GET.get("expediente_id")
+    is_academico = request.GET.get("is_academico")
+    if is_academico:
+        is_academico = True
+    else:
+        is_academico = False
+
     programa = Expediente.objects.filter(id=expediente_id, is_active=True).values(
         "programa_id", "promocion"
     )
     periodo = Periodo.get_periodo_by_etapa_active(
-        programa[0]["programa_id"], programa[0]["promocion"]
+        programa[0]["programa_id"], programa[0]["promocion"], is_academico
     )
     serializer = PeriodoSerializer(periodo)
     return Response(serializer.data)
