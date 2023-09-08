@@ -91,11 +91,19 @@ class Periodo(models.Model):
         return periodo
 
     @staticmethod
-    def get_periodo_by_etapa_active(programa_id, promocion):
-        etapa = Etapa.objects.filter(
-            programa__id=programa_id, promocion=promocion, is_active=True
-        ).first()
-        return etapa.periodo
+    def get_periodo_by_etapa_active(programa_id, promocion, is_academico):
+        if is_academico:
+            etapa = Etapa.objects.filter(
+                programa__id=programa_id, promocion=promocion, is_active=True
+            ).first()
+            if etapa is None:
+                return None
+            return etapa.periodo
+        else:
+            etapa = Etapa.objects.filter(
+                programa__id=programa_id, promocion=promocion, is_active_matricula=True
+            ).first()
+            return etapa.periodo
 
     @staticmethod
     def get_periodos():
@@ -109,6 +117,7 @@ class Etapa(models.Model):
     programa = models.ForeignKey("academicos.Programa", on_delete=models.CASCADE)
     promocion = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
+    is_active_matricula = models.BooleanField(default=True)
     fecha_inicio = models.DateField(blank=True, null=True)
     fecha_fin = models.DateField(blank=True, null=True)
     fecha_extemporaneo_inicio = models.DateField(blank=True, null=True)
