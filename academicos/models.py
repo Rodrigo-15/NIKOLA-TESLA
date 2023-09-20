@@ -224,6 +224,7 @@ class Matricula(models.Model):
     is_retirado = models.BooleanField(default=False)
     is_aplazado = models.BooleanField(default=False)
     is_dirigido = models.BooleanField(default=False)
+    is_convalidado = models.BooleanField(default=False)
     aplazado = models.ForeignKey(
         Aplazado, on_delete=models.CASCADE, null=True, blank=True
     )

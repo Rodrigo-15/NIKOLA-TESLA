@@ -72,4 +72,9 @@ urlpatterns = [
         get_listado_alumnos_excel,
         name="get_listado_alumnos_excel",
     ),
+    path(
+        "generate_txt_bach/",
+        generate_txt_bach,
+        name="generate_txt_bach",
+    ),
 ]
