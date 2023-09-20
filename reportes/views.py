@@ -1905,3 +1905,74 @@ def reporte_list_curso(cursogrupo_id):
         reportes.append(data)
 
     return reportes
+
+
+@api_view(["GET"])
+def generate_txt_bach(request):
+    periodo_id = request.GET.get("periodo_id")
+    if periodo_id == None:
+        return Response(
+            {"error": "No se encontro el periodo"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    # path
+    milisecond = str(int(round(time.time() * 1000)))
+    media_root = settings.MEDIA_ROOT
+    txt_folder = os.path.join(media_root, "txt")
+    if not os.path.exists(txt_folder):
+        os.makedirs(txt_folder)
+    txt_file_name = os.path.join(
+        txt_folder,
+        "RECA-EPG-{}-{}.txt".format(periodo_id, milisecond),
+    )
+    if os.path.exists(txt_file_name):
+        os.remove(txt_file_name)
+
+    # TXT
+    file = open(txt_file_name, "w")
+    file.write("T07591300003449440843000000000000000000002023091400000000\n")
+    # body
+    datos = Expediente.objects.filter(periodo_id=periodo_id, is_retired=False).order_by(
+        "id"
+    )
+    reg_detalle = "D"
+    cod_servicio = "002"
+    count = 0
+    ref_recibo = str("").ljust(20)
+    moneda = "01"
+    moneda_ref = str("").ljust(14)
+    resto_data = str("").ljust(50)
+    imp_moratorio = str("").ljust(14)
+    otros_concepto = f"{0:0162d}"
+    for data in datos:
+        count = count + 1
+        num_documento = str(data.persona.numero_documento).ljust(20)
+        nombre_alumno = str(
+            f"{data.persona.apellido_paterno} {data.persona.apellido_materno} { data.persona.nombres}"
+        ).ljust(40)
+        num_recibo = str(f"{count:06d}").ljust(20)
+        fecha_emision = datetime.datetime.now().strftime("%Y%m%d")
+        fecha_vencimiento = str("").ljust(8)
+        if data.programa.id == 35:
+            concepto = str(f"{531:04d}").ljust(4)
+        else:
+            codigo_concepto = Concepto.objects.filter(
+                programa_id=data.programa.id
+            ).values("codigo", "precio")
+            num_concepto = int(codigo_concepto[0]["codigo"])
+            monto_precio = int(codigo_concepto[0]["precio"] - 1)
+            concepto = f"{num_concepto:04d}"
+            precio = f"{monto_precio:012d}00"
+        file.write(
+            f"{reg_detalle}0{cod_servicio}000{num_documento}{nombre_alumno}{num_recibo}{ref_recibo}{fecha_emision}{fecha_vencimiento}{moneda}{moneda_ref}{resto_data}{imp_moratorio}{concepto}{precio}{otros_concepto}\n"
+        )
+    file.close()
+
+    # return
+    path_return = os.path.join(
+        settings.MEDIA_URL,
+        "txt",
+        "RECA-EPG-{}-{}.txt".format(periodo_id, milisecond),
+    )
+    path_return = path_return.replace("\\", "/")
+    return Response({"path": path_return})
