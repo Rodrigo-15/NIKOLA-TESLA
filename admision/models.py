@@ -52,12 +52,16 @@ class Expediente(models.Model):
 
     @staticmethod
     def get_alumno_by_numero_documento(numero_documento):
-        return Expediente.objects.filter(persona__numero_documento=numero_documento).first()
-    
+        return Expediente.objects.filter(
+            persona__numero_documento=numero_documento, is_active=True
+        ).first()
+
     @staticmethod
     def get_alumno_expedientes_by_id_persona(id):
         return Expediente.objects.filter(persona__id=id, is_active=True).order_by("-id")
 
     @staticmethod
     def get_alumno_expedientes_by_numero_documento(numero_documento):
-        return Expediente.objects.filter(persona__numero_documento=numero_documento, is_active=True).order_by("-id")
+        return Expediente.objects.filter(
+            persona__numero_documento=numero_documento, is_active=True
+        ).order_by("-id")
