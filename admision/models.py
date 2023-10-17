@@ -26,6 +26,9 @@ class Expediente(models.Model):
     is_retired = models.BooleanField(default=False, null=True, blank=True)
     is_graduate = models.BooleanField(default=False, null=True, blank=True)
     res_dir_retiro = models.CharField(max_length=100, null=True, blank=True, default="")
+    codigo_universitario = models.CharField(
+        max_length=100, null=True, blank=True, default=""
+    )
 
     def __str__(self):
         return f"{self.persona} {self.programa} {self.promocion}"
@@ -48,5 +51,13 @@ class Expediente(models.Model):
         return Expediente.objects.filter(id=expediente_id).first()
 
     @staticmethod
+    def get_alumno_by_numero_documento(numero_documento):
+        return Expediente.objects.filter(persona__numero_documento=numero_documento).first()
+    
+    @staticmethod
     def get_alumno_expedientes_by_id_persona(id):
         return Expediente.objects.filter(persona__id=id, is_active=True).order_by("-id")
+
+    @staticmethod
+    def get_alumno_expedientes_by_numero_documento(numero_documento):
+        return Expediente.objects.filter(persona__numero_documento=numero_documento, is_active=True).order_by("-id")

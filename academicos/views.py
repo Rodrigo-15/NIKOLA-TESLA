@@ -263,7 +263,7 @@ def get_horarios_matriculados_by_expediente(request):
         periodo_id = request.GET.get("periodo")
         cursos_matriculados = Matricula.get_matricula_by_expediente_periodo(
             expediente_id, periodo_id
-        )
+        ).order_by("curso_grupo__id")
         data_final = []
         DIAS = [
             "",
@@ -876,3 +876,80 @@ def cerrar_acta_aplazado(request):
         aplazado_obj.is_cerrado = True
         aplazado_obj.save()
         return Response(status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_alumno_identificacion(request):
+    if request.method == "GET":
+        num_documento = request.GET.get("num_documento")
+        alumno = Expediente.get_alumno_by_numero_documento(num_documento)
+        expedientes = Expediente.get_alumno_expedientes_by_numero_documento(
+            num_documento
+        )
+        if not alumno:
+            return Response({"message": "Alumno no encontrado"}, status=404)
+        serializer = ExpedientePersonaSerializer(alumno)
+        serializer_expedientes = ExpedientesSerializer(expedientes, many=True)
+        # return
+        import os
+        from django.conf import settings
+
+        foto = alumno.persona.foto
+        print(serializer.data)
+        path_return = os.path.join(
+            settings.MEDIA_URL,
+            "fotos",
+            "{}".format(foto),
+        )
+        path_return = path_return.replace("\\", "/")
+        return Response(
+            {
+                **serializer.data,
+                "foto": path_return,
+                "expedientes": serializer_expedientes.data,
+            }
+        )
+
+
+@api_view(["GET"])
+def horario_dia_curso_grupo(request):
+    if request.method == "GET":
+        expediente_id = request.GET.get("expediente")
+        from datetime import datetime
+
+        data_horario = []
+        DIAS = [
+            "",
+            "Lunes",
+            "Martes",
+            "Miercoles",
+            "Jueves",
+            "Viernes",
+            "Sabado",
+            "Domingo",
+        ]
+        fecha = datetime.now().strftime("%Y-%m-%d")
+        dia = datetime.now().weekday() + 1
+
+        cursogrupo = Matricula.objects.filter(
+            expediente__id=expediente_id,
+            curso_grupo__fecha_inicio__lte=fecha,
+            curso_grupo__fecha_termino__gte=fecha,
+        )
+
+        horarios = Horario.objects.filter(
+            curso_grupo__id=cursogrupo[0].curso_grupo.id, dia=dia
+        )
+        for horario in horarios:
+            obj_horario = {
+                "aula": horario.aula.nombre,
+                "curso": horario.curso_grupo.curso.nombre,
+                "grupo": horario.curso_grupo.grupo,
+                "docente": horario.curso_grupo.docente.persona.get_full_name(),
+                "dia": DIAS[horario.dia],
+                "hora_inicio": horario.hora_inicio.strftime("%H:%M %p"),
+                "hora_fin": horario.hora_fin.strftime("%H:%M %p"),
+            }
+            data_horario.append(obj_horario)
+
+        return Response(data_horario, status=status.HTTP_200_OK)

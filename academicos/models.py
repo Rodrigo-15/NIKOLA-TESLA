@@ -149,6 +149,15 @@ class CursoGrupo(models.Model):
         ).order_by("grupo")
 
 
+class Aula(models.Model):
+    nombre = models.CharField(max_length=50)
+    capacidad = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.nombre} - {self.capacidad}"
+
+
 class Horario(models.Model):
     DIAS = (
         (1, "Lunes"),
@@ -166,6 +175,7 @@ class Horario(models.Model):
     hora_fin = models.TimeField()
     dia = models.IntegerField(choices=DIAS)
     is_active = models.BooleanField(default=True)
+    aula = models.ForeignKey("Aula", on_delete=models.CASCADE, null=True, blank=True)
 
     def get_dia(self):
         return self.DIAS[self.dia - 1][1]
@@ -182,7 +192,9 @@ class Horario(models.Model):
             self.curso_grupo.curso.nombre if self.curso_grupo else "No asignado"
         )
         grupo_nombre = self.curso_grupo.grupo if self.curso_grupo else "No asignado"
-        return f"{self.get_full_horario()} - {curso_nombre} - {grupo_nombre}"
+
+        aula_nombre = self.aula.nombre if self.aula else "No asignado"
+        return f"{self.get_full_horario()} - {curso_nombre} - {grupo_nombre} - {aula_nombre}"
 
 
 class Aplazado(models.Model):
