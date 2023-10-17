@@ -895,7 +895,6 @@ def get_alumno_identificacion(request):
         from django.conf import settings
 
         foto = alumno.persona.foto
-        print(serializer.data)
         path_return = os.path.join(
             settings.MEDIA_URL,
             "fotos",
@@ -904,24 +903,8 @@ def get_alumno_identificacion(request):
         path_return = path_return.replace("\\", "/")
         # expedientes
         serializer_expedientes = ExpedientesSerializer(expedientes, many=True)
-
-        # return
-        return Response(
-            {
-                **serializer.data,
-                "foto": path_return,
-                "expedientes": serializer_expedientes.data,
-            }
-        )
-
-
-@api_view(["GET"])
-def horario_dia_curso_grupo(request):
-    if request.method == "GET":
-        expediente_id = request.GET.get("expediente")
         from datetime import datetime
 
-        data_horario = []
         DIAS = [
             "",
             "Lunes",
@@ -934,26 +917,44 @@ def horario_dia_curso_grupo(request):
         ]
         fecha = datetime.now().strftime("%Y-%m-%d")
         dia = datetime.now().weekday() + 1
-
-        cursogrupo = Matricula.objects.filter(
-            expediente__id=expediente_id,
-            curso_grupo__fecha_inicio__lte=fecha,
-            curso_grupo__fecha_termino__gte=fecha,
-        )
-
-        horarios = Horario.objects.filter(
-            curso_grupo__id=cursogrupo[0].curso_grupo.id, dia=dia
-        )
-        for horario in horarios:
-            obj_horario = {
-                "aula": horario.aula.nombre,
-                "curso": horario.curso_grupo.curso.nombre,
-                "grupo": horario.curso_grupo.grupo,
-                "docente": horario.curso_grupo.docente.persona.get_full_name(),
-                "dia": DIAS[horario.dia],
-                "hora_inicio": horario.hora_inicio.strftime("%H:%M %p"),
-                "hora_fin": horario.hora_fin.strftime("%H:%M %p"),
+        obj_expedientes = []
+        for expediente in expedientes:
+            obj_expediente = {
+                "id": expediente.id,
+                "programa_nombre": expediente.programa.nombre,
+                "programa_id": expediente.programa.id,
+                "promocion": expediente.promocion,
+                "codigo_universitario": expediente.codigo_universitario,
+                "horarios": [],
             }
-            data_horario.append(obj_horario)
+            cursogrupo = Matricula.objects.filter(
+                expediente__id=expediente.id,
+                curso_grupo__fecha_inicio__lte=fecha,
+                curso_grupo__fecha_termino__gte=fecha,
+            )
+            if cursogrupo:
+                horarios = Horario.objects.filter(
+                    curso_grupo__id=cursogrupo[0].curso_grupo.id, dia=dia
+                )
+                for horario in horarios:
+                    print(horario.aula)
+                    obj_horario = {
+                        "aula": horario.aula.nombre if horario.aula else "",
+                        "curso": horario.curso_grupo.curso.nombre,
+                        "grupo": horario.curso_grupo.grupo,
+                        "docente": horario.curso_grupo.docente.persona.get_full_name(),
+                        "dia": DIAS[horario.dia],
+                        "hora_inicio": horario.hora_inicio.strftime("%H:%M"),
+                        "hora_fin": horario.hora_fin.strftime("%H:%M"),
+                    }
+                    obj_expediente["horarios"].append(obj_horario)
+            obj_expedientes.append(obj_expediente)
 
-        return Response(data_horario, status=status.HTTP_200_OK)
+        # return
+        return Response(
+            {
+                **serializer.data,
+                "foto": path_return,
+                "expedientes": obj_expedientes,
+            }
+        )

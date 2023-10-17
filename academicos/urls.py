@@ -115,9 +115,4 @@ urlpatterns = [
         get_alumno_identificacion,
         name="get_alumno_identificacion",
     ),
-    path(
-        "horario_dia_curso_grupo",
-        horario_dia_curso_grupo,
-        name="horario_dia_curso_grupo",
-    ),
 ]
