@@ -888,9 +888,9 @@ def get_alumno_identificacion(request):
         )
         if not alumno:
             return Response({"message": "Alumno no encontrado"}, status=404)
+        # alumno
         serializer = ExpedientePersonaSerializer(alumno)
-        serializer_expedientes = ExpedientesSerializer(expedientes, many=True)
-        # return
+        # fotos
         import os
         from django.conf import settings
 
@@ -902,6 +902,10 @@ def get_alumno_identificacion(request):
             "{}".format(foto),
         )
         path_return = path_return.replace("\\", "/")
+        # expedientes
+        serializer_expedientes = ExpedientesSerializer(expedientes, many=True)
+
+        # return
         return Response(
             {
                 **serializer.data,
