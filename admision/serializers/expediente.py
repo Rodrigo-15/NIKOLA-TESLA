@@ -57,15 +57,8 @@ class ExpedientePersonaSerializer(serializers.Serializer):
     apellido_paterno = serializers.CharField(source="persona.apellido_paterno")
     apellido_materno = serializers.CharField(source="persona.apellido_materno")
     numero_documento = serializers.CharField(source="persona.numero_documento")
-    foto = serializers.SerializerMethodField(source="get_foto")
     correo = serializers.CharField(source="persona.correo")
     celular = serializers.CharField(source="persona.celular")
-
-    def get_foto(self, obj):
-        return ""
-        if not obj.persona.foto:
-            return ""
-        return obj.persona.foto
 
 
 class ExpedienteMatriculaSerializer(serializers.Serializer):
@@ -80,7 +73,6 @@ class ExpedienteMatriculaSerializer(serializers.Serializer):
     foto = serializers.SerializerMethodField(source="get_foto")
 
     def get_foto(self, obj):
-        return ""
         if not obj.persona.foto:
             return ""
         return obj.persona.foto
@@ -91,3 +83,4 @@ class ExpedientesSerializer(serializers.Serializer):
     programa_nombre = serializers.CharField(source="programa.nombre")
     programa_id = serializers.IntegerField(source="programa.id")
     promocion = serializers.CharField()
+    codigo_universitario = serializers.CharField()
