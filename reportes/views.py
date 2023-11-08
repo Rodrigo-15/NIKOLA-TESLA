@@ -957,12 +957,16 @@ def reporte_economico_function(numero_documento):
 
     # PAGOS DE PENSION
     pagos = Pago.get_pagos_by_expediente(expediente)
-    pagos_programa = pagos.filter(concepto__programa__codigo=expediente.programa.codigo)
+    pagos_programa = pagos.filter(
+        concepto__programa__codigo=expediente.programa.codigo
+    ).order_by("fecha_operacion")
     suma_pagos_programa = pagos_programa.aggregate(Sum("monto"))["monto__sum"] or 0
     cantidad_pagos_programa = round((suma_pagos_programa / (costo - 1)), 0)
     cuotas_x_ciclo = round(int(cuotas / expediente.programa.cantidad_matriculas), 0)
     # PAGOS DE MATRICULA
-    pagos_matricula = pagos.filter(concepto__id=concepto_matricula_id)
+    pagos_matricula = pagos.filter(concepto__id=concepto_matricula_id).order_by(
+        "fecha_operacion"
+    )
     cantidad_pagos_matricula = pagos_matricula.count()
     suma_pagos_matricula = pagos_matricula.aggregate(Sum("monto"))["monto__sum"] or 0
     # PAGOS DE OTROS CONCEPTOS
