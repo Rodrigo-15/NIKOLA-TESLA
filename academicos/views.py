@@ -188,11 +188,11 @@ def get_cursos_grupos_by_cursos(request):
             "Sabado",
             "Domingo",
         ]
-
         for curso in cursos:
             curso_grupos = CursoGrupo.get_cursos_grupos_by_curso(
                 curso, periodo.id
             ).order_by("id")
+
             if len(curso_grupos) > 0:
                 obj_curso = {
                     "curso_id": curso,
@@ -228,6 +228,7 @@ def get_cursos_grupos_by_cursos(request):
                         }
                         obj_grupo["horarios"].append(obj_horario)
                     grupos.append(obj_grupo)
+
                 cursos_list_final.append({**obj_curso, "grupos": grupos})
         return Response(cursos_list_final)
 
