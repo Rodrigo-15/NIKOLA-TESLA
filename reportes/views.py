@@ -1374,11 +1374,13 @@ def reporte_economico_expediente_api(request):
         pagos = Pago.get_pagos_by_expediente(expediente)
         pagos_programa = pagos.filter(
             concepto__programa__codigo=expediente.programa.codigo
-        )
+        ).order_by("fecha_operacion")
         cantidad_pagos_programa = pagos_programa.count()
         suma_pagos_programa = pagos_programa.aggregate(Sum("monto"))["monto__sum"] or 0
         # PAGOS DE MATRICULA
-        pagos_matricula = pagos.filter(concepto__id=concepto_matricula_id)
+        pagos_matricula = pagos.filter(concepto__id=concepto_matricula_id).order_by(
+            "fecha_operacion"
+        )
         cantidad_pagos_matricula = pagos_matricula.count()
         suma_pagos_matricula = (
             pagos_matricula.aggregate(Sum("monto"))["monto__sum"] or 0
