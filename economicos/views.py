@@ -132,12 +132,20 @@ def conciliar_pagos(request):
 def filter_pago(request):
     if request.method == "GET":
         search = request.GET.get("search", "")
-        pagos = Pago.objects.filter(
-            Q(nombre_cliente__icontains=search)
-            | Q(numero_operacion__icontains=search)
-            | Q(numero_documento__icontains=search)
-            | Q(concepto__nombre__icontains=search)
-        )[:25]
+        if search == "":
+            pagos = Pago.objects.filter(
+                Q(nombre_cliente__icontains=search)
+                | Q(numero_operacion__icontains=search)
+                | Q(numero_documento__icontains=search)
+                | Q(concepto__nombre__icontains=search)
+            )[:25]
+        else:
+            pagos = Pago.objects.filter(
+                Q(nombre_cliente__icontains=search)
+                | Q(numero_operacion__icontains=search)
+                | Q(numero_documento__icontains=search)
+                | Q(concepto__nombre__icontains=search)
+            )
         pagos_serializer = PagoSerializerFilter(pagos, many=True)
         return Response(pagos_serializer.data)
 
