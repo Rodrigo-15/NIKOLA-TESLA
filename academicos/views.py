@@ -421,6 +421,7 @@ def cerrar_acta(request):
         )
         for matricula in matricula_obj:
             matricula.fecha_cierre_acta = date_now.strftime("%Y-%m-%d")
+            matricula.is_publicado = True
             matricula.is_cerrado = True
             matricula.save()
         return Response(status=status.HTTP_200_OK)

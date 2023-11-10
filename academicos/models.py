@@ -304,3 +304,15 @@ class Matricula(models.Model):
             "expediente__persona__apellido_paterno",
             "expediente__persona__apellido_materno",
         )
+
+
+class AsistenciaDocente(models.Model):
+    cursogrupo = models.ForeignKey(CursoGrupo, on_delete=models.CASCADE)
+    fecha = models.DateField(auto_now_add=True, null=True, blank=True)
+    hora_ingreso = models.TimeField(null=True, blank=True)
+    hora_salida = models.TimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    observacion = models.CharField(max_length=100, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.cursogrupo.docente.persona}- {self.fecha} - {self.hora_ingreso} - {self.hora_salida}"
