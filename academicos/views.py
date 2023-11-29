@@ -565,12 +565,14 @@ def get_expedientes(request):
         promocion = request.GET.get("promocion")
         if programa == "0":
             data = Expediente.objects.filter(
-                Q(persona__full_name__icontains=search),
+                Q(persona__full_name__icontains=search)
+                | Q(persona__numero_documento__icontains=search),
                 promocion__icontains=promocion,
             ).order_by("-id")[:25]
         else:
             data = Expediente.objects.filter(
-                Q(persona__full_name__icontains=search),
+                Q(persona__full_name__icontains=search)
+                | Q(persona__numero_documento__icontains=search),
                 promocion__icontains=promocion,
                 programa__id=programa,
             ).order_by("-id")[:25]
