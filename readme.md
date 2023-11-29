@@ -30,7 +30,7 @@ Password:
 ```
 ### Correr el Servidor
 ```
-
+python manage.py runserver
 ```
 
 ## Rutas

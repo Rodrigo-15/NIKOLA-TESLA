@@ -71,25 +71,38 @@ def get_cursos_by_programa_id(request):
             pago_ciclo = 0
         else:
             pago_ciclo = obj_pago_ciclo["curso_grupo__curso__ciclo"]
+
         obj_pagos = Pago.objects.filter(
             expendiente_id=expediente_id,
             concepto__programa__codigo=obj_programa["codigo"],
         )
+        pago_matricula = Pago.objects.filter(
+            expendiente_id=expediente_id, concepto_id=48
+        )
         monto_total = 0
+        monto_total_matricula = 0
         for pago in obj_pagos:
             monto_total = monto_total + pago.monto
+        for pago_m in pago_matricula:
+            monto_total_matricula = monto_total_matricula + pago_m.monto
+
         if obj_programa["cuotas"] == 16:
+            num_ciclos = 4
             pagos_total = (4 * obj_programa["costo"]) * pago_ciclo
         elif obj_programa["cuotas"] == 18:
+            num_ciclos = 6
             pagos_total = (6 * obj_programa["costo"]) * pago_ciclo
         elif obj_programa["cuotas"] == 20:
+            num_ciclos = 5
             pagos_total = (5 * obj_programa["costo"]) * pago_ciclo
         elif obj_programa["cuotas"] == 24:
+            num_ciclos = 6
             pagos_total = (6 * obj_programa["costo"]) * pago_ciclo
         elif obj_programa["cuotas"] == 36:
+            num_ciclos = 6
             pagos_total = (6 * obj_programa["costo"]) * pago_ciclo
 
-        if monto_total < (pagos_total - (4 * pago_ciclo)):
+        if monto_total < (pagos_total - (num_ciclos * pago_ciclo)):
             mensaje = (
                 "No puede realizar su matricula usted tiene una deuda de pension por un monto total de "
                 + str(pagos_total - monto_total)
@@ -552,16 +565,12 @@ def get_expedientes(request):
         promocion = request.GET.get("promocion")
         if programa == "0":
             data = Expediente.objects.filter(
-                Q(persona__numero_documento__icontains=search)
-                | Q(persona__apellido_paterno__icontains=search)
-                | Q(persona__apellido_materno__icontains=search),
+                Q(persona__full_name__icontains=search),
                 promocion__icontains=promocion,
             ).order_by("-id")[:25]
         else:
             data = Expediente.objects.filter(
-                Q(persona__numero_documento__icontains=search)
-                | Q(persona__apellido_paterno__icontains=search)
-                | Q(persona__apellido_materno__icontains=search),
+                Q(persona__full_name__icontains=search),
                 promocion__icontains=promocion,
                 programa__id=programa,
             ).order_by("-id")[:25]
@@ -904,7 +913,6 @@ def get_alumno_identificacion(request):
         )
         path_return = path_return.replace("\\", "/")
         # expedientes
-        serializer_expedientes = ExpedientesSerializer(expedientes, many=True)
         from datetime import datetime
 
         DIAS = [
@@ -960,3 +968,80 @@ def get_alumno_identificacion(request):
                 "expedientes": obj_expedientes,
             }
         )
+
+
+@api_view(["GET"])
+def get_docente_identificacion(request):
+    if request.method == "GET":
+        num_documento = request.GET.get("num_documento")
+        docente = Docente.get_docente_by_numero_documento(num_documento)
+        if not docente:
+            return Response({"message": "Docente no encontrado"}, status=404)
+
+        # fotos
+        import os
+        from django.conf import settings
+
+        foto = docente["persona__foto"]
+        path_return = os.path.join(
+            settings.MEDIA_URL,
+            "fotos",
+            "{}".format(foto),
+        )
+        path_return = path_return.replace("\\", "/")
+
+        # docente
+        obj_docente = {
+            "id": docente["id"],
+            "persona_id": docente["persona__id"],
+            "numero_documento": docente["persona__numero_documento"],
+            "nombres": docente["persona__nombres"],
+            "apellido_paterno": docente["persona__apellido_paterno"],
+            "apellido_materno": docente["persona__apellido_materno"],
+            "foto": path_return,
+            "correo": docente["persona__correo"],
+            "celular": docente["persona__celular"],
+        }
+        # CURSO
+        from datetime import datetime
+
+        DIAS = [
+            "",
+            "Lunes",
+            "Martes",
+            "Miercoles",
+            "Jueves",
+            "Viernes",
+            "Sabado",
+            "Domingo",
+        ]
+        fecha = datetime.now().strftime("%Y-%m-%d")
+        dia = datetime.now().weekday() + 1
+        curso_grupos = CursoGrupo.objects.filter(
+            docente__id=docente["id"],
+            fecha_inicio__lte=fecha,
+            fecha_termino__gte=fecha,
+        )
+        obj_curso = []
+        for curso_grupo in curso_grupos:
+            horarios = Horario.objects.filter(curso_grupo__id=curso_grupo.id, dia=dia)
+            obj_horario = []
+            for horario in horarios:
+                obj_horario.append(
+                    {
+                        "aula": horario.aula.nombre if horario.aula else "",
+                        "dia": DIAS[horario.dia],
+                        "hora_inicio": horario.hora_inicio.strftime("%H:%M"),
+                        "hora_fin": horario.hora_fin.strftime("%H:%M"),
+                    }
+                )
+            obj_curso.append(
+                {
+                    "id": curso_grupo.id,
+                    "nombre_curso": curso_grupo.curso.nombre,
+                    "grupo_curso": curso_grupo.grupo,
+                    "horario": obj_horario,
+                }
+            )
+        # return
+        return Response({**obj_docente, "detalle_curso": obj_curso})

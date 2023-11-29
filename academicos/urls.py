@@ -115,4 +115,9 @@ urlpatterns = [
         get_alumno_identificacion,
         name="get_alumno_identificacion",
     ),
+    path(
+        "get_docente_identificacion",
+        get_docente_identificacion,
+        name="get_docente_identificacion",
+    ),
 ]

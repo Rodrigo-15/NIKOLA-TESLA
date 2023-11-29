@@ -105,6 +105,24 @@ class Docente(models.Model):
     def __str__(self):
         return f"{self.full_name()} - {self.grado_academico}"
 
+    @staticmethod
+    def get_docente_by_numero_documento(numero_documento):
+        return (
+            Docente.objects.filter(persona__numero_documento=numero_documento)
+            .values(
+                "id",
+                "persona__id",
+                "persona__nombres",
+                "persona__apellido_paterno",
+                "persona__apellido_materno",
+                "persona__numero_documento",
+                "persona__foto",
+                "persona__correo",
+                "persona__celular",
+            )
+            .first()
+        )
+
 
 class CursoGrupo(models.Model):
     GRUPOS = (
