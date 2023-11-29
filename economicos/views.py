@@ -145,7 +145,7 @@ def filter_pago(request):
                 | Q(numero_operacion__icontains=search)
                 | Q(numero_documento__icontains=search)
                 | Q(concepto__nombre__icontains=search)
-            )
+            ).order_by("-fecha_operacion")[:50]
         pagos_serializer = PagoSerializerFilter(pagos, many=True)
         return Response(pagos_serializer.data)
 
