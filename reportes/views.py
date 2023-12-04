@@ -765,7 +765,7 @@ def reporte_economico_alumno_api(request):
         cantidad_pagos_programa = pagos_programa.count()
         suma_pagos_programa = pagos_programa.aggregate(Sum("monto"))["monto__sum"] or 0
         # PAGOS DE MATRICULA
-        pagos_matricula = pagos.filter(concepto__id=concepto_matricula_id).order_by(
+        pagos_matricula = pagos.filter(concepto__id__in=(48, 49)).order_by(
             "fecha_operacion"
         )
         cantidad_pagos_matricula = pagos_matricula.count()
@@ -774,7 +774,7 @@ def reporte_economico_alumno_api(request):
         )
         # PAGOS DE OTROS CONCEPTOS
         pagos_otros = (
-            pagos.exclude(concepto__id=concepto_matricula_id)
+            pagos.exclude(concepto__id__in=(48, 49))
             .exclude(concepto__programa__codigo=expediente.programa.codigo)
             .order_by("fecha_operacion")
         )
@@ -821,7 +821,10 @@ def reporte_economico_alumno_api(request):
         monto_pagado = 0
         for pago in pagos_matricula:
             nro_cuota += 1
-            monto_pagado = pago.monto + pago_anterior
+            if pago.concepto_id == 48:
+                monto_pagado = pago.monto + pago_anterior
+            else:
+                monto_pagado = (pago.monto - 50) + pago_anterior
             saldo = costo_total_matricula - monto_pagado
             pagos_matricula_list.append(
                 {
@@ -837,7 +840,10 @@ def reporte_economico_alumno_api(request):
                 }
             )
             pago_anterior = monto_pagado
-            total_pago_matricula_lista += pago.monto
+            if pago.concepto_id == 48:
+                total_pago_matricula_lista += pago.monto
+            else:
+                total_pago_matricula_lista += pago.monto - 50
         # LISTA DE PAGOS POR OTROS CONCEPTOS
         pagos_otros_list = []
         total_pago_otros_lista = 0
@@ -964,13 +970,13 @@ def reporte_economico_function(numero_documento):
     cantidad_pagos_programa = round((suma_pagos_programa / (costo - 1)), 0)
     cuotas_x_ciclo = round(int(cuotas / expediente.programa.cantidad_matriculas), 0)
     # PAGOS DE MATRICULA
-    pagos_matricula = pagos.filter(concepto__id=concepto_matricula_id).order_by(
+    pagos_matricula = pagos.filter(concepto__id__in=(48, 49)).order_by(
         "fecha_operacion"
     )
     cantidad_pagos_matricula = pagos_matricula.count()
     suma_pagos_matricula = pagos_matricula.aggregate(Sum("monto"))["monto__sum"] or 0
     # PAGOS DE OTROS CONCEPTOS
-    pagos_otros = pagos.exclude(concepto__id=concepto_matricula_id).exclude(
+    pagos_otros = pagos.exclude(concepto__id__in=(48, 49)).exclude(
         concepto__programa__codigo=expediente.programa.codigo
     )
     suma_pagos_otros = pagos_otros.aggregate(Sum("monto"))["monto__sum"] or 0
@@ -1017,7 +1023,10 @@ def reporte_economico_function(numero_documento):
     monto_pagado = 0
     for pago in pagos_matricula:
         nro_cuota += 1
-        monto_pagado = pago.monto + pago_anterior
+        if pago.concepto_id == 48:
+            monto_pagado = pago.monto + pago_anterior
+        else:
+            monto_pagado = (pago.monto - 50) + pago_anterior
         saldo = costo_total_matricula - monto_pagado
         pagos_matricula_list.append(
             {
@@ -1033,7 +1042,10 @@ def reporte_economico_function(numero_documento):
             }
         )
         pago_anterior = monto_pagado
-        total_pago_matricula_lista += pago.monto
+        if pago.concepto_id == 48:
+            total_pago_matricula_lista += pago.monto
+        else:
+            total_pago_matricula_lista += pago.monto - 50
     # LISTA DE PAGOS POR OTROS CONCEPTOS
     pagos_otros_list = []
     total_pago_otros_lista = 0
@@ -1339,7 +1351,7 @@ def reporte_economico_expediente_api(request):
     if request.method == "GET":
         expediente_id = request.GET.get("expediente")
 
-        expediente = Expediente.objects.filter(id=expediente_id, is_active=True).first()
+        expediente = Expediente.objects.filter(id=expediente_id).first()
         # COSTO TOTAL PENSION
         if not expediente:
             return Response(
@@ -1357,7 +1369,7 @@ def reporte_economico_expediente_api(request):
         # COSTO TOTAL MATRICULA
         cantidad_matriculas = expediente.programa.cantidad_matriculas
         concepto = Concepto.objects.filter(
-            codigo="531", nombre="MATRICULA MAESTRIA Y DOCTORADOS"
+            nombre="MATRICULA MAESTRIA Y DOCTORADOS", codigo="531"
         ).first()
         precio_matricula = 0
 
@@ -1378,7 +1390,7 @@ def reporte_economico_expediente_api(request):
         cantidad_pagos_programa = pagos_programa.count()
         suma_pagos_programa = pagos_programa.aggregate(Sum("monto"))["monto__sum"] or 0
         # PAGOS DE MATRICULA
-        pagos_matricula = pagos.filter(concepto__id=concepto_matricula_id).order_by(
+        pagos_matricula = pagos.filter(concepto__id__in=(48, 49)).order_by(
             "fecha_operacion"
         )
         cantidad_pagos_matricula = pagos_matricula.count()
@@ -1386,7 +1398,7 @@ def reporte_economico_expediente_api(request):
             pagos_matricula.aggregate(Sum("monto"))["monto__sum"] or 0
         )
         # PAGOS DE OTROS CONCEPTOS
-        pagos_otros = pagos.exclude(concepto__id=concepto_matricula_id).exclude(
+        pagos_otros = pagos.exclude(concepto__id__in=(48, 49)).exclude(
             concepto__programa__codigo=expediente.programa.codigo
         )
         suma_pagos_otros = pagos_otros.aggregate(Sum("monto"))["monto__sum"] or 0
@@ -1432,7 +1444,11 @@ def reporte_economico_expediente_api(request):
         monto_pagado = 0
         for pago in pagos_matricula:
             nro_cuota += 1
-            monto_pagado = pago.monto + pago_anterior
+            if pago.concepto_id == 48:
+                monto_pagado = pago.monto + pago_anterior
+            else:
+                monto_pagado = (pago.monto - 50) + pago_anterior
+
             saldo = costo_total_matricula - monto_pagado
             pagos_matricula_list.append(
                 {
@@ -1448,7 +1464,10 @@ def reporte_economico_expediente_api(request):
                 }
             )
             pago_anterior = monto_pagado
-            total_pago_matricula_lista += pago.monto
+            if pago.concepto_id == 48:
+                total_pago_matricula_lista += pago.monto
+            else:
+                total_pago_matricula_lista += pago.monto - 50
         # LISTA DE PAGOS POR OTROS CONCEPTOS
         pagos_otros_list = []
         total_pago_otros_lista = 0

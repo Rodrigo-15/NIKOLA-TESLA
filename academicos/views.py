@@ -257,9 +257,12 @@ def get_matricula_by_expediente_active(request):
             is_academico = False
 
         # periodo = Periodo.get_periodo_activo()
-        programa = Expediente.objects.filter(id=expediente_id, is_active=True).values(
-            "programa_id", "promocion"
-        )
+        result = False
+        programa = Expediente.objects.filter(
+            id=expediente_id, is_active=True, is_retired=False
+        ).values("programa_id", "promocion")
+        if programa is None:
+            return Response(result)
         periodo = Periodo.get_periodo_by_etapa_active(
             programa[0]["programa_id"], programa[0]["promocion"], is_academico
         )
@@ -267,7 +270,9 @@ def get_matricula_by_expediente_active(request):
             expediente_id, periodo.id
         )
         serializer = MatriculaSerializer(matricula, many=True)
-        return Response(serializer.data)
+        if len(serializer.data) <= 0:
+            result = True
+        return Response(result)
 
 
 @api_view(["GET"])
