@@ -27,7 +27,7 @@ from admision.serializers.expediente import (
     ExpedienteReportSerializer,
     ExpedienteSerializer,
 )
-from core.models import Periodo, Persona, CargoArea
+from core.models import Periodo, Persona, CargoArea, Etapa
 from economicos.models import Concepto, Pago
 from django.db.models import Sum, Max, Min
 from rest_framework import status
@@ -1134,17 +1134,23 @@ def reporte_academico_function(expediente_id):
     # fecha ejecucion y condicion
     obj_ejecucion = Matricula.objects.filter(
         expediente_id=expediente_id, is_retirado=False
+    ).values("curso_grupo__fecha_inicio", "curso_grupo__fecha_termino")
+    etapas = Etapa.objects.filter(
+        promocion=expediente.promocion, programa_id=expediente.programa.id
     )
-    fecha_inicio = obj_ejecucion.aggregate(Min("fecha"))["fecha__min"].strftime(
-        "%d/%m/%Y"
-    )
+    fecha_inicio = obj_ejecucion.aggregate(Min("curso_grupo__fecha_inicio"))[
+        "curso_grupo__fecha_inicio__min"
+    ].strftime("%d/%m/%Y")
     fecha_final = ""
     condicion = "ESTUDIANTE"
     if expediente.is_graduate == True:
-        fecha_final = obj_ejecucion.aggregate(Max("fecha"))["fecha__max"].strftime(
-            "%d/%m/%Y"
-        )
-        condicion = "GRADUADO"
+        fecha_final = obj_ejecucion.aggregate(Max("curso_grupo__fecha_termino"))[
+            "curso_grupo__fecha_termino__max"
+        ].strftime("%d/%m/%Y")
+        condicion = "EGRESADO"
+    fecha_1_mat = etapas.aggregate(Min("fecha_inicio"))["fecha_inicio__min"].strftime(
+        "%d/%m/%Y"
+    )
     # DATOS CURSOS
     obj_curso = Cursos.objects.filter(
         plan_estudio__programa__id=expediente.programa.id
@@ -1295,6 +1301,7 @@ def reporte_academico_function(expediente_id):
         "fecha_final": fecha_final,
         "condicion": condicion,
         "fecha_actual": fecha_actual_str,
+        "fecha_1_mat": fecha_1_mat,
         "cargoarea": obj_cargoarea,
     }
 
