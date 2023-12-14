@@ -40,6 +40,8 @@ class ExpedienteAlumnoSerializer(serializers.Serializer):
     foto = serializers.SerializerMethodField(source="get_foto")
     correo = serializers.CharField(source="persona.correo")
     celular = serializers.CharField(source="persona.celular")
+    is_retired = serializers.BooleanField()
+    is_graduate = serializers.BooleanField()
 
     def get_foto(self, obj):
         return ""
@@ -77,6 +79,7 @@ class ExpedienteMatriculaSerializer(serializers.Serializer):
     programa_nombre = serializers.CharField(source="programa.nombre")
     promocion = serializers.CharField()
     is_retired = serializers.BooleanField()
+    is_graduate = serializers.BooleanField()
     foto = serializers.SerializerMethodField(source="get_foto")
 
     def get_foto(self, obj):
