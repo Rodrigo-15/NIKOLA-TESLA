@@ -1283,7 +1283,7 @@ def reporte_academico_function(expediente_id):
                     "promedio": "-",
                 }
             )
-
+        # PPA
         # ENCARGADO OFICINA
         obj_cargoarea = CargoArea.objects.filter(
             area__id=1, cargo__id=1, is_active=True
@@ -2008,3 +2008,112 @@ def generate_txt_bach(request):
     )
     path_return = path_return.replace("\\", "/")
     return Response({"path": path_return})
+
+
+@api_view(["GET"])
+def generate_diploma_pdf(request):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import landscape, A4
+    from reportlab.lib import utils
+    from reportlab.pdfgen import canvas
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.lib.colors import HexColor
+    from reportlab.pdfbase.ttfonts import TTFont
+    import qrcode
+    from PIL import Image
+
+    if request.method == "GET":
+        expediente_id = request.GET.get("expediente_id")
+        if expediente_id == None:
+            return Response(
+                {"error": "No se encontro el expediente"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        expediente = Expediente.objects.filter(id=expediente_id).first()
+
+        num_doc = expediente.persona.numero_documento
+        persona = (
+            expediente.persona.nombres
+            + " "
+            + expediente.persona.apellido_paterno
+            + " "
+            + expediente.persona.apellido_materno
+        )
+        programa = expediente.programa.nombre
+        programa_id = expediente.programa.id
+
+        # fecha
+        fecha = datetime.datetime.now().strftime("%d/%m/%Y")
+        dia = datetime.datetime.now().day
+        mes_id = datetime.datetime.now().strftime("%m")
+        anio = datetime.datetime.now().year
+        mes_array = [
+            {"nombre": "Enero"},
+            {"nombre": "Febrero"},
+            {"nombre": "Marzo"},
+            {"nombre": "Abril"},
+            {"nombre": "Mayo"},
+            {"nombre": "Junio"},
+            {"nombre": "Julio"},
+            {"nombre": "Agosto"},
+            {"nombre": "Septiembre"},
+            {"nombre": "Octubre"},
+            {"nombre": "Noviembre"},
+            {"nombre": "Diciembre"},
+        ]
+        mes_name = mes_array[int(mes_id) - 1].get("nombre")
+
+        fecha = f"Iquitos, {dia} de {mes_name} de {anio}"
+
+        # Guardar el PDF en la carpeta media
+        media_root = settings.MEDIA_ROOT
+        pdf_folder = os.path.join(media_root)
+        if not os.path.exists(pdf_folder):
+            os.makedirs(pdf_folder)
+
+        # Registrar la fuente .otf que no tienes instalada
+        font_path = os.path.join(settings.MEDIA_ROOT, "config", "times.ttf")
+        font_path1 = os.path.join(settings.MEDIA_ROOT, "config", "timesbd.ttf")
+        # Ajusta la ruta
+        pdfmetrics.registerFont(TTFont("times", font_path))
+        pdfmetrics.registerFont(TTFont("timesbd", font_path1))
+        #milisecond
+        milisecond = str(int(round(time.time() * 1000)))
+        # Crear un objeto PDF con orientación horizontal y tamaño de página A4
+        archivoPdf = canvas.Canvas(
+            os.path.join(
+                settings.MEDIA_ROOT,
+                "diplomas",
+                f"diploma_egregasado-{persona}-{num_doc}-{programa}-{milisecond}.pdf",
+            ),
+            landscape(A4),
+        )
+
+        image_path = os.path.join(
+            settings.MEDIA_ROOT, "config", f"diploma{programa_id}.jpg"
+        )
+        pdf_width, pdf_height = landscape(A4)
+        archivoPdf.drawImage(image_path, 0, 0, width=pdf_width, height=pdf_height)
+
+        archivoPdf.setFillColor(HexColor("#02273E"))
+        archivoPdf.setFont("timesbd", 32)
+        archivoPdf.drawCentredString(430, 290, f"{persona}".upper())
+
+        archivoPdf.setFillColor(HexColor("#000000"))
+        archivoPdf.setFont("times", 21)
+        archivoPdf.drawString(72, 218, f"{programa}.".title())
+
+        archivoPdf.setFillColor(HexColor("#000000"))
+        archivoPdf.setFont("times", 21)
+        archivoPdf.drawString(500, 185, f"{fecha}.".capitalize())
+
+        archivoPdf.save()
+        # retornar la ruta del archivo PDF
+        path_return = os.path.join(
+            settings.MEDIA_URL,
+            "diplomas",
+            f"diploma_egregasado-{persona}-{num_doc}-{programa}-{milisecond}.pdf",
+        )
+        path_return = path_return.replace("\\", "/")
+        return Response({"path": path_return})

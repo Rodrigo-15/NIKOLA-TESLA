@@ -77,4 +77,5 @@ urlpatterns = [
         generate_txt_bach,
         name="generate_txt_bach",
     ),
+    path("generate_diploma_pdf/", generate_diploma_pdf, name="generate_diploma_pdf"),
 ]
