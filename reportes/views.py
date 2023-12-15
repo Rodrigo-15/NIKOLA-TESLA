@@ -2040,6 +2040,12 @@ def generate_diploma_pdf(request):
             + " "
             + expediente.persona.apellido_materno
         )
+        nombres = expediente.persona.nombres
+        apellidos = (
+            expediente.persona.apellido_paterno
+            + " "
+            + expediente.persona.apellido_materno
+        )
         programa = expediente.programa.nombre
         programa_id = expediente.programa.id
 
@@ -2078,7 +2084,7 @@ def generate_diploma_pdf(request):
         # Ajusta la ruta
         pdfmetrics.registerFont(TTFont("times", font_path))
         pdfmetrics.registerFont(TTFont("timesbd", font_path1))
-        #milisecond
+        # milisecond
         milisecond = str(int(round(time.time() * 1000)))
         # Crear un objeto PDF con orientación horizontal y tamaño de página A4
         archivoPdf = canvas.Canvas(
@@ -2096,9 +2102,15 @@ def generate_diploma_pdf(request):
         pdf_width, pdf_height = landscape(A4)
         archivoPdf.drawImage(image_path, 0, 0, width=pdf_width, height=pdf_height)
 
-        archivoPdf.setFillColor(HexColor("#02273E"))
-        archivoPdf.setFont("timesbd", 32)
-        archivoPdf.drawCentredString(430, 290, f"{persona}".upper())
+        if len(persona) <= 32:
+            archivoPdf.setFillColor(HexColor("#02273E"))
+            archivoPdf.setFont("timesbd", 32)
+            archivoPdf.drawCentredString(430, 290, f"{persona}".upper())
+        else:
+            archivoPdf.setFillColor(HexColor("#02273E"))
+            archivoPdf.setFont("timesbd", 32)
+            archivoPdf.drawCentredString(430, 300, f"{nombres}".upper())
+            archivoPdf.drawCentredString(430, 270, f"{apellidos}".upper())
 
         archivoPdf.setFillColor(HexColor("#000000"))
         archivoPdf.setFont("times", 21)
