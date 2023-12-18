@@ -150,7 +150,7 @@ class CursoGrupo(models.Model):
 
     def __str__(self):
         docente = self.docente.full_name() if self.docente else "No asignado"
-        return f"{self.id} - {self.curso.nombre} - {self.grupo} - {docente} (Programa: {self.curso.plan_estudio.programa.nombre})"
+        return f"{self.id} - {self.curso.nombre} - {self.grupo} - {docente} (Programa: {self.curso.plan_estudio.programa.nombre}) - (Periodo: {self.periodo.nombre})"
 
     @staticmethod
     def get_cursos_grupos_by_curso(curso_id, periodo_id):
