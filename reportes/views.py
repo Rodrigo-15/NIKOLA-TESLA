@@ -1186,6 +1186,10 @@ def reporte_academico_function(expediente_id):
                 nota = obj_nota.promedio_final
                 det_acta = "REGULAR"
                 num_acta = obj_nota.num_acta_ref
+            elif obj_nota.is_old == True and obj_nota.is_dirigido == True:
+                nota = obj_nota.promedio_final
+                det_acta = "DIRIGIDO"
+                num_acta = obj_nota.num_acta_ref
             elif obj_nota.is_cerrado == True:
                 nota = obj_nota.promedio_final
                 det_acta = "REGULAR"

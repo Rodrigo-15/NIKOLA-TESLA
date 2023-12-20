@@ -301,6 +301,7 @@ class Matricula(models.Model):
             curso_grupo__id=curso_grupo_id,
             expediente__is_active=True,
             is_retirado=False,
+            is_convalidado=False,
         ).order_by(
             "expediente__persona__apellido_paterno",
             "expediente__persona__apellido_materno",
