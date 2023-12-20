@@ -1168,23 +1168,27 @@ def reporte_academico_function(expediente_id):
             .first()
         )
         if obj_nota != None:
-            if obj_nota.promedio_final != None:
-                num_acta = str(obj_nota.curso_grupo.id).zfill(6)
-                periodo = obj_nota.curso_grupo.periodo.nombre
-                if obj_nota.is_aplazado == True:
-                    if obj_nota.promedio_final_aplazado != None:
-                        nota = obj_nota.promedio_final_aplazado
-                        det_acta = "APLAZADO"
-                    else:
-                        nota = ""
-                        det_acta = "APLAZADO"
-                elif obj_nota.is_dirigido == True:
-                    nota = obj_nota.promedio_final
-                    det_acta = "DIRIGIDO"
-                else:
-                    nota = obj_nota.promedio_final
-                    det_acta = "REGULAR"
-
+            num_acta = str(obj_nota.curso_grupo.id).zfill(6)
+            periodo = obj_nota.curso_grupo.periodo.nombre
+            if obj_nota.is_aplazado == True:
+                nota = obj_nota.promedio_final_aplazado or ""
+                num_acta = f"{str(obj_nota.curso_grupo.id).zfill(6)}-A{obj_nota.aplazado.num_acta}"
+                det_acta = "APLAZADO"
+            elif obj_nota.is_dirigido == True:
+                nota = obj_nota.promedio_final
+                det_acta = "DIRIGIDO"
+            elif obj_nota.is_convalidado == True:
+                nota = obj_nota.promedio_final
+                det_acta = "CONVALIDADO"
+                num_acta = "-"
+                periodo = "-"
+            elif obj_nota.is_old == True:
+                nota = obj_nota.promedio_final
+                det_acta = "REGULAR"
+                num_acta = obj_nota.num_acta_ref
+            elif obj_nota.is_cerrado == True:
+                nota = obj_nota.promedio_final
+                det_acta = "REGULAR"
             else:
                 nota = ""
                 num_acta = ""
