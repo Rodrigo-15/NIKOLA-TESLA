@@ -268,6 +268,7 @@ class Matricula(models.Model):
     )
     fecha_modified = models.DateTimeField(auto_now=True, null=True, blank=True)
     num_acta_ref = models.CharField(max_length=50, null=True, blank=True)
+    is_old = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         # if not self.id:
