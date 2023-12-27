@@ -644,16 +644,16 @@ def get_progreso_academico_by_expediente_id(request):
             .order_by("curso_grupo__curso__codigo")
         )
         data = []
-
         for matricula in cursos:
             if matricula.is_aplazado == True:
+                observacion = "APLAZADO"
                 if matricula.promedio_final_aplazado == None:
                     promedio_final = ""
                 else:
                     promedio_final = "{:.2f}".format(matricula.promedio_final_aplazado)
             else:
                 promedio_final = "{:.2f}".format(matricula.promedio_final)
-
+                observacion = ""
             curso_grupo = CursoGrupo.objects.get(id=matricula.curso_grupo.id)
             obj_curso = {
                 "id": curso_grupo.curso.id,
@@ -666,6 +666,8 @@ def get_progreso_academico_by_expediente_id(request):
                 "fecha_inicio": curso_grupo.fecha_inicio,
                 "fecha_termino": curso_grupo.fecha_termino,
                 "fecha_cierre_acta": matricula.fecha_cierre_acta,
+                "is_convalidado": matricula.is_convalidado,
+                "observacion": observacion,
             }
             data.append({**obj_curso, "promedio_final": promedio_final})
         return Response(data)
@@ -685,7 +687,7 @@ def get_periodos_by_expediente_id(request):
             "periodo__is_active_matricula",
         )
         .distinct()
-        .order_by("periodo__id")
+        .order_by("periodo__nombre")
     )
     obj_periodos = []
     for periodo in periodos:
@@ -715,7 +717,7 @@ def get_periodos_by_docente_id(request):
             "periodo__is_active_matricula",
         )
         .distinct()
-        .order_by("periodo__id")
+        .order_by("periodo__nombre")
     )
     obj_periodos = []
     for periodo in periodos:

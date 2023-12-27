@@ -1170,26 +1170,30 @@ def reporte_academico_function(expediente_id):
         if obj_nota != None:
             num_acta = str(obj_nota.curso_grupo.id).zfill(6)
             periodo = obj_nota.curso_grupo.periodo.nombre
-            if obj_nota.is_aplazado == True:
+            if obj_nota.is_old == False and obj_nota.is_aplazado == True:
                 nota = obj_nota.promedio_final_aplazado or ""
                 num_acta = f"{str(obj_nota.curso_grupo.id).zfill(6)}-A{obj_nota.aplazado.num_acta}"
                 det_acta = "APLAZADO"
-            elif obj_nota.is_dirigido == True:
+            elif obj_nota.is_old == False and obj_nota.is_dirigido == True:
                 nota = obj_nota.promedio_final
                 det_acta = "DIRIGIDO"
+            elif obj_nota.is_old == True and obj_nota.is_dirigido == True:
+                nota = obj_nota.promedio_final
+                det_acta = "DIRIGIDO"
+                num_acta = obj_nota.num_acta_ref
+            elif obj_nota.is_old == True and obj_nota.is_aplazado == True:
+                nota = obj_nota.promedio_final_aplazado or ""
+                det_acta = "APLAZADO"
+                num_acta = obj_nota.aplazado.num_acta
+            elif obj_nota.is_old == True:
+                nota = obj_nota.promedio_final
+                det_acta = "REGULAR"
+                num_acta = obj_nota.num_acta_ref
             elif obj_nota.is_convalidado == True:
                 nota = obj_nota.promedio_final
                 det_acta = "CONVALIDADO"
                 num_acta = "-"
                 periodo = "-"
-            elif obj_nota.is_old == True:
-                nota = obj_nota.promedio_final
-                det_acta = "REGULAR"
-                num_acta = obj_nota.num_acta_ref
-            elif obj_nota.is_old == True and obj_nota.is_dirigido == True:
-                nota = obj_nota.promedio_final
-                det_acta = "DIRIGIDO"
-                num_acta = obj_nota.num_acta_ref
             elif obj_nota.is_cerrado == True:
                 nota = obj_nota.promedio_final
                 det_acta = "REGULAR"
