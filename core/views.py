@@ -22,7 +22,7 @@ def get_periodo_active(request):
 
 @api_view(["GET"])
 def get_periodos(request):
-    periodos = Periodo.get_periodos()
+    periodos = Periodo.get_periodos().order_by("nombre")
     serializer = PeriodoSerializer(periodos, many=True)
     return Response(serializer.data)
 

@@ -530,8 +530,6 @@ def get_reporte_matricula_pdf(request):
 
 
 def reporte_matricula_alumno_function(expediente_id, periodo_id):
-    # expediente_id = 3407
-    # periodo_id = 1
     #
     periodo = Periodo.objects.get(id=periodo_id)
     #
@@ -552,17 +550,33 @@ def reporte_matricula_alumno_function(expediente_id, periodo_id):
     #
     matriculas = Matricula.objects.filter(
         expediente=expediente_id, periodo=periodo_id, is_retirado=False
-    )
+    ).order_by("curso_grupo__curso__codigo")
     cursos = []
     for matricula in matriculas:
         curso = Cursos.objects.get(id=matricula.curso_grupo.curso.id)
         grupo = matricula.curso_grupo.grupo
         cursos.append({"curso": curso, "grupo": grupo})
 
-    dia = datetime.datetime.now().day
-    anio = datetime.datetime.now().year
-    #
-    mes_name = datetime.datetime.now().strftime("%B")
+    # FECHA DE REPORTE
+    fecha_matricula = matriculas.first().fecha
+    dia = fecha_matricula.day
+    anio = fecha_matricula.year
+    mes_id = fecha_matricula.strftime("%m")
+    mes_array = [
+        {"nombre": "Enero"},
+        {"nombre": "Febrero"},
+        {"nombre": "Marzo"},
+        {"nombre": "Abril"},
+        {"nombre": "Mayo"},
+        {"nombre": "Junio"},
+        {"nombre": "Julio"},
+        {"nombre": "Agosto"},
+        {"nombre": "Septiembre"},
+        {"nombre": "Octubre"},
+        {"nombre": "Noviembre"},
+        {"nombre": "Diciembre"},
+    ]
+    mes_name = mes_array[int(mes_id) - 1].get("nombre")
     fecha_actual_str = f"{dia} de {mes_name} de {anio}"
 
     return {
