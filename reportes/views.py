@@ -1131,8 +1131,8 @@ def get_reporte_academico_alumno_pdf(request):
         )
         if os.path.exists(pdf_file_name):
             os.remove(pdf_file_name)
-        html.write_pdf(target=pdf_file_name)
 
+        html.write_pdf(target=pdf_file_name)
         path_return = os.path.join(
             settings.MEDIA_URL,
             "pdf",
@@ -1184,6 +1184,7 @@ def reporte_academico_function(expediente_id):
         if obj_nota != None:
             num_acta = str(obj_nota.curso_grupo.id).zfill(6)
             periodo = obj_nota.curso_grupo.periodo.nombre
+            resolucion = obj_nota.curso_grupo.resolucion or ""
             if obj_nota.is_old == False and obj_nota.is_aplazado == True:
                 nota = obj_nota.promedio_final_aplazado or ""
                 num_acta = f"{str(obj_nota.curso_grupo.id).zfill(6)}-A{obj_nota.aplazado.num_acta}"
@@ -1208,6 +1209,7 @@ def reporte_academico_function(expediente_id):
                 det_acta = "CONVALIDADO"
                 num_acta = "-"
                 periodo = "-"
+                resolucion = "-"
             elif obj_nota.is_cerrado == True:
                 nota = obj_nota.promedio_final
                 det_acta = "REGULAR"
@@ -1216,11 +1218,13 @@ def reporte_academico_function(expediente_id):
                 num_acta = ""
                 det_acta = ""
                 periodo = ""
+                resolucion = ""
         else:
             nota = ""
             num_acta = ""
             det_acta = ""
             periodo = ""
+            resolucion = ""
         cursos.append(
             {
                 "nombre": curso.nombre,
@@ -1230,6 +1234,7 @@ def reporte_academico_function(expediente_id):
                 "num_acta": num_acta,
                 "det_acta": det_acta,
                 "periodo": periodo,
+                "resolucion": resolucion,
             }
         )
         total_creditos = total_creditos + curso.creditos
@@ -1268,6 +1273,7 @@ def reporte_academico_function(expediente_id):
             periodo_id=periodo.periodo.id,
             is_retirado=False,
             is_cerrado=True,
+            curso_grupo__curso__plan_estudio__programa__isnull=False,
         ).order_by("curso_grupo__curso__codigo")
         ppc = 0
         creditos = 0
@@ -1309,16 +1315,51 @@ def reporte_academico_function(expediente_id):
                     "promedio": "-",
                 }
             )
-        # PPA
-        # ENCARGADO OFICINA
-        obj_cargoarea = CargoArea.objects.filter(
-            area__id=1, cargo__id=1, is_active=True
-        ).first()
+
+    # EXTRACURRICULARES
+    obj_extracurricular = Matricula.objects.filter(
+        expediente_id=expediente_id,
+        periodo_id=periodo.periodo.id,
+        is_retirado=False,
+        is_cerrado=True,
+        curso_grupo__curso__plan_estudio__programa__isnull=True,
+    ).order_by("curso_grupo__curso__codigo")
+    cursos_extracurricular = []
+    for p in obj_extracurricular:
+        if p.is_aplazado == True:
+            if p.promedio_final_aplazado == None:
+                promedio_final = p.promedio_final
+            else:
+                promedio_final = p.promedio_final_aplazado
+        else:
+            promedio_final = p.promedio_final
+
+        if p.is_old == True:
+            num_acta_extracurricular = p.num_acta_ref
+        else:
+            num_acta_extracurricular = str(p.curso_grupo.id).zfill(6)
+        cursos_extracurricular.append(
+            {
+                "curso": p.curso_grupo.curso.nombre,
+                "modalidad": "EXTRACURRICULAR",
+                "resolucion": p.curso_grupo.resolucion or "",
+                "ejecutado": f'{p.curso_grupo.fecha_inicio.strftime("%d/%m/%Y")} AL {p.curso_grupo.fecha_termino.strftime("%d/%m/%Y")}',
+                "nota": promedio_final,
+                "docente": p.curso_grupo.docente.persona.get_full_name(),
+                "acta": num_acta_extracurricular,
+            }
+        )
+
+    # ENCARGADO OFICINA
+    obj_cargoarea = CargoArea.objects.filter(
+        area__id=1, cargo__id=1, is_active=True
+    ).first()
 
     #
     return {
         "expediente": expediente,
         "cursos": cursos,
+        "cursos_extracurricular": cursos_extracurricular,
         "promedios_x_ciclo": promedios_x_ciclo,
         "promedio_graduado": promedio_graduado,
         "total_creditos": total_creditos,
@@ -1329,6 +1370,7 @@ def reporte_academico_function(expediente_id):
         "fecha_actual": fecha_actual_str,
         "fecha_1_mat": fecha_1_mat,
         "cargoarea": obj_cargoarea,
+        "anio": anio,
     }
 
 
