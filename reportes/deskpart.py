@@ -2,6 +2,7 @@ import os
 from backend import settings
 from django.template.loader import render_to_string
 from weasyprint import HTML
+import time
 
 
 def get_process_tracking_sheet(data) -> str:
@@ -14,16 +15,19 @@ def get_process_tracking_sheet(data) -> str:
         code_number = data["procedure"]["code_number"]
         #
         html_string = render_to_string("reports/hoja_seguimiento.html", data)
+        milisecond = str(int(round(time.time() * 1000)))
         html = HTML(string=html_string)
         pdf_file_name = os.path.join(
-            pdf_folder, "hoja-seguimiento-{}.pdf".format(code_number)
+            pdf_folder, "hoja-seguimiento-{}-{}.pdf".format(code_number, milisecond)
         )
         if os.path.exists(pdf_file_name):
             os.remove(pdf_file_name)
         html.write_pdf(pdf_file_name)
         #
         path_return = os.path.join(
-            settings.MEDIA_URL, "pdf", "hoja-seguimiento-{}.pdf".format(code_number)
+            settings.MEDIA_URL,
+            "pdf",
+            "hoja-seguimiento-{}-{}.pdf".format(code_number, milisecond),
         )
         path_return = path_return.replace("\\", "/")
         return path_return

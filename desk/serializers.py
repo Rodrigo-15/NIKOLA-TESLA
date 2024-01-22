@@ -39,18 +39,18 @@ class ProcedureSerializer(serializers.ModelSerializer):
     file_id = serializers.IntegerField()
     person_id = serializers.SerializerMethodField(source="get_person_id")
     person_full_name = serializers.SerializerMethodField(source="get_person_full_name")
-    person_document = serializers.SerializerMethodField(
-        source="get_person_document")
+    person_document = serializers.SerializerMethodField(source="get_person_document")
     code_number = serializers.CharField()
     procedure_type_id = serializers.IntegerField()
     procedure_type_description = serializers.SerializerMethodField(
-        source="get_procedure_type_description")
+        source="get_procedure_type_description"
+    )
     subject = serializers.CharField()
     description = serializers.CharField()
+    attached_files = serializers.FileField()
     reference_doc_number = serializers.CharField()
     headquarter_id = serializers.IntegerField()
-    headquarter_name = serializers.SerializerMethodField(
-        source="get_headquarter_name")
+    headquarter_name = serializers.SerializerMethodField(source="get_headquarter_name")
     user_id = serializers.IntegerField()
     user_name = serializers.SerializerMethodField(source="get_user_name")
     created_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
@@ -64,15 +64,13 @@ class ProcedureSerializer(serializers.ModelSerializer):
         return None
 
     def get_headquarter_name(self, obj):
-        headquarter = Headquarter.objects.filter(
-            id=obj.headquarter_id).first()
+        headquarter = Headquarter.objects.filter(id=obj.headquarter_id).first()
         if headquarter:
             return headquarter.name
         return None
 
     def get_procedure_type_description(self, obj):
-        procedure_type = ProcedureType.objects.filter(
-            id=obj.procedure_type_id).first()
+        procedure_type = ProcedureType.objects.filter(id=obj.procedure_type_id).first()
         if procedure_type:
             return procedure_type.description
         return None
@@ -96,13 +94,21 @@ class ProcedureSerializer(serializers.ModelSerializer):
             return person.id
 
         return None
-    
+
     def get_state(self, obj):
-        procedure_tracing = ProcedureTracing.objects.filter(
-             is_approved=False, procedure_id=obj.id ).exclude(to_area_id = None).first()
+        procedure_tracing = (
+            ProcedureTracing.objects.filter(is_approved=False, procedure_id=obj.id)
+            .exclude(to_area_id=None)
+            .first()
+        )
         if procedure_tracing:
             return True
         return False
+
+    def get_attached_file(self, obj):
+        if obj.attached_files:
+            return obj.attached_files.url
+        return "No adjunto"
 
     class Meta:
         model = Procedure
@@ -125,8 +131,7 @@ class ProcedureTracingsList(serializers.Serializer):
     user_id = serializers.IntegerField()
     user = serializers.SerializerMethodField(source="get_user")
     assigned_user_id = serializers.IntegerField()
-    assigned_user = serializers.SerializerMethodField(
-        source="get_assigned_user")
+    assigned_user = serializers.SerializerMethodField(source="get_assigned_user")
     date = serializers.SerializerMethodField(source="get_date")
     hour = serializers.SerializerMethodField(source="get_hour")
 
@@ -151,10 +156,9 @@ class ProcedureTracingsList(serializers.Serializer):
 
     def get_assigned_user(self, obj):
         if obj.assigned_user_id:
-            person = Persona.objects.filter(
-                user_id=obj.assigned_user_id).first()
+            person = Persona.objects.filter(user_id=obj.assigned_user_id).first()
             if not person:
-                return 'No Asignado'
+                return "No Asignado"
 
             return (
                 person.nombres
@@ -164,7 +168,7 @@ class ProcedureTracingsList(serializers.Serializer):
                 + person.apellido_materno
             )
 
-        return 'No Asignado'
+        return "No Asignado"
 
 
 class ProcedureListSerializer(serializers.Serializer):
@@ -186,16 +190,21 @@ class ProcedureListSerializer(serializers.Serializer):
         return "No registrado"
 
     def get_last_action(self, obj):
-        procedure_tracing = ProcedureTracing.objects.filter(
-            procedure_id=obj.id).order_by("-created_at").first()
+        procedure_tracing = (
+            ProcedureTracing.objects.filter(procedure_id=obj.id)
+            .order_by("-created_at")
+            .first()
+        )
         if procedure_tracing:
             return procedure_tracing.action_log
         return "No registrado"
 
     def get_state(self, obj):
-        procedure_tracing = ProcedureTracing.objects.filter(
-             is_approved=False, procedure_id=obj.id ).exclude(to_area_id = None).first()
+        procedure_tracing = (
+            ProcedureTracing.objects.filter(is_approved=False, procedure_id=obj.id)
+            .exclude(to_area_id=None)
+            .first()
+        )
         if procedure_tracing:
             return True
         return False
-    
