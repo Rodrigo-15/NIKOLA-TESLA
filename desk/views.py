@@ -370,6 +370,7 @@ def save_procedure(request):
         description = (
             request.data["description"] if "description" in request.data else ""
         )
+        attached_files = request.FILES.get("attached_files")
         procedure_type_id = request.data["procedure_type_id"]
         reference_doc_number = (
             request.data["reference_doc_number"]
@@ -401,6 +402,7 @@ def save_procedure(request):
             file_id=file.id,
             subject=subject,
             description=description,
+            attached_files=attached_files,
             procedure_type_id=procedure_type_id,
             reference_doc_number=reference_doc_number,
             headquarter_id=headquarter_id,
@@ -426,6 +428,7 @@ def update_procedure(request):
             procedure_id = request.data["procedure_id"]
             subject = request.data["subject"]
             description = request.data["description"]
+            attached_files = request.FILES.get("attached_files")
             reference_doc_number = request.data["reference_doc_number"]
             number_of_sheets = request.data["number_of_sheets"]
         except KeyError:
@@ -455,6 +458,8 @@ def update_procedure(request):
 
         procedure.subject = subject
         procedure.description = description
+        if attached_files:
+            procedure.attached_files = attached_files
         procedure.reference_doc_number = reference_doc_number
         procedure.number_of_sheets = number_of_sheets
         procedure.save()

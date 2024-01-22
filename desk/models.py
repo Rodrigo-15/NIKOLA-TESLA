@@ -1,21 +1,12 @@
 from datetime import date, datetime
 from django.db import models
 
-from core.models import Area, BaseModel, Persona
+from core.models import Area, BaseModel, Persona, Headquarter
+
+# concepto
+from economicos.models import Concepto
 
 # Create your models here.
-
-
-class Headquarter(models.Model):
-    name = models.CharField(max_length=50)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        verbose_name = "headquarter"
-        verbose_name_plural = "headquarters"
-
-    def __str__(self):
-        return self.name
 
 
 class File(models.Model):
@@ -54,7 +45,12 @@ class ProcedureRequirement(models.Model):
 
 
 class ProcedureType(models.Model):
+    concepto = models.ForeignKey(
+        Concepto, on_delete=models.CASCADE, null=True, blank=True
+    )
     description = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=True)
+    days = models.IntegerField(default=0)
 
     class Meta:
         verbose_name = "procedure type"
@@ -69,9 +65,7 @@ class Procedure(models.Model):
     code_number = models.CharField(max_length=15, null=True, blank=True)
     subject = models.TextField(null=False, blank=False)
     description = models.TextField(null=True, blank=True, default="")
-    attached_files = models.FileField(
-        upload_to="procedures/attached_files/", null=True, blank=True
-    )
+    attached_files = models.FileField(upload_to="tramites/", null=True, blank=True)
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
     reference_doc_number = models.CharField(max_length=20, null=True, blank=True)
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)

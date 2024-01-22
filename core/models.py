@@ -150,9 +150,19 @@ class Cargo(models.Model):
         return f"{self.nombre} - {self.is_active}"
 
 
-class CargoArea(models.Model):
-    from desk.models import Headquarter
+class Headquarter(models.Model):
+    name = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=True)
 
+    class Meta:
+        verbose_name = "headquarter"
+        verbose_name_plural = "headquarters"
+
+    def __str__(self):
+        return self.name
+
+
+class CargoArea(models.Model):
     GRADOS = (
         ("Bach.", "Bachiller"),
         ("Lic.", "Licenciado"),
