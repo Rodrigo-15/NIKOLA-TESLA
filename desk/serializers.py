@@ -184,7 +184,7 @@ class ProcedureListSerializer(serializers.Serializer):
 
     def get_solicitante(self, obj):
         file = obj.file
-        person = Persona.objects.filter(user_id=file.person.user_id).first()
+        person = Persona.objects.filter(id=file.person_id).first()
         if person:
             return person.get_full_name()
         return "No registrado"
