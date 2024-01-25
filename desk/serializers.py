@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from core.models import Persona
+from core.models import Persona, Area
 from desk.models import (
     Headquarter,
     Procedure,
@@ -83,10 +83,15 @@ class ProcedureSerializer(serializers.ModelSerializer):
         return None
 
     def get_person_full_name(self, obj):
-        person = Persona.objects.filter(id=obj.file.person_id).first()
-        if person:
+        file = obj.file
+        if  file.person_id is None:
+            area = Area.objects.filter(id=file.area_id).first()
+            return area.nombre
+        elif file.area_id is None:
+            person = Persona.objects.filter(id=file.person_id).first()
             return person.get_full_name()
-        return None
+        else:
+            return "No registrado"
 
     def get_person_id(self, obj):
         person = Persona.objects.filter(id=obj.file.person_id).first()
@@ -124,6 +129,7 @@ class ProcedureTracingSerializer(serializers.ModelSerializer):
 class ProcedureTracingsList(serializers.Serializer):
     id = serializers.IntegerField()
     procedure_id = serializers.IntegerField()
+    code_number = serializers.SerializerMethodField(source="get_code_number")
     action = serializers.CharField()
     action_log = serializers.CharField()
     is_finished = serializers.BooleanField()
@@ -170,6 +176,12 @@ class ProcedureTracingsList(serializers.Serializer):
 
         return "No Asignado"
 
+    def get_code_number(self, obj):
+        procedure = Procedure.objects.filter(id=obj.procedure_id).first()
+        if procedure:
+            return procedure.code_number
+        return ""
+
 
 class ProcedureListSerializer(serializers.Serializer):
     id = serializers.IntegerField()
@@ -184,10 +196,14 @@ class ProcedureListSerializer(serializers.Serializer):
 
     def get_solicitante(self, obj):
         file = obj.file
-        person = Persona.objects.filter(id=file.person_id).first()
-        if person:
+        if  file.person_id is None:
+            area = Area.objects.filter(id=file.area_id).first()
+            return area.nombre
+        elif file.area_id is None:
+            person = Persona.objects.filter(id=file.person_id).first()
             return person.get_full_name()
-        return "No registrado"
+        else:
+            return "No registrado"
 
     def get_last_action(self, obj):
         procedure_tracing = (

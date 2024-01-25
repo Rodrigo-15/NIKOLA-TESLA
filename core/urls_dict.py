@@ -37,7 +37,10 @@ urls_dict = {
             "save_procedure": f"{url}desk/save_procedure",
             "update_procedure": f"{url}desk/update_procedure",
             "get_procedure_by_id": f"{url}desk/get_procedure_by_id/procedure_id",
-            "get_process_tracking_sheet_pdf": url+"reportes/get_process_tracking_sheet_pdf/?procedure_id={procedure_id}",
+            "get_process_tracking_sheet_pdf": url
+            + "reportes/get_process_tracking_sheet_pdf/?procedure_id={procedure_id}",
+            "get_charge_procedure_pdf": url
+            + "reportes/get_charge_procedure_pdf/?area_id={area_id}&user_id={user_id}",
         },
         "login": f"{url}desk/login/",
         "get_tracings_procedures": f"{url}desk/get_tracings_procedures/status",
@@ -46,7 +49,7 @@ urls_dict = {
         "get_areas": f"{url}desk/get_areas",  # get
         "get_user_for_area": f"{url}desk/get_user_for_area",  # post
         "save_derive_procedure": f"{url}desk/save_derive_procedure",  # post
-        "get_procedures_requirements": f"{url}desk/get_procedures_requirements", # post
+        "get_procedures_requirements": f"{url}desk/get_procedures_requirements",  # post
         # post
         "finally_trace_procedure": f"{url}desk/finally_trace_procedure",
         "get_user_profile": f"{url}desk/get_user_profile",  # get

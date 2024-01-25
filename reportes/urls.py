@@ -78,4 +78,9 @@ urlpatterns = [
         name="generate_txt_bach",
     ),
     path("generate_diploma_pdf/", generate_diploma_pdf, name="generate_diploma_pdf"),
+    path(
+        "get_charge_procedure_pdf/",
+        get_charge_procedure_pdf,
+        name="get_charge_procedure_pdf",
+    ),
 ]
