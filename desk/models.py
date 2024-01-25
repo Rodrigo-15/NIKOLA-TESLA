@@ -11,6 +11,7 @@ from economicos.models import Concepto
 
 class File(models.Model):
     person = models.ForeignKey(Persona, on_delete=models.CASCADE, null=True, blank=True)
+    area = models.ForeignKey(Area, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateField(auto_now_add=True, auto_now=False)
     updated_at = models.DateField(auto_now_add=False, auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -24,9 +25,12 @@ class File(models.Model):
         return File.objects.filter().values("id").last()["id"]
 
     def __str__(self):
-        if self.person is None:
-            return "Unnamed"
-        return self.person.nombres
+        if self.person:
+            return self.person.nombres
+        if self.area:
+            return self.area.nombre
+        return "Unnamed"
+
 
 
 class ProcedureRequirement(models.Model):

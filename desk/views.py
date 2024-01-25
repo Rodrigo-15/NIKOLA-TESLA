@@ -365,6 +365,8 @@ def get_tracings_procedures(request, status):
 @api_view(["POST"])
 def save_procedure(request):
     if request.method == "POST":
+        
+        
         person_id = request.data["person_id"]
         subject = request.data["subject"]
         description = (
@@ -394,9 +396,14 @@ def save_procedure(request):
             number_of_sheets = 0
 
         area_user = CargoArea.objects.filter(persona__user_id=user_id).first()
-        file = File.objects.filter(person_id=person_id).first()
+        if person_id == "0":
+            file = File.objects.filter(area_id = area_user.id).first()
+        else:
+            file = File.objects.filter(person_id=person_id).first()
 
-        if not file:
+        if not file and person_id == "0":
+            file = File.objects.create(area_id=area_user.id)
+        elif not file and person_id != "0":
             file = File.objects.create(person_id=person_id)
         procedure = Procedure.objects.create(
             file_id=file.id,
