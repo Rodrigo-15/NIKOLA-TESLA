@@ -381,7 +381,11 @@
                     </tr>
                     <tr>
                         <th class="th-num">N°</th>
-                        <th class="th-asignatura">ASIGNATURAS</th>
+                        {% if expediente.programa.tipo_id != 3 %}
+                            <th class="th-asignatura">ASIGNATURAS</th>
+                        {% else %}
+                            <th class="th-asignatura">MODULOS</th>
+                        {% endif %}
                         <th class="th-nota">NOTA</th>
                         <th class="th-cred">CRED</th>
                         <th class="th-ciclo">CICLO</th>
