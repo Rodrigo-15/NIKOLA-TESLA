@@ -57,6 +57,7 @@ def get_procedures(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         area = cargo_area.area
+        user_id = user.id
         #
         data = request.query_params
         STATES = ["started", "in_progress", "finished"]
@@ -75,20 +76,21 @@ def get_procedures(request):
                 "Invalid state: " + str(STATES),
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        counters = get_counters_procedure(date, code_number, area)
+        counters = get_counters_procedure(date, code_number, area, user_id)
 
         procedures = []
 
         if state == "started":
             procedures = get_started_procedures()
         elif state == "in_progress":
-            procedures = get_in_progress_procedures()
+            procedures = get_in_progress_procedures(user_id)
         else:
             procedures = get_finished_procedures()
 
         procedures = Procedure.objects.filter(
             id__in=[procedure["procedure"] for procedure in procedures]
         )
+        
         procedures = get_filter_procedures_by_area(procedures, area)
 
         if date:
@@ -104,7 +106,7 @@ def get_procedures(request):
         return Response({"procedures": serializer.data, "counters": counters})
 
 
-def get_counters_procedure(date=None, code_number=None, area=None):
+def get_counters_procedure(date=None, code_number=None, area=None,user_id=None):
     counters = {
         "started": {
             "label": "",
@@ -134,7 +136,7 @@ def get_counters_procedure(date=None, code_number=None, area=None):
     procedures_started = get_filter_procedures_by_area(procedures_started, area)
     counters["started"]["total"] = len(procedures_started)
 
-    procedures_in_progress = get_in_progress_procedures()
+    procedures_in_progress = get_in_progress_procedures(user_id)
     procedures_in_progress = Procedure.objects.filter(
         id__in=[procedure["procedure"] for procedure in procedures_in_progress]
     )
@@ -301,14 +303,17 @@ def get_started_procedures():
     return serializer.data
 
 
-def get_in_progress_procedures():
+def get_in_progress_procedures(user_id=None):
     """Get Procedures that have more than one TracingProcedure and it is not finished"""
 
     procedure_tracings = ProcedureTracing.objects.filter(
         is_finished=False,
+        from_area_id__isnull=False,
+        to_area_id__isnull=True,
+        user_id=user_id,
         procedure_id__in=ProcedureTracing.objects.values("procedure_id")
         .annotate(count=Count("procedure_id"))
-        .filter(count__gt=1)
+        .filter(count__gt=1,)
         .values("procedure_id"),
     ).exclude(
         procedure_id__in=ProcedureTracing.objects.filter(is_finished=True).values(
@@ -397,12 +402,13 @@ def save_procedure(request):
 
         area_user = CargoArea.objects.filter(persona__user_id=user_id).first()
         if person_id == "0":
-            file = File.objects.filter(area_id = area_user.id).first()
+            file = File.objects.filter(area_id = area_user.area_id).first()
         else:
             file = File.objects.filter(person_id=person_id).first()
 
+        
         if not file and person_id == "0":
-            file = File.objects.create(area_id=area_user.id)
+            file = File.objects.create(area_id=area_user.area_id)
         elif not file and person_id != "0":
             file = File.objects.create(person_id=person_id)
         procedure = Procedure.objects.create(

@@ -1291,7 +1291,7 @@ def reporte_academico_function(expediente_id):
             creditos += p.curso_grupo.curso.creditos
             if (
                 promedio_final >= 14
-                and p.curso_grupo.curso.plan_estudio.programa.tipo_id == 1
+                and p.curso_grupo.curso.plan_estudio.programa.tipo_id in [1, 3]
             ):
                 creditos_aprobados += p.curso_grupo.curso.creditos
             if (
