@@ -73,7 +73,7 @@ class CursoGrupoSerializer(serializers.Serializer):
     docente_nombre = serializers.SerializerMethodField(source="get_docente_nombre")
     curso_id = serializers.IntegerField(source="curso.id")
     curso_nombre = serializers.CharField(source="curso.nombre")
-    programa_nombre = serializers.CharField(source="curso.plan_estudio.programa.nombre")
+    programa_nombre = serializers.SerializerMethodField(source="get_programa_nombre") 
     grupo = serializers.CharField()     
     horarios = serializers.SerializerMethodField(source="get_horarios")     
 
@@ -83,7 +83,12 @@ class CursoGrupoSerializer(serializers.Serializer):
         return obj.docente.full_name()
     
     def get_horarios(self, obj):
-        return HoarioMatriculaSerializer(obj.horario_set.all(), many=True).data        
+        return HoarioMatriculaSerializer(obj.horario_set.all(), many=True).data
+
+    def get_programa_nombre(self, obj):
+        if not obj.curso.plan_estudio.programa:
+            return "EXTRACURRICULAR"
+        return obj.curso.plan_estudio.programa.nombre    
 
 class ExpedienteDocenteserializer(serializers.Serializer):
     id = serializers.IntegerField()

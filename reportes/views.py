@@ -644,7 +644,7 @@ def reporte_acta_function(cursogrupo_id, periodo_id):
         + cursogrupo.docente.persona.apellido_materno
     )
     #
-    programa = cursogrupo.curso.plan_estudio.programa.nombre
+    programa = cursogrupo.curso.plan_estudio.programa if cursogrupo.curso.plan_estudio.programa else "EXTRACURRICULAR"
     #
     matriculas = Matricula.get_curso_grupo_by_id(cursogrupo_id)
     expedientes = []
