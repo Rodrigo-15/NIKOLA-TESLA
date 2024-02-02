@@ -50,13 +50,15 @@ def get_procedures(request):
                 "User not found",
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        cargo_area = CargoArea.objects.filter(persona=persona).first()
+        cargo_area = CargoArea.objects.filter(persona=persona)
         if not cargo_area:
             return Response(
                 "CargoArea not found",
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        area = cargo_area.area
+        
+        area=[area1.area_id for area1 in cargo_area]
+        # area=cargo_area.area
         user_id = user.id
         #
         data = request.query_params
@@ -278,9 +280,14 @@ def login(request):
 
 
 def get_filter_procedures_by_area(procedures, area):
-    procedures_trackings = ProcedureTracing.objects.filter(
-        Q(from_area=area) | Q(to_area=area)
-    )
+    if not area:
+        procedures_trackings = ProcedureTracing.objects.filter(
+            Q(from_area=area) | Q(to_area=area)
+        )
+    else:
+        procedures_trackings = ProcedureTracing.objects.filter(
+            from_area_id__in=area
+        )
     procedure_ids_in_trackings = procedures_trackings.values_list(
         "procedure", flat=True
     )
@@ -305,23 +312,19 @@ def get_started_procedures():
 
 def get_in_progress_procedures(user_id=None):
     """Get Procedures that have more than one TracingProcedure and it is not finished"""
-
+    area_id = CargoArea.objects.filter(persona__user_id=user_id)
+    area_id =[area.area_id for area in area_id]
     procedure_tracings = ProcedureTracing.objects.filter(
         is_finished=False,
-        from_area_id__isnull=False,
+        from_area_id__in=area_id,
         to_area_id__isnull=True,
         user_id=user_id,
-        procedure_id__in=ProcedureTracing.objects.values("procedure_id")
-        .annotate(count=Count("procedure_id"))
-        .filter(count__gt=1,)
-        .values("procedure_id"),
     ).exclude(
         procedure_id__in=ProcedureTracing.objects.filter(is_finished=True).values(
             "procedure_id"
-        )
+        ),
     )
     serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
-
     return serializer.data
 
 
@@ -524,9 +527,10 @@ def save_derive_procedure(request):
             else 0
         )
 
-        from_area_id = (
-            CargoArea.objects.filter(persona__user_id=user_id).first().area_id
-        )
+        # from_area_id = (
+        #     CargoArea.objects.filter(persona__user_id=user_id).first().area_id
+        # )
+        from_area_id = ( ProcedureTracing.objects.filter(procedure_id=procedure_id).last().from_area_id)
         to_area_id = request.data["to_area_id"]
         action = request.data["action"]
         ref_procedure_tracking_id = (
@@ -586,18 +590,18 @@ def save_derive_procedure(request):
 def get_tracings_to_approved(request):
     if request.method == "POST":
         user_id = request.data["user_id"]
-        area_id = CargoArea.objects.filter(persona__user_id=user_id).first()
+        area_id = CargoArea.objects.filter(persona__user_id=user_id)
         if not area_id:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
                 data={"message": "El usuario no tiene un area asignada"},
             )
-        area_id = area_id.area_id
+        area_id =[area.area_id for area in area_id]
         tracings_for_area = ProcedureTracing.objects.filter(
-            to_area_id=area_id, is_approved=False, assigned_user_id=None
+            to_area_id__in = area_id, is_approved=False, assigned_user_id=None
         ).order_by("-created_at")
         tracings_for_user = ProcedureTracing.objects.filter(
-            to_area_id=area_id, assigned_user_id=user_id, is_approved=False
+            to_area_id__in = area_id, assigned_user_id=user_id, is_approved=False
         ).order_by("-created_at")
         serializer_tracings_for_area = ProcedureTracingsList(
             tracings_for_area, many=True
@@ -624,10 +628,10 @@ def approve_tracing(request):
         )
 
         ProcedureTracing.objects.filter(id=tracing_id).update(is_approved=True)
-
-        from_area_id = (
-            CargoArea.objects.filter(persona__user_id=user_id).first().area_id
-        )
+        from_area_id = ( ProcedureTracing.objects.filter(id=tracing_id).first().to_area_id)
+        # from_area_id = (
+        #     CargoArea.objects.filter(persona__user_id=user_id).first().area_id
+        # )
         ref_procedure_tracking_id = (
             ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
         )

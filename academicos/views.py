@@ -484,7 +484,10 @@ def save_notas(request):
                     )
                     for matricula in matricula_obj:
                         matricula.promedio_final = float(alumno["promedio_final"])
-                        matricula.save()
+                        if matricula.is_cerrado == True:
+                            return Response( status=status.HTTP_400_BAD_REQUEST)
+                        else:
+                            matricula.save()
                 else:
                     return Response(status=status.HTTP_400_BAD_REQUEST)
 
