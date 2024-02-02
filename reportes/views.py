@@ -1165,7 +1165,7 @@ def reporte_academico_function(expediente_id):
         condicion = "EGRESADO"
     fecha_1_mat = etapas.aggregate(Min("fecha_inicio"))["fecha_inicio__min"].strftime(
         "%d/%m/%Y"
-    )
+    ) if etapas else ""
     # DATOS CURSOS
     obj_curso = Cursos.objects.filter(
         plan_estudio__programa__id=expediente.programa.id
