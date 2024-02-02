@@ -644,7 +644,7 @@ def reporte_acta_function(cursogrupo_id, periodo_id):
         + cursogrupo.docente.persona.apellido_materno
     )
     #
-    programa = cursogrupo.curso.plan_estudio.programa if cursogrupo.curso.plan_estudio.programa else "EXTRACURRICULAR"
+    programa = cursogrupo.curso.plan_estudio.programa.nombre if cursogrupo.curso.plan_estudio.programa else "EXTRACURRICULAR"
     #
     matriculas = Matricula.get_curso_grupo_by_id(cursogrupo_id)
     expedientes = []
@@ -1003,6 +1003,7 @@ def reporte_economico_function(numero_documento):
     date_now = datetime.now()
     fecha_reporte = date_now.strftime("%d/%m/%Y")
     hora_reporte = date_now.strftime("%H:%M %p")
+    anio = date_now.year
     # LISTA DE PAGOS POR PENSION
     pagos_programa_list = []
     nro_cuota = 0
@@ -1110,6 +1111,7 @@ def reporte_economico_function(numero_documento):
         ).replace(",", "."),
         "cuotas_x_ciclo": cuotas_x_ciclo,
         "cargoarea": obj_cargoarea,
+        "anio": anio,
     }
 
 
