@@ -163,9 +163,6 @@
             border-collapse: collapse;
         }
 
-        table {
-            width: 1000px;
-        }
         .conceptotabla {
             font-weight: 700;
             text-align: right;
@@ -211,6 +208,16 @@
         }
         .txt-td{
             font-size: 10px;
+        }
+        .td-firma{
+            font-size: 10px;
+            width: 30px;
+            text-align: right;
+        }
+        .td-contend{
+            font-size: 14px;
+            width: 120px;
+            text-align: left;
         }
     </style>
 </head>
@@ -286,13 +293,13 @@
         <table style="font-size: x-small;" class="wrapper">
             <thead>
                 <tr>
-                    <th class="txt-th table-line">Nº</th>
-                    <th class="txt-th table-line">AÑO</th>
-                    <th class="txt-th table-line">FECHA</th>
-                    <th class="txt-th table-line">COD. BCO.</th>
-                    <th class="txt-th table-line">CANT. CUOTAS</th>
-                    <th class="txt-th table-line">CONCEPTO</th>
-                    <th class="txt-th table-line">PAGO</th>
+                    <th class="txt-th">Nº</th>
+                    <th class="txt-th">AÑO</th>
+                    <th class="txt-th">FECHA</th>
+                    <th class="txt-th">COD. BCO.</th>
+                    <th class="txt-th">CANT. CUOTAS</th>
+                    <th class="txt-th">CONCEPTO</th>
+                    <th class="txt-th">PAGO</th>
                 </tr>
             </thead>
             <tbody>
@@ -336,7 +343,7 @@
             </div>
         </div>
         <table style="font-size: x-small;" class="wrapper">
-            <thead class="table-line">
+            <thead>
                 <tr>
                     <th class="txt-th ">AÑO</th>
                     <th class="txt-th ">FECHA</th>
@@ -391,11 +398,11 @@
         <table style="font-size: x-small;" class="wrapper">
             <thead>
                 <tr>
-                    <th class="txt-th table-line">AÑO</th>
-                    <th class="txt-th table-line">FECHA</th>
-                    <th class="txt-th table-line">COD. BCO.</th>
-                    <th class="txt-th table-line">CONCEPTO</th>
-                    <th class="txt-th table-line">MONTO</th>
+                    <th class="txt-th">AÑO</th>
+                    <th class="txt-th">FECHA</th>
+                    <th class="txt-th">COD. BCO.</th>
+                    <th class="txt-th">CONCEPTO</th>
+                    <th class="txt-th">MONTO</th>
                 </tr>
             </thead>
             <tbody>
@@ -412,21 +419,21 @@
         </table>
         <div>
             <p>EL PRESENTE INFORME ECONÓMICO HACE CONSTAR QUE EL/LA SR(A). {{ expediente.persona.nombres }} {{ expediente.persona.apellido_paterno }}
-                {{ expediente.persona.apellido_materno }} &nbsp;&nbsp;&nbsp;&nbsp; ADEUDA PAGOS REQUERIDOS POR SU PROGRAMA DE &nbsp;&nbsp;&nbsp;&nbsp;.</p>
+                {{ expediente.persona.apellido_materno }} &nbsp;&nbsp;&nbsp;&nbsp; ADEUDA PAGOS REQUERIDOS POR SU PROGRAMA DE {{expediente.programa.nombre}}.</p>
         </div>
         <br>
         <br>
         <table style="font-size: x-small;" class="wrapper">
             <thead>
                 <tr>
-                    <th colspan="5" class="txt-th table-line">REPORTE INFORMATIVO DE DEUDA</th>
+                    <th colspan="5" class="txt-th">REPORTE INFORMATIVO DE DEUDA</th>
                 </tr>
                 <tr>
-                    <th class="txt-th table-line">CODIGO </th>
-                    <th class="txt-th table-line">CUOTAS</th>
-                    <th class="txt-th table-line">MONTO</th>
-                    <th class="txt-th table-line">CONCEPTO</th>
-                    <th class="txt-th table-line">TOTAL</th>
+                    <th class="txt-th">CODIGO </th>
+                    <th class="txt-th">CUOTAS</th>
+                    <th class="txt-th">MONTO</th>
+                    <th class="txt-th">CONCEPTO</th>
+                    <th class="txt-th">TOTAL</th>
                 </tr>
             </thead>
             <tbody>
@@ -440,21 +447,29 @@
             </tbody>
         </table>
         <br>
-        <div class="firma">
+        <div class="firma" style="display: inline-block;">
             <p class="firma-p">-------------------------------------------------------</p>
             <p class="firma-p">{{cargoarea.grado_academico}} {{cargoarea.persona.nombres}}
                 {{cargoarea.persona.apellido_paterno}} {{cargoarea.persona.apellido_materno}}</p>
             <p class="firma-p">{{cargoarea.cargo.nombre}} De La {{cargoarea.area.nombre}}</p>
         </div>
-        <div class="firma">
-            <p class="firma-p">-------------------------------------------------------</p>
-            <p class="firma-p">{{cargoarea.grado_academico}} {{cargoarea.persona.nombres}}
-                {{cargoarea.persona.apellido_paterno}} {{cargoarea.persona.apellido_materno}}</p>
-            <p class="firma-p">{{cargoarea.cargo.nombre}} De La {{cargoarea.area.nombre}}</p>
-        </div>
-        <br>
-        <br>
-        <br>
+        <!-- <table style="font-size: x-small;" class="wrapper">
+            <tr>
+              <td class="td-firma">FIRMA:</td>
+              <td class="td-contend">------------------------------------------</td>
+              <td class="td-firma">FIRMA:</td>
+              <td class="td-contend">------------------------------------------</td>
+            </tr>
+            <tr>
+                <td class="td-firma">ELABORADO POR:</td>
+                <td class="td-contend"></td>
+                <td class="td-firma">V°B°:</td>
+                <td class="td-contend"></td>
+            </tr>
+          </table> -->
+        <br><br><br><br><br><br>
+        <br><br><br><br>
+        <br><br><br><br>
         <div class="fecha">
             <p>{{fecha_reporte}}-{{ hora_reporte }}</p>
         </div>
