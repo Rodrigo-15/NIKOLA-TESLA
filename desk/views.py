@@ -72,13 +72,14 @@ def get_procedures(request):
 
         date = data["date"]
         code_number = data["code_number"]
+        persona =data["persona"]
         state = data["state"]
         if state not in STATES:
             return Response(
                 "Invalid state: " + str(STATES),
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        counters = get_counters_procedure(date, code_number, area, user_id)
+        counters = get_counters_procedure(date, code_number,persona, area, user_id)
 
         procedures = []
 
@@ -101,6 +102,10 @@ def get_procedures(request):
         if code_number:
             procedures = procedures.filter(code_number__icontains=code_number)
 
+        if persona:
+            procedures = procedures.filter(Q(file__person__full_name__contains=persona))
+
+
         procedures = procedures.order_by("-created_at")[:20]
 
         serializer = ProcedureListSerializer(procedures, many=True)
@@ -108,7 +113,7 @@ def get_procedures(request):
         return Response({"procedures": serializer.data, "counters": counters})
 
 
-def get_counters_procedure(date=None, code_number=None, area=None,user_id=None):
+def get_counters_procedure(date=None, code_number=None,persona=None, area=None,user_id=None):
     counters = {
         "started": {
             "label": "",
@@ -169,11 +174,17 @@ def get_counters_procedure(date=None, code_number=None, area=None,user_id=None):
         procedures_finished = procedures_finished.filter(
             code_number__icontains=code_number
         )
+    
+    
+    if persona:
+        procedures_started = procedures_started.filter(Q(file__person__full_name__contains=persona))
+        procedures_in_progress = procedures_in_progress.filter(Q(file__person__full_name__contains=persona))
+        procedures_finished = procedures_finished.filter(Q(file__person__full_name__contains=persona))
 
+    
     serializer_started = ProcedureListSerializer(procedures_started, many=True)
     serializer_in_progress = ProcedureListSerializer(procedures_in_progress, many=True)
     serializer_finished = ProcedureListSerializer(procedures_finished, many=True)
-
     counters["started"]["count"] = len(serializer_started.data)
     counters["in_progress"]["count"] = len(serializer_in_progress.data)
     counters["finished"]["count"] = len(serializer_finished.data)
@@ -189,6 +200,16 @@ def get_counters_procedure(date=None, code_number=None, area=None,user_id=None):
             "label"
         ] = f"{counters['finished']['count']}/{counters['finished']['total']}"
     elif code_number and len(code_number) > 5:
+        counters["started"][
+            "label"
+        ] = f"{counters['started']['count']}/{counters['started']['total']}"
+        counters["in_progress"][
+            "label"
+        ] = f"{counters['in_progress']['count']}/{counters['in_progress']['total']}"
+        counters["finished"][
+            "label"
+        ] = f"{counters['finished']['count']}/{counters['finished']['total']}"
+    elif persona:
         counters["started"][
             "label"
         ] = f"{counters['started']['count']}/{counters['started']['total']}"
