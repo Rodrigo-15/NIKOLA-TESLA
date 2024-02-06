@@ -1151,7 +1151,7 @@ def reporte_academico_function(expediente_id):
     # fecha ejecucion y condicion
     obj_ejecucion = Matricula.objects.filter(
         expediente_id=expediente_id, is_retirado=False
-    ).values("curso_grupo__fecha_inicio", "curso_grupo__fecha_termino")
+    ).exclude(curso_grupo__curso__plan_estudio__programa__isnull=True).values("curso_grupo__fecha_inicio", "curso_grupo__fecha_termino")
     etapas = Etapa.objects.filter(
         promocion=expediente.promocion, programa_id=expediente.programa.id
     )
