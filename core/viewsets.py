@@ -12,3 +12,7 @@ class PersonaViewSet(ModelViewSet):
 class AreaViewSet(ModelViewSet):
     queryset = Area.objects.all()
     serializer_class = AreaSerializer
+
+class PersonaJuridicaViewSet(ModelViewSet):
+    queryset = persona_juridica.objects.all()
+    serializer_class = PersonaJuridicaSerializer

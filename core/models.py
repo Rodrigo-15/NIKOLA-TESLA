@@ -214,3 +214,27 @@ class Menu(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.url} - {self.is_active}"
+
+class persona_juridica(models.Model):
+    tipo_documento = models.ForeignKey(
+        TipoDocumento, on_delete=models.CASCADE, null=True, blank=True
+    )
+    numero_documento = models.CharField(
+        max_length=20, null=True, blank=True, unique=True
+    )
+    razon_social = models.CharField(max_length=50)
+    correo = models.EmailField(max_length=254, null=True, blank=True)
+    celular = models.CharField(max_length=20, null=True, blank=True)
+    persona_contacto = models.CharField(max_length=50, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.numero_documento} {self.razon_social} ({self.correo})"
+    
+    @staticmethod
+    def get_persona_juridica_by_numero_id(numero_documento):
+        return persona_juridica.objects.filter(numero_documento=numero_documento)
+    
+    @staticmethod
+    def get_persona_juridica_by_razaon_social(razon_social):
+        return persona_juridica.objects.filter(razon_social=razon_social)

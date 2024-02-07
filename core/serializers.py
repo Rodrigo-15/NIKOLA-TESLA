@@ -93,3 +93,8 @@ class PeridoExpedienteSerializer(serializers.Serializer):
     fecha_fin = serializers.DateField()
     is_active = serializers.BooleanField()
     is_active_matricula = serializers.BooleanField()
+
+class PersonaJuridicaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = persona_juridica
+        fields = "__all__"

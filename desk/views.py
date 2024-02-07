@@ -754,3 +754,33 @@ def get_user_profile(request):
                 "area": area,
             }
         )
+
+@api_view(["GET"])
+def get_procedures_in_progress(request):
+    if request.method == "GET":
+        procedure_tracings = ProcedureTracing.objects.filter(
+            is_finished=False,
+
+        ).exclude(
+            procedure_id__in=ProcedureTracing.objects.filter(is_finished=True).values(
+                "procedure_id"
+            )
+
+        ).exclude(
+            procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+            .annotate(count=Count("procedure_id"))
+            .filter(count=1)
+            .values("procedure_id"),
+
+        )
+
+        proceduretracing = ProcedureTracingSerializer(procedure_tracings, many=True)
+
+        procedures = Procedure.objects.filter(
+            id__in=[procedure["procedure"] for procedure in proceduretracing.data]
+        )
+                
+        serializer = ProcedureListSerializer(procedures, many=True)
+        counters = len(serializer.data)
+        return Response({"procedures": serializer.data, "counters": counters})
+      
