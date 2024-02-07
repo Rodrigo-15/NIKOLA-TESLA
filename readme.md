@@ -30,7 +30,7 @@ Password:
 ```
 ### Correr el Servidor
 ```
-python manage.py runserver
+python manage.py runserver 192.168.16.184:8000
 ```
 
 ## Rutas
