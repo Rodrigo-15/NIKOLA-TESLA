@@ -382,6 +382,11 @@ def save_procedure(request):
         )
         attached_files = request.FILES.get("attached_files")
         procedure_type_id = request.data["procedure_type_id"]
+        for_the_area_id = (
+            request.data["for_the_area_id"]
+            if "for_the_area_id" in request.data
+            else None
+        )
         reference_doc_number = (
             request.data["reference_doc_number"]
             if "reference_doc_number" in request.data
@@ -424,6 +429,7 @@ def save_procedure(request):
             headquarter_id=headquarter_id,
             user_id=user_id,
             number_of_sheets=number_of_sheets,
+            for_the_area_id=for_the_area_id,
         )
 
         ProcedureTracing.objects.create(
