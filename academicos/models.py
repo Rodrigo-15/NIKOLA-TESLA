@@ -322,9 +322,8 @@ class Matricula(models.Model):
         )
 
     @staticmethod
-    def get_curso_grupo_aplazado_by_id(curso_grupo_id, aplazado_id):
+    def get_curso_grupo_aplazado_by_id(aplazado_id):
         return Matricula.objects.filter(
-            curso_grupo__id=curso_grupo_id,
             aplazado__id=aplazado_id,
             expediente__is_active=True,
             is_retirado=False,

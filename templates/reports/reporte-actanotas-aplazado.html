@@ -241,7 +241,9 @@
 
         <main>
             <div class="subtitulo">
-                <p id="Reporte"><b><h1>ACTA DE NOTAS N°:{{actanotas.cursogrupo_id}}-A{{actanotas.num_acta}}</h1></b></p>
+                <p id="Reporte"><b>
+                        <h1>ACTA DE NOTAS APLAZADO N°:{{actanotas.cursogrupo_id}}</h1>
+                    </b></p>
             </div>
             <div class="container">
                 <div class="concepto">
@@ -256,7 +258,7 @@
                 </div>
             </div>
             <div class="container ">
-                <div class="concepto" >
+                <div class="concepto">
                     <P>Creditos:</P>
                 </div>
                 <div class="datospersonal">
@@ -279,7 +281,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th >N° Orden</th>
+                        <th>N° Orden</th>
                         <th>Apellidos y Nombres</th>
                         <th>Codigo de Alumno</th>
                         <th>Promedio Final <br>(EN NUMERO)</th>
@@ -290,7 +292,8 @@
                     {% for alumno in actanotas.alumnos %}
                     <tr>
                         <td>{{alumno.num_orden}}</td>
-                        <td style="text-align: left !important;">{{alumno.alumno.persona.apellido_paterno}} {{alumno.alumno.persona.apellido_materno}} {{alumno.alumno.persona.nombres}} </td>
+                        <td style="text-align: left !important;">{{alumno.alumno.persona.apellido_paterno}}
+                            {{alumno.alumno.persona.apellido_materno}} {{alumno.alumno.persona.nombres}} </td>
                         <td>{{alumno.alumno.persona.numero_documento}}</td>
                         <td>{{alumno.promedio_final}}</td>
                         <td>{{alumno.promedio_letra}}</td>
@@ -326,8 +329,10 @@
             <br>
             <br>
             <div style="font-size: 10px; ">
-                
-                <p><b>Este documento se ha impreso del sistema de notas de la escuela de postgrado con código : {{actanotas.cursogrupo_id}}-A{{actanotas.num_acta}}, con fecha {{actanotas.fecha_actual_str}}</b></p>
+
+                <p><b>Este documento se ha impreso del sistema de notas de la escuela de postgrado con código :
+                        {{actanotas.cursogrupo_id}}, con fecha
+                        {{actanotas.fecha_actual_str}}</b></p>
             </div>
         </main>
     </section>
