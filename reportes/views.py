@@ -1659,9 +1659,9 @@ def reporte_economico_expediente_api(request):
 @api_view(["POST"])
 def get_reporte_actanotas_aplazado_pdf(request):
     aplazado_id = request.data.get("aplazado_id")
-    cursogrupo_id = request.data.get("cursogrupo_id")
+    # cursogrupo_id = request.data.get("cursogrupo_id")
     periodo_id = request.data.get("periodo_id")
-    actanotas = reporte_acta_aplazado_function(cursogrupo_id, aplazado_id, periodo_id)
+    actanotas = reporte_acta_aplazado_function(aplazado_id, periodo_id)
     #
     media_root = settings.MEDIA_ROOT
     pdf_folder = os.path.join(media_root, "pdf")
@@ -1673,8 +1673,8 @@ def get_reporte_actanotas_aplazado_pdf(request):
     milisecond = str(int(round(time.time() * 1000)))
     pdf_file_name = os.path.join(
         pdf_folder,
-        "reporte-actanotas-aplazado-{}-{}-{}.pdf".format(
-            cursogrupo_id, aplazado_id, milisecond
+        "reporte-actanotas-aplazado-{}-{}.pdf".format(
+             aplazado_id, milisecond
         ),
     )
     if os.path.exists(pdf_file_name):
@@ -1683,17 +1683,17 @@ def get_reporte_actanotas_aplazado_pdf(request):
     path_return = os.path.join(
         settings.MEDIA_URL,
         "pdf",
-        "reporte-actanotas-aplazado-{}-{}-{}.pdf".format(
-            cursogrupo_id, aplazado_id, milisecond
+        "reporte-actanotas-aplazado-{}-{}.pdf".format(
+             aplazado_id, milisecond
         ),
     )
     path_return = path_return.replace("\\", "/")
     return Response({"path": path_return})
 
 
-def reporte_acta_aplazado_function(cursogrupo_id, aplazado_id, periodo_id):
+def reporte_acta_aplazado_function( aplazado_id, periodo_id):
     periodo = Periodo.objects.get(id=periodo_id)
-    cursogrupo = CursoGrupo.objects.get(id=cursogrupo_id)
+    cursogrupo = Matricula.objects.filter(aplazado_id=aplazado_id).first().curso_grupo
     aplazado = Aplazado.objects.get(id=aplazado_id)
     #
     cursonombre = cursogrupo.curso.nombre
@@ -1714,7 +1714,7 @@ def reporte_acta_aplazado_function(cursogrupo_id, aplazado_id, periodo_id):
 
     programa = cursogrupo.curso.plan_estudio.programa.nombre
     #
-    matriculas = Matricula.get_curso_grupo_aplazado_by_id(cursogrupo_id, aplazado_id)
+    matriculas = Matricula.get_curso_grupo_aplazado_by_id(aplazado_id)
     expedientes = []
     for matricula in matriculas:
         obj_expediente = {
@@ -1782,7 +1782,7 @@ def reporte_acta_aplazado_function(cursogrupo_id, aplazado_id, periodo_id):
     ]
     mes_name = mes_array[int(mes_id) - 1].get("nombre")
     fecha_actual_str = f"{dia} de {mes_name} de {anio}"
-    grupo_id = str(cursogrupo_id).rjust(5, "0")
+    grupo_id = str(aplazado_id).rjust(5, "0")
     return {
         "actanotas": {
             "cursogrupo_id": grupo_id,
