@@ -37,12 +37,13 @@ from desk.serializers import (
 )
 
 from core.pagination import CustomPagination
+
 # Create your views here.
 
 
 @check_app_name(APP_NAME)
 @api_view(["GET"])
-def get_procedures(request):
+def get_procedures_a(request):
     if request.method == "GET":
         user = request.user
         persona = Persona.objects.filter(user=user).first()
@@ -57,8 +58,8 @@ def get_procedures(request):
                 "CargoArea not found",
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
-        area=[area1.area_id for area1 in cargo_area]
+
+        area = [area1.area_id for area1 in cargo_area]
         # area=cargo_area.area
         user_id = user.id
         #
@@ -93,7 +94,7 @@ def get_procedures(request):
         procedures = Procedure.objects.filter(
             id__in=[procedure["procedure"] for procedure in procedures]
         )
-        
+
         procedures = get_filter_procedures_by_area(procedures, area)
 
         if date:
@@ -109,7 +110,7 @@ def get_procedures(request):
         return Response({"procedures": serializer.data, "counters": counters})
 
 
-def get_counters_procedure(date=None, code_number=None, area=None,user_id=None):
+def get_counters_procedure(date=None, code_number=None, area=None, user_id=None):
     counters = {
         "started": {
             "label": "",
@@ -213,9 +214,7 @@ def get_filter_procedures_by_area(procedures, area):
             Q(from_area=area) | Q(to_area=area)
         )
     else:
-        procedures_trackings = ProcedureTracing.objects.filter(
-            from_area_id__in=area
-        )
+        procedures_trackings = ProcedureTracing.objects.filter(from_area_id__in=area)
     procedure_ids_in_trackings = procedures_trackings.values_list(
         "procedure", flat=True
     )
@@ -241,7 +240,7 @@ def get_started_procedures():
 def get_in_progress_procedures(user_id=None):
     """Get Procedures that have more than one TracingProcedure and it is not finished"""
     area_id = CargoArea.objects.filter(persona__user_id=user_id)
-    area_id =[area.area_id for area in area_id]
+    area_id = [area.area_id for area in area_id]
     procedure_tracings = ProcedureTracing.objects.filter(
         is_finished=False,
         from_area_id__in=area_id,
@@ -391,7 +390,11 @@ def save_derive_procedure(request):
         # from_area_id = (
         #     CargoArea.objects.filter(persona__user_id=user_id).first().area_id
         # )
-        from_area_id = ( ProcedureTracing.objects.filter(procedure_id=procedure_id).last().from_area_id)
+        from_area_id = (
+            ProcedureTracing.objects.filter(procedure_id=procedure_id)
+            .last()
+            .from_area_id
+        )
         to_area_id = request.data["to_area_id"]
         action = request.data["action"]
         ref_procedure_tracking_id = (
@@ -457,12 +460,12 @@ def get_tracings_to_approved(request):
                 status=status.HTTP_400_BAD_REQUEST,
                 data={"message": "El usuario no tiene un area asignada"},
             )
-        area_id =[area.area_id for area in area_id]
+        area_id = [area.area_id for area in area_id]
         tracings_for_area = ProcedureTracing.objects.filter(
-            to_area_id__in = area_id, is_approved=False, assigned_user_id=None
+            to_area_id__in=area_id, is_approved=False, assigned_user_id=None
         ).order_by("-created_at")
         tracings_for_user = ProcedureTracing.objects.filter(
-            to_area_id__in = area_id, assigned_user_id=user_id, is_approved=False
+            to_area_id__in=area_id, assigned_user_id=user_id, is_approved=False
         ).order_by("-created_at")
         serializer_tracings_for_area = ProcedureTracingsList(
             tracings_for_area, many=True
@@ -489,7 +492,7 @@ def approve_tracing(request):
         )
 
         ProcedureTracing.objects.filter(id=tracing_id).update(is_approved=True)
-        from_area_id = ( ProcedureTracing.objects.filter(id=tracing_id).first().to_area_id)
+        from_area_id = ProcedureTracing.objects.filter(id=tracing_id).first().to_area_id
         # from_area_id = (
         #     CargoArea.objects.filter(persona__user_id=user_id).first().area_id
         # )
@@ -610,7 +613,8 @@ def get_user_profile(request):
             }
         )
 
-#new modification
+
+# new modification
 @api_view(["POST"])
 @check_app_name()
 @check_credentials()
@@ -665,7 +669,7 @@ def login(request):
             cargo_area = CargoArea.objects.filter(persona=person).first()
             if not cargo_area:
                 areas = []
-            data_area =cargo_area.area.all()
+            data_area = cargo_area.area.all()
             areas = AreaSerializer(data_area, many=True).data
             return Response(
                 {
@@ -682,6 +686,30 @@ def login(request):
                 "User does not have permission",
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+
+@api_view(["GET"])
+def get_procedures(request):
+    if request.method == "GET":
+
+        query = request.GET.get("query")
+
+        procedure_tracings = ProcedureTracing.objects.filter()
+
+        proceduretracing = ProcedureTracingSerializer(procedure_tracings, many=True)
+
+        procedures = Procedure.objects.filter(
+            id__in=[procedure["procedure"] for procedure in proceduretracing.data]
+        )
+        procedures = procedures.filter(
+            code_number__icontains=query,
+        ).order_by("-code_number")
+        paginator = CustomPagination()
+        paginated_procedures = paginator.paginate_queryset(procedures, request)
+        serializer = ProcedureListSerializer(paginated_procedures, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
 
 @api_view(["GET"])
 def get_procedures_in_started(request):
@@ -712,24 +740,26 @@ def get_procedures_in_started(request):
 
         return paginator.get_paginated_response(serializer.data)
 
+
 @api_view(["GET"])
 def get_procedures_in_progress(request):
     if request.method == "GET":
-        
-        procedure_tracings = ProcedureTracing.objects.filter(
-            is_finished=False,
 
-        ).exclude(
-            procedure_id__in=ProcedureTracing.objects.filter(is_finished=True).values(
-                "procedure_id"
+        procedure_tracings = (
+            ProcedureTracing.objects.filter(
+                is_finished=False,
             )
-
-        ).exclude(
-            procedure_id__in=ProcedureTracing.objects.values("procedure_id")
-            .annotate(count=Count("procedure_id"))
-            .filter(count=1)
-            .values("procedure_id"),
-
+            .exclude(
+                procedure_id__in=ProcedureTracing.objects.filter(
+                    is_finished=True
+                ).values("procedure_id")
+            )
+            .exclude(
+                procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+                .annotate(count=Count("procedure_id"))
+                .filter(count=1)
+                .values("procedure_id"),
+            )
         )
 
         proceduretracing = ProcedureTracingSerializer(procedure_tracings, many=True)
@@ -742,7 +772,8 @@ def get_procedures_in_progress(request):
         serializer = ProcedureListSerializer(paginated_procedures, many=True)
 
         return paginator.get_paginated_response(serializer.data)
-    
+
+
 @api_view(["POST"])
 def save_procedure(request):
     if request.method == "POST":
@@ -782,17 +813,16 @@ def save_procedure(request):
         area_id = request.data["area_id"]
 
         if person_id == "0":
-            file = File.objects.filter(area_id = area_id).first()
+            file = File.objects.filter(area_id=area_id).first()
         else:
             file = File.objects.filter(person_id=person_id).first()
 
-        
         if not file:
             if person_id == "0":
                 file = File.objects.create(area_id=area_id)
             else:
                 file = File.objects.create(person_id=person_id)
-            
+
         procedure = Procedure.objects.create(
             file_id=file.id,
             subject=subject,
