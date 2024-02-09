@@ -33,6 +33,7 @@ urls_dict = {
         },
         "procedures": {
             "get_procedures": f"{url}desk/get_procedures?date&code_number",
+            "get_procedures_in_started": f"{url}desk/get_procedures_in_started",
             "get_procedures_in_progress": f"{url}desk/get_procedures_in_progress",
             "get_procedure_and_tracing_by_id": f"{url}desk/get_procedure_and_tracing_by_id",
             "save_procedure": f"{url}desk/save_procedure",

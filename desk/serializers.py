@@ -190,11 +190,11 @@ class ProcedureListSerializer(serializers.Serializer):
     updated_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
     reference_doc_number = serializers.CharField()
     subject = serializers.CharField()
-    solicitante = serializers.SerializerMethodField(source="get_solicitante")
+    person_full_name = serializers.SerializerMethodField(source="get_person_full_name")
     last_action = serializers.SerializerMethodField(source="get_last_action")
     state = serializers.SerializerMethodField(source="get_state")
 
-    def get_solicitante(self, obj):
+    def get_person_full_name(self, obj):
         file = obj.file
         if  file.person_id is None:
             area = Area.objects.filter(id=file.area_id).first()

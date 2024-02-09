@@ -36,6 +36,7 @@ from desk.serializers import (
     ProcedureTracingsList,
 )
 
+from core.pagination import CustomPagination
 # Create your views here.
 
 
@@ -206,79 +207,6 @@ def get_counters_procedure(date=None, code_number=None, area=None,user_id=None):
     return counters
 
 
-@api_view(["POST"])
-@check_app_name()
-@check_credentials()
-def login(request):
-    if request.method == "POST":
-        email = request.data.get("email")
-        password = request.data.get("password")
-        app_name = request.headers["app-name"]
-
-        try:
-            user = User.objects.get(username=email, is_active=True)
-        except Exception:
-            return Response(
-                "User does not exist",
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        if user.check_password(password):
-            token, _ = Token.objects.get_or_create(user=user)
-            groups = user.groups.all()
-
-            app = Apps.objects.filter(name=app_name).first()
-            menu = Menu.objects.filter(app=app).first()
-
-            is_group_valid_app = False
-            for group in groups:
-                if group in menu.groups.all():
-                    is_group_valid_app = True
-                    break
-
-            if not is_group_valid_app:
-                return Response(
-                    "User does not have permission",
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
-
-            person = Persona.objects.get(user_id=user.id)
-            headquarter = (
-                CargoArea.objects.filter(persona_id=person.id)
-                .values("headquarter_id", "headquarter__name")
-                .first()
-            )
-            person_data = PersonSerializer(person).data
-            from backend.settings import DEBUG, URL_LOCAL, URL_PROD
-
-            url = URL_LOCAL if DEBUG else URL_PROD
-            path = person_data["foto"]
-            if path:
-                path = path.replace("/media", "media")
-                person_data["foto"] = url + path
-
-            cargo_area = CargoArea.objects.filter(persona=person).first()
-            if not cargo_area:
-                area = {}
-            area = AreaSerializer(cargo_area.area).data
-
-            return Response(
-                {
-                    "user": UserSerializer(user).data,
-                    "groups": GroupSerializer(groups, many=True).data,
-                    "token": token.key,
-                    "person": person_data,
-                    "headquarter": headquarter,
-                    "area": area,
-                }
-            )
-        else:
-            return Response(
-                "User does not have permission",
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
-
 def get_filter_procedures_by_area(procedures, area):
     if not area:
         procedures_trackings = ProcedureTracing.objects.filter(
@@ -368,79 +296,6 @@ def get_tracings_procedures(request, status):
             procedures = {"finished": get_finished_procedures()}
 
         return Response(procedures)
-
-
-@api_view(["POST"])
-def save_procedure(request):
-    if request.method == "POST":
-        
-        
-        person_id = request.data["person_id"]
-        subject = request.data["subject"]
-        description = (
-            request.data["description"] if "description" in request.data else ""
-        )
-        attached_files = request.FILES.get("attached_files")
-        procedure_type_id = request.data["procedure_type_id"]
-        for_the_area_id = (
-            request.data["for_the_area_id"]
-            if "for_the_area_id" in request.data
-            else None
-        )
-        reference_doc_number = (
-            request.data["reference_doc_number"]
-            if "reference_doc_number" in request.data
-            else ""
-        )
-
-        user_id = request.data["user_id"]
-        headquarter = (
-            CargoArea.objects.filter(persona__user_id=user_id)
-            .values("headquarter_id")
-            .first()
-        )
-
-        headquarter_id = headquarter["headquarter_id"]
-        if not headquarter:
-            headquarter_id = 1
-
-        number_of_sheets = request.data["number_of_sheets"]
-        if not number_of_sheets:
-            number_of_sheets = 0
-
-        area_user = CargoArea.objects.filter(persona__user_id=user_id).first()
-        if person_id == "0":
-            file = File.objects.filter(area_id = area_user.area_id).first()
-        else:
-            file = File.objects.filter(person_id=person_id).first()
-
-        
-        if not file and person_id == "0":
-            file = File.objects.create(area_id=area_user.area_id)
-        elif not file and person_id != "0":
-            file = File.objects.create(person_id=person_id)
-        procedure = Procedure.objects.create(
-            file_id=file.id,
-            subject=subject,
-            description=description,
-            attached_files=attached_files,
-            procedure_type_id=procedure_type_id,
-            reference_doc_number=reference_doc_number,
-            headquarter_id=headquarter_id,
-            user_id=user_id,
-            number_of_sheets=number_of_sheets,
-            for_the_area_id=for_the_area_id,
-        )
-
-        ProcedureTracing.objects.create(
-            procedure_id=procedure.id,
-            from_area_id=area_user.area_id if area_user else None,
-            user_id=user_id,
-        )
-
-        return Response(
-            status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
-        )
 
 
 @api_view(["POST"])
@@ -755,9 +610,112 @@ def get_user_profile(request):
             }
         )
 
+#new modification
+@api_view(["POST"])
+@check_app_name()
+@check_credentials()
+def login(request):
+    if request.method == "POST":
+        email = request.data.get("email")
+        password = request.data.get("password")
+        app_name = request.headers["app-name"]
+
+        try:
+            user = User.objects.get(username=email, is_active=True)
+        except Exception:
+            return Response(
+                "User does not exist",
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if user.check_password(password):
+            token, _ = Token.objects.get_or_create(user=user)
+            groups = user.groups.all()
+
+            app = Apps.objects.filter(name=app_name).first()
+            menu = Menu.objects.filter(app=app).first()
+
+            is_group_valid_app = False
+            for group in groups:
+                if group in menu.groups.all():
+                    is_group_valid_app = True
+                    break
+
+            if not is_group_valid_app:
+                return Response(
+                    "User does not have permission",
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            person = Persona.objects.get(user_id=user.id)
+            headquarter = (
+                CargoArea.objects.filter(persona_id=person.id)
+                .values("headquarter_id", "headquarter__name")
+                .first()
+            )
+            person_data = PersonSerializer(person).data
+            from backend.settings import DEBUG, URL_LOCAL, URL_PROD
+
+            url = URL_LOCAL if DEBUG else URL_PROD
+            path = person_data["foto"]
+            if path:
+                path = path.replace("/media", "media")
+                person_data["foto"] = url + path
+
+            cargo_area = CargoArea.objects.filter(persona=person).first()
+            if not cargo_area:
+                areas = []
+            data_area =cargo_area.area.all()
+            areas = AreaSerializer(data_area, many=True).data
+            return Response(
+                {
+                    "user": UserSerializer(user).data,
+                    "groups": GroupSerializer(groups, many=True).data,
+                    "token": token.key,
+                    "person": person_data,
+                    "headquarter": headquarter,
+                    "area": areas,
+                }
+            )
+        else:
+            return Response(
+                "User does not have permission",
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+@api_view(["GET"])
+def get_procedures_in_started(request):
+    if request.method == "GET":
+        user_id = request.GET.get("user_id")
+        query = request.GET.get("query")
+
+        procedure_tracings = ProcedureTracing.objects.filter(
+            is_finished=False,
+            procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+            .annotate(count=Count("procedure_id"))
+            .filter(count=1)
+            .values("procedure_id"),
+        )
+
+        proceduretracing = ProcedureTracingSerializer(procedure_tracings, many=True)
+
+        procedures = Procedure.objects.filter(
+            id__in=[procedure["procedure"] for procedure in proceduretracing.data]
+        )
+        procedures = procedures.filter(
+            user_id=user_id,
+            code_number__icontains=query,
+        )
+        paginator = CustomPagination()
+        paginated_procedures = paginator.paginate_queryset(procedures, request)
+        serializer = ProcedureListSerializer(paginated_procedures, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
 @api_view(["GET"])
 def get_procedures_in_progress(request):
     if request.method == "GET":
+        
         procedure_tracings = ProcedureTracing.objects.filter(
             is_finished=False,
 
@@ -779,8 +737,81 @@ def get_procedures_in_progress(request):
         procedures = Procedure.objects.filter(
             id__in=[procedure["procedure"] for procedure in proceduretracing.data]
         )
-                
-        serializer = ProcedureListSerializer(procedures, many=True)
-        counters = len(serializer.data)
-        return Response({"procedures": serializer.data, "counters": counters})
-      
+        paginator = CustomPagination()
+        paginated_procedures = paginator.paginate_queryset(procedures, request)
+        serializer = ProcedureListSerializer(paginated_procedures, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+    
+@api_view(["POST"])
+def save_procedure(request):
+    if request.method == "POST":
+        person_id = request.data["person_id"]
+        subject = request.data["subject"]
+        description = (
+            request.data["description"] if "description" in request.data else ""
+        )
+        attached_files = request.FILES.get("attached_files")
+        procedure_type_id = request.data["procedure_type_id"]
+        for_the_area_id = (
+            request.data["for_the_area_id"]
+            if "for_the_area_id" in request.data
+            else None
+        )
+        reference_doc_number = (
+            request.data["reference_doc_number"]
+            if "reference_doc_number" in request.data
+            else ""
+        )
+
+        user_id = request.data["user_id"]
+        headquarter = (
+            CargoArea.objects.filter(persona__user_id=user_id)
+            .values("headquarter_id")
+            .first()
+        )
+
+        headquarter_id = headquarter["headquarter_id"]
+        if not headquarter:
+            headquarter_id = 1
+
+        number_of_sheets = request.data["number_of_sheets"]
+        if not number_of_sheets:
+            number_of_sheets = 0
+
+        area_id = request.data["area_id"]
+
+        if person_id == "0":
+            file = File.objects.filter(area_id = area_id).first()
+        else:
+            file = File.objects.filter(person_id=person_id).first()
+
+        
+        if not file:
+            if person_id == "0":
+                file = File.objects.create(area_id=area_id)
+            else:
+                file = File.objects.create(person_id=person_id)
+            
+        procedure = Procedure.objects.create(
+            file_id=file.id,
+            subject=subject,
+            description=description,
+            attached_files=attached_files,
+            procedure_type_id=procedure_type_id,
+            reference_doc_number=reference_doc_number,
+            headquarter_id=headquarter_id,
+            user_id=user_id,
+            number_of_sheets=number_of_sheets,
+            for_the_area_id=for_the_area_id,
+        )
+
+        ProcedureTracing.objects.create(
+            procedure_id=procedure.id,
+            from_area_id=area_id if area_id else None,
+            user_id=user_id,
+        )
+
+        return Response(
+            status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
+        )

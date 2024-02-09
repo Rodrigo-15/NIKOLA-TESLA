@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from django.db import models
 
-from core.models import Area, BaseModel, Persona, Headquarter
+from core.models import Area, BaseModel, Persona, Headquarter,PersonaJuridica
 
 # concepto
 from economicos.models import Concepto
@@ -12,6 +12,7 @@ from economicos.models import Concepto
 class File(models.Model):
     person = models.ForeignKey(Persona, on_delete=models.CASCADE, null=True, blank=True)
     area = models.ForeignKey(Area, on_delete=models.CASCADE, null=True, blank=True)
+    legalperson = models.ForeignKey(PersonaJuridica, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateField(auto_now_add=True, auto_now=False)
     updated_at = models.DateField(auto_now_add=False, auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -71,7 +72,7 @@ class Procedure(models.Model):
     description = models.TextField(null=True, blank=True, default="")
     attached_files = models.FileField(upload_to="tramites/", null=True, blank=True)
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
-    reference_doc_number = models.CharField(max_length=20, null=True, blank=True)
+    reference_doc_number = models.CharField(max_length=250, null=True, blank=True)
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     headquarter = models.ForeignKey(Headquarter, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)

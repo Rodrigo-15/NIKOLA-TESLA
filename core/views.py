@@ -64,18 +64,26 @@ def get_person_list(request):
     if request.method == "POST":
         query = request.data.get("query")
         persons = []
+        legalperson = []
 
         if query.isdigit():
             persons = Persona.objects.filter(numero_documento=query)[:10]
+            if not persons:
+                legalperson = PersonaJuridica.objects.filter(ruc=query)[:10]
         else:
             query = query.upper()
             persons = Persona.objects.filter(full_name__contains=query)[:10]
+            if not persons:
+                legalperson = PersonaJuridica.objects.filter(razon_social__contains=query)[:10]
 
-        if len(persons) <= 0:
+        if not persons and  not legalperson:
             return Response([])
-
-        serializer = PersonListSerializer(persons, many=True)
-    return Response(serializer.data)
+        if persons:
+            serializer = PersonListSerializer(persons, many=True)
+            return Response(serializer.data)
+        else:
+            serializer = PersonaJuridicaSerializer(legalperson, many=True)
+            return Response(serializer.data)
 
 
 from rest_framework.permissions import IsAuthenticated

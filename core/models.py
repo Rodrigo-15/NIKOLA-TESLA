@@ -178,7 +178,7 @@ class CargoArea(models.Model):
     grado_academico = models.CharField(
         max_length=50, null=True, blank=True, choices=GRADOS
     )
-    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    area = models.ManyToManyField(Area)
     cargo = models.ForeignKey(Cargo, on_delete=models.CASCADE)
     headquarter = models.ForeignKey(
         Headquarter, on_delete=models.CASCADE, null=True, blank=True
@@ -186,7 +186,7 @@ class CargoArea(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.persona.nombres} {self.persona.apellido_paterno} {self.persona.apellido_materno} - {self.area.nombre} - {self.cargo.nombre}"
+        return f"{self.persona.nombres} {self.persona.apellido_paterno} {self.persona.apellido_materno} - {self.cargo.nombre}"
 
 
 class Apps(models.Model):
@@ -215,7 +215,7 @@ class Menu(models.Model):
     def __str__(self):
         return f"{self.name} - {self.url} - {self.is_active}"
 
-class persona_juridica(models.Model):
+class PersonaJuridica(models.Model):
     tipo_documento = models.ForeignKey(
         TipoDocumento, on_delete=models.CASCADE, null=True, blank=True
     )
@@ -233,8 +233,8 @@ class persona_juridica(models.Model):
     
     @staticmethod
     def get_persona_juridica_by_numero_id(numero_documento):
-        return persona_juridica.objects.filter(numero_documento=numero_documento)
+        return PersonaJuridica.objects.filter(numero_documento=numero_documento)
     
     @staticmethod
     def get_persona_juridica_by_razaon_social(razon_social):
-        return persona_juridica.objects.filter(razon_social=razon_social)
+        return PersonaJuridica.objects.filter(razon_social=razon_social)
