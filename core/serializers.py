@@ -52,7 +52,15 @@ class PersonListSerializer(serializers.Serializer):
             return ""
         return obj.get_full_name()
 
-
+class PersonaJuridicaSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    full_name = serializers.SerializerMethodField(source="get_full_name")
+    numero_documento = serializers.CharField(max_length=200)
+    def get_full_name(self, obj):
+        if not obj:
+            return ""
+        return obj.razon_social
+    
 class CargoAreaPersonSerializer(serializers.Serializer):
     id = serializers.IntegerField(source="persona.id", read_only=True)
     user_id = serializers.IntegerField(source="persona.user.id", read_only=True)
@@ -94,7 +102,3 @@ class PeridoExpedienteSerializer(serializers.Serializer):
     is_active = serializers.BooleanField()
     is_active_matricula = serializers.BooleanField()
 
-class PersonaJuridicaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = persona_juridica
-        fields = "__all__"
