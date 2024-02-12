@@ -1477,6 +1477,23 @@ def get_charge_procedure_pdf(request):
         "charge_number": text_charge_number,
     }
 
+#    for value in final_data:
+   #     if value == "usuario":
+  #          print("Usuario {")
+  #          for valor in final_data["usuario"]:
+  #              print(f"{valor} : {final_data['usuario'][valor]}")
+  #          print("}")
+  #      elif value == "procedure":
+   #         print("Procedure {")
+   #         for valor in final_data["procedure"]:
+   #             print("[")
+   #             for xd in valor:
+ #                   print(f"{xd} : {valor[xd]}")
+  #              print("]")
+
+ #           print("}")
+ #       else:
+#            print(f"{value} : {final_data[value]}")
     path = get_charge_procedure(final_data)
     from backend.settings import DEBUG, URL_LOCAL, URL_PROD
 

@@ -1,0 +1,185 @@
+area : {'id': 1, 'nombre': 'oficina de asuntos académicos', 'is_active': True, 'key_name': 'OAA', 'charge_number': 32, 'is_external': False}
+fecha : 12/02/2024
+hora : 08:17 AM
+anio : 2024
+Usuario {
+id : 3466
+nombres : MARIA LUISA
+apellido_paterno : GARCIA
+apellido_materno : TORRES
+numero_documento : 41180647
+correo : mgarciat@postgradounap.edu.pe
+celular : None
+}
+Procedure {
+[
+id : 62
+file_id : 81
+person_id : 1657
+person_full_name : DENIS JIMÉNEZ HUISA
+person_document : 44262442
+code_number : 00060-2024
+procedure_type_id : 3
+procedure_type_description : CERTIFICADO DE ESTUDIOS MAESTRIA
+subject : SOLICITA CERTIFICADO DE ESTUDIOS DE MAESTRIA
+description :
+attached_files : /media/tramites/DENIS_-_CERTIFICADO_DE_ESTUDIOS.pdf
+reference_doc_number :
+headquarter_id : 1
+headquarter_name : IQUITOS
+user_id : 1166
+user_name : TIRSA PEÑA LOPEZ
+created_at : 30/01/2024 11:49:56 AM
+updated_at : 05/02/2024 10:38:03 AM
+state : True
+number_of_sheets : 5
+file : 81
+procedure_type : 3
+user : 1166
+headquarter : 1
+for_the_area : None
+to_area : {'id': 5, 'nombre': 'oficina de asuntos economicos', 'is_active': True, 'key_name': 'OAE', 'charge_number': 1, 'is_external': False}
+]
+[
+id : 64
+file_id : 81
+person_id : 1657
+person_full_name : DENIS JIMÉNEZ HUISA
+person_document : 44262442
+code_number : 00062-2024
+procedure_type_id : 1
+procedure_type_description : OTROS TRAMITES
+subject : Solicita Constancia Administrativa
+description :
+attached_files : /media/tramites/denis_-_c._administrativa.pdf
+reference_doc_number :
+headquarter_id : 1
+headquarter_name : IQUITOS
+user_id : 1166
+user_name : TIRSA PEÑA LOPEZ
+created_at : 30/01/2024 11:53:29 AM
+updated_at : 05/02/2024 10:38:23 AM
+state : True
+number_of_sheets : 5
+file : 81
+procedure_type : 1
+user : 1166
+headquarter : 1
+for_the_area : None
+to_area : {'id': 5, 'nombre': 'oficina de asuntos economicos', 'is_active': True, 'key_name': 'OAE', 'charge_number': 1, 'is_external': False}
+]
+[
+id : 63
+file_id : 81
+person_id : 1657
+person_full_name : DENIS JIMÉNEZ HUISA
+person_document : 44262442
+code_number : 00061-2024
+procedure_type_id : 1
+procedure_type_description : OTROS TRAMITES
+subject : Solicita Constancia de matricula
+description :
+attached_files : /media/tramites/DENIS_-_C._MATRICULA.pdf
+reference_doc_number :
+headquarter_id : 1
+headquarter_name : IQUITOS
+user_id : 1166
+user_name : TIRSA PEÑA LOPEZ
+created_at : 30/01/2024 11:52:16 AM
+updated_at : 05/02/2024 10:38:36 AM
+state : True
+number_of_sheets : 5
+file : 81
+procedure_type : 1
+user : 1166
+headquarter : 1
+for_the_area : None
+to_area : {'id': 5, 'nombre': 'oficina de asuntos economicos', 'is_active': True, 'key_name': 'OAE', 'charge_number': 1, 'is_external': False}
+]
+[
+id : 77
+file_id : 88
+person_id : 3043
+person_full_name : VERONICA VANESSA PANAIFO SOTO
+person_document : 42271809
+code_number : 00075-2024
+procedure_type_id : 3
+procedure_type_description : CERTIFICADO DE ESTUDIOS MAESTRIA
+subject : SOLICITA CERTIFICADO DE ESTUDIOS DE MAESTRIA
+description :
+attached_files : /media/tramites/PANAIFO_SOTO_-_CERTIFICADO_DE_ESTUDIOS.pdf
+reference_doc_number :
+headquarter_id : 1
+headquarter_name : IQUITOS
+user_id : 1166
+user_name : TIRSA PEÑA LOPEZ
+created_at : 30/01/2024 12:22:08 PM
+updated_at : 05/02/2024 10:39:02 AM
+state : True
+number_of_sheets : 7
+file : 88
+procedure_type : 3
+user : 1166
+headquarter : 1
+for_the_area : None
+to_area : {'id': 5, 'nombre': 'oficina de asuntos economicos', 'is_active': True, 'key_name': 'OAE', 'charge_number': 1, 'is_external': False}
+]
+[
+id : 76
+file_id : 88
+person_id : 3043
+person_full_name : VERONICA VANESSA PANAIFO SOTO
+person_document : 42271809
+code_number : 00074-2024
+procedure_type_id : 2
+procedure_type_description : CONSTANCIA DE EGRESADO
+subject : SOLICITA CONSTANCIA DE EGRESADO
+description :
+attached_files : /media/tramites/PANAIFO_SOTO_-C._EGRESADO.pdf
+reference_doc_number :
+headquarter_id : 1
+headquarter_name : IQUITOS
+user_id : 1166
+user_name : TIRSA PEÑA LOPEZ
+created_at : 30/01/2024 12:20:15 PM
+updated_at : 05/02/2024 10:39:17 AM
+state : True
+number_of_sheets : 7
+file : 88
+procedure_type : 2
+user : 1166
+headquarter : 1
+for_the_area : None
+to_area : {'id': 5, 'nombre': 'oficina de asuntos economicos', 'is_active': True, 'key_name': 'OAE', 'charge_number': 1, 'is_external': False}
+]
+[
+id : 189
+file_id : 177
+person_id : 3141
+person_full_name : LILIANA PATRICIA WONG VARGAS
+person_document : 72853226
+code_number : 00187-2024
+procedure_type_id : 27
+procedure_type_description : EXAMEN DE SUFICIENCIA
+subject : SOLICITA EXAMEN DE SUFICIENCIA DEL IDIOMA INGLES
+description : ADJUNTA PAGO
+attached_files : /media/tramites/doc00888320240205130348.pdf
+reference_doc_number :
+headquarter_id : 1
+headquarter_name : IQUITOS
+user_id : 1166
+user_name : TIRSA PEÑA LOPEZ
+created_at : 05/02/2024 13:05:40 PM
+updated_at : 06/02/2024 10:15:41 AM
+state : True
+number_of_sheets : 2
+file : 177
+procedure_type : 27
+user : 1166
+headquarter : 1
+for_the_area : None
+to_area : {'id': 1, 'nombre': 'oficina de asuntos académicos', 'is_active': True, 'key_name': 'OAA', 'charge_number': 31, 'is_external': False}
+]
+}
+procedure_count : 6
+charge_number : 000032
