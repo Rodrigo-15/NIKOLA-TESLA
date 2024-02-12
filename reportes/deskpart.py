@@ -50,11 +50,10 @@ def get_charge_procedure(data) -> str:
         pdf_folder = os.path.join(media_root, "pdf")
         if not os.path.exists(pdf_folder):
             os.makedirs(pdf_folder)
-        charge_number = data["charge_number"]
-        #
+        area = data["area"]["nombre"].replace(" ", "_")
         milisecond = str(int(round(time.time() * 1000)))
         pdf_file_name = os.path.join(
-            pdf_folder, "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond)
+            pdf_folder, "hoja_de_cargo-{}-{}.pdf".format(area, milisecond),
         )
         if os.path.exists(pdf_file_name):
             os.remove(pdf_file_name)
@@ -209,7 +208,7 @@ def get_charge_procedure(data) -> str:
         #------------------------------construccion del documento------------------------------#
         #-----cabezal-----#
         c.drawImage(logoUnap, limiteIzquierda, limiteArriba - 37.5, 75, 37.5)
-        c.drawImage(logoPostgrado, limiteDerecha- 37.5, limiteArriba- 37.5, 37.5, 37.5)
+        c.drawImage(logoPostgrado, limiteDerecha- 40, limiteArriba- 40, 40, 40)
         #c.line(limiteDerecha, limiteArriba, limiteDerecha, limiteAbajo)
 
         c.setFont(psfontname=fontname, size= fontzise)
@@ -220,7 +219,7 @@ def get_charge_procedure(data) -> str:
         fontname = "Arial-Bold"
         c.setFont(psfontname= fontname, size= fontzise+3)
 
-        c.drawCentredString((limiteDerecha + limiteIzquierda)/2, limiteArriba - 60, "HOJA DE CARGO N°                             -MP-EPG-UNAP")
+        c.drawCentredString((limiteDerecha + limiteIzquierda)/2, limiteArriba - 60, "HOJA DE CARGO N°      -MP-EPG-UNAP")
 
         fontname = "Arial"
         c.setFont(psfontname= fontname, size= fontzise)
@@ -294,12 +293,13 @@ def get_charge_procedure(data) -> str:
 
 
         #---------guardar archivo-------------#
+        c.setTitle("hoja_de_cargo-{}-{}".format(area, milisecond))
         c.save()
         #
         path_return = os.path.join(
             settings.MEDIA_URL,
             "pdf",
-            "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond),
+            "hoja_de_cargo-{}-{}.pdf".format(area, milisecond),
         )
         path_return = path_return.replace("\\", "/")
         return path_return
