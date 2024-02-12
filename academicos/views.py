@@ -406,7 +406,7 @@ def get_alumnos_curso_grupo_by_id(request):
         for expediente in expedientes:
             alumno = Expediente.get_alumno_by_expediente_id(expediente["expediente_id"])
             if expediente["promedio_final"] == None:
-                promedio_final = ""
+                promedio_final = expediente["promedio_final"]
             else:
                 if expediente["is_cerrado"]:
                     promedio_final = "{:.2f}".format(expediente["promedio_final"])
