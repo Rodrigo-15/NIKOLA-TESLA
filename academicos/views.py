@@ -398,6 +398,7 @@ def get_alumnos_curso_grupo_by_id(request):
             obj_expediente = {
                 "expediente_id": matricula.expediente.id,
                 "promedio_final": matricula.promedio_final,
+                "is_cerrado": matricula.is_cerrado,
             }
 
             expedientes.append(obj_expediente)
@@ -407,7 +408,10 @@ def get_alumnos_curso_grupo_by_id(request):
             if expediente["promedio_final"] == None:
                 promedio_final = ""
             else:
-                promedio_final = "{:.2f}".format(expediente["promedio_final"])
+                if expediente["is_cerrado"]:
+                    promedio_final = "{:.2f}".format(expediente["promedio_final"])
+                else:
+                    promedio_final = expediente["promedio_final"]
             serializer = ExpedienteAlumnoSerializer(alumno)
             alumnos.append({**serializer.data, "promedio_final": promedio_final})
         return Response(alumnos)
@@ -488,7 +492,7 @@ def save_notas(request):
                     for matricula in matricula_obj:
                         matricula.promedio_final = float(alumno["promedio_final"])
                         if matricula.is_cerrado == True:
-                            return Response( status=status.HTTP_400_BAD_REQUEST)
+                            return Response(status=status.HTTP_400_BAD_REQUEST)
                         else:
                             matricula.save()
                 else:
@@ -819,7 +823,6 @@ def get_alumnos_aplazado_curso_grupo_by_id(request):
             aplazado__docente__persona_id=persona_id,
             is_aplazado=True,
             aplazado_id=aplazado_id,
-
         )
         expedientes = []
         for matricula in matriculas:
