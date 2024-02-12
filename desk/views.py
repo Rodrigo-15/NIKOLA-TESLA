@@ -37,6 +37,7 @@ from desk.serializers import (
 )
 
 from core.pagination import CustomPagination
+from django.db.models.functions import TruncDate
 
 # Create your views here.
 
@@ -693,6 +694,7 @@ def get_procedures(request):
     if request.method == "GET":
 
         query = request.GET.get("query")
+        date = request.GET.get("date")
 
         procedure_tracings = ProcedureTracing.objects.filter()
 
@@ -701,9 +703,20 @@ def get_procedures(request):
         procedures = Procedure.objects.filter(
             id__in=[procedure["procedure"] for procedure in proceduretracing.data]
         )
-        procedures = procedures.filter(
-            code_number__icontains=query,
-        ).order_by("-code_number")
+        procedures = (
+            procedures.filter(
+                Q(code_number__icontains=query)
+                | Q(subject__icontains=query)
+                | Q(file__person__full_name__icontains=query)
+                | Q(file__area__nombre__icontains=query)
+                | Q(file__legalperson__razon_social__icontains=query)
+                | Q(file__person__numero_documento__icontains=query)
+                | Q(file__legalperson__numero_documento__icontains=query),
+                **({"created_at__date": date} if date else {}),
+            )
+            .annotate(created_at_date=TruncDate("created_at"))
+            .order_by("-code_number")
+        )
         paginator = CustomPagination()
         paginated_procedures = paginator.paginate_queryset(procedures, request)
         serializer = ProcedureListSerializer(paginated_procedures, many=True)
@@ -731,8 +744,73 @@ def get_procedures_in_started(request):
             id__in=[procedure["procedure"] for procedure in proceduretracing.data]
         )
         procedures = procedures.filter(
+            Q(code_number__icontains=query)
+            | Q(subject__icontains=query)
+            | Q(file__person__full_name__icontains=query)
+            | Q(file__area__nombre__icontains=query)
+            | Q(file__legalperson__razon_social__icontains=query)
+            | Q(file__person__numero_documento__icontains=query)
+            | Q(file__legalperson__numero_documento__icontains=query),
             user_id=user_id,
-            code_number__icontains=query,
+        )
+        paginator = CustomPagination()
+        paginated_procedures = paginator.paginate_queryset(procedures, request)
+        serializer = ProcedureListSerializer(paginated_procedures, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+@api_view(["GET"])
+def get_procedures_for_user(request):
+    if request.method == "GET":
+        user_id = request.GET.get("user_id")
+        date = request.GET.get("date")
+        query = request.GET.get("query")
+        cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+        if not cargo_area:
+            return Response(
+                "CargoArea not found",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        data_area = cargo_area.area.all()
+        area_id = [area.id for area in data_area]
+
+        procedure_tracings = (
+            ProcedureTracing.objects.filter(
+                is_finished=False,
+                from_area_id__in=area_id,
+                user_id=user_id,
+            )
+            .exclude(
+                procedure_id__in=ProcedureTracing.objects.filter(
+                    is_finished=True
+                ).values("procedure_id")
+            )
+            .exclude(
+                procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+                .annotate(count=Count("procedure_id"))
+                .filter(count=1)
+                .values("procedure_id"),
+            )
+        )
+        proceduretracing = ProcedureTracingSerializer(procedure_tracings, many=True)
+
+        procedures = Procedure.objects.filter(
+            id__in=[procedure["procedure"] for procedure in proceduretracing.data]
+        )
+        procedures = (
+            procedures.filter(
+                Q(code_number__icontains=query)
+                | Q(subject__icontains=query)
+                | Q(file__person__full_name__icontains=query)
+                | Q(file__area__nombre__icontains=query)
+                | Q(file__legalperson__razon_social__icontains=query)
+                | Q(file__person__numero_documento__icontains=query)
+                | Q(file__legalperson__numero_documento__icontains=query),
+                **({"created_at__date": date} if date else {}),
+            )
+            .annotate(created_at_date=TruncDate("created_at"))
+            .order_by("-code_number")
         )
         paginator = CustomPagination()
         paginated_procedures = paginator.paginate_queryset(procedures, request)
