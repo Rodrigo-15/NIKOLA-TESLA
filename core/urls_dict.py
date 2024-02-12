@@ -39,7 +39,7 @@ urls_dict = {
             "get_procedure_and_tracing_by_id": f"{url}desk/get_procedure_and_tracing_by_id",
             "save_procedure": f"{url}desk/save_procedure",
             "update_procedure": f"{url}desk/update_procedure",
-            "get_procedure_by_id": f"{url}desk/get_procedure_by_id/procedure_id",
+            "get_procedure_by_id": f"{url}desk/get_procedure_by_id/",
             "get_process_tracking_sheet_pdf": url
             + "reportes/get_process_tracking_sheet_pdf/?procedure_id={procedure_id}",
             "get_charge_procedure_pdf": url

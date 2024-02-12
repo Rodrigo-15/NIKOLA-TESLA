@@ -298,77 +298,6 @@ def get_tracings_procedures(request, status):
         return Response(procedures)
 
 
-@api_view(["POST"])
-def update_procedure(request):
-    if request.method == "POST":
-        try:
-            procedure_id = request.data["procedure_id"]
-            subject = request.data["subject"]
-            description = request.data["description"]
-            attached_files = request.FILES.get("attached_files")
-            reference_doc_number = request.data["reference_doc_number"]
-            number_of_sheets = request.data["number_of_sheets"]
-        except KeyError:
-            return Response(
-                status=status.HTTP_400_BAD_REQUEST,
-                data={
-                    "message": "Fields are missing",
-                    "fields": [
-                        "procedure_id",
-                        "subject",
-                        "description",
-                        "reference_doc_number",
-                        "number_of_sheets",
-                    ],
-                },
-            )
-
-        procedure = Procedure.objects.filter(id=procedure_id).first()
-
-        if not procedure:
-            return Response(
-                status=status.HTTP_400_BAD_REQUEST,
-                data={
-                    "message": "No se encontró el procedimiento o no tiene permisos para editarlo"
-                },
-            )
-
-        procedure.subject = subject
-        procedure.description = description
-        if attached_files:
-            procedure.attached_files = attached_files
-        procedure.reference_doc_number = reference_doc_number
-        procedure.number_of_sheets = number_of_sheets
-        procedure.save()
-
-        data = ProcedureSerializer(procedure).data
-
-        return Response(status=status.HTTP_200_OK, data=data)
-
-
-@api_view(["POST"])
-def get_procedure_and_tracing_by_id(request):
-    if request.method == "POST":
-        procedure_id = request.data["procedure_id"]
-
-        procedure = Procedure.objects.filter(id=procedure_id).first()
-        procedure_tracings = ProcedureTracing.objects.filter(
-            procedure_id=procedure_id
-        ).order_by("-created_at")
-
-        serializer_procedure = ProcedureSerializer(procedure)
-        serializer_procedure_tracings = ProcedureTracingsList(
-            procedure_tracings, many=True
-        )
-
-        return Response(
-            {
-                "procedure": serializer_procedure.data,
-                "procedure_tracings": serializer_procedure_tracings.data,
-            }
-        )
-
-
 @api_view(["GET"])
 def years_for_procedures(request):
     if request.method == "GET":
@@ -550,15 +479,6 @@ def finally_trace_procedure(request):
         )
 
         return Response(status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
-@check_is_auth()
-def get_procedure_by_id(request, procedure_id):
-    if request.method == "GET":
-        procedure = Procedure.objects.filter(id=procedure_id).first()
-        data = ProcedureSerializer(procedure).data
-        return Response(data)
 
 
 @api_view(["POST"])
@@ -775,23 +695,10 @@ def get_procedures_for_user(request):
         data_area = cargo_area.area.all()
         area_id = [area.id for area in data_area]
 
-        procedure_tracings = (
-            ProcedureTracing.objects.filter(
-                is_finished=False,
-                from_area_id__in=area_id,
-                user_id=user_id,
-            )
-            .exclude(
-                procedure_id__in=ProcedureTracing.objects.filter(
-                    is_finished=True
-                ).values("procedure_id")
-            )
-            .exclude(
-                procedure_id__in=ProcedureTracing.objects.values("procedure_id")
-                .annotate(count=Count("procedure_id"))
-                .filter(count=1)
-                .values("procedure_id"),
-            )
+        procedure_tracings = ProcedureTracing.objects.filter(
+            is_finished=False,
+            from_area_id__in=area_id,
+            user_id=user_id,
         )
         proceduretracing = ProcedureTracingSerializer(procedure_tracings, many=True)
 
@@ -923,3 +830,82 @@ def save_procedure(request):
         return Response(
             status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
         )
+
+
+@api_view(["GET"])
+def get_procedure_by_id(request, procedure_id):
+    if request.method == "GET":
+        procedure = Procedure.objects.filter(id=procedure_id).first()
+        data = ProcedureSerializer(procedure).data
+        return Response(data)
+
+
+@api_view(["GET"])
+def get_procedure_and_tracing_by_id(request):
+    if request.method == "GET":
+        procedure_id = request.GET.get("procedure_id")
+
+        procedure = Procedure.objects.filter(id=procedure_id).first()
+        procedure_tracings = ProcedureTracing.objects.filter(
+            procedure_id=procedure_id
+        ).order_by("-created_at")
+
+        serializer_procedure = ProcedureSerializer(procedure)
+        serializer_procedure_tracings = ProcedureTracingsList(
+            procedure_tracings, many=True
+        )
+
+        return Response(
+            {
+                "procedure": serializer_procedure.data,
+                "procedure_tracings": serializer_procedure_tracings.data,
+            }
+        )
+
+
+@api_view(["POST"])
+def update_procedure(request):
+    if request.method == "POST":
+        try:
+            procedure_id = request.data["procedure_id"]
+            subject = request.data["subject"]
+            description = request.data["description"]
+            attached_files = request.FILES.get("attached_files")
+            reference_doc_number = request.data["reference_doc_number"]
+            number_of_sheets = request.data["number_of_sheets"]
+        except KeyError:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={
+                    "message": "Fields are missing",
+                    "fields": [
+                        "procedure_id",
+                        "subject",
+                        "description",
+                        "reference_doc_number",
+                        "number_of_sheets",
+                    ],
+                },
+            )
+
+        procedure = Procedure.objects.filter(id=procedure_id).first()
+
+        if not procedure:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={
+                    "message": "No se encontró el procedimiento o no tiene permisos para editarlo"
+                },
+            )
+
+        procedure.subject = subject
+        procedure.description = description
+        if attached_files:
+            procedure.attached_files = attached_files
+        procedure.reference_doc_number = reference_doc_number
+        procedure.number_of_sheets = number_of_sheets
+        procedure.save()
+
+        data = ProcedureSerializer(procedure).data
+
+        return Response(status=status.HTTP_200_OK, data=data)

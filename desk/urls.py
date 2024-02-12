@@ -10,7 +10,6 @@ from desk.views import (
     save_derive_procedure,
     get_tracings_to_approved,
     approve_tracing,
-    get_procedure_by_id,
     get_areas,
     get_user_for_area,
     finally_trace_procedure,
@@ -23,6 +22,7 @@ from desk.views import (
     get_procedures_for_user,
     get_procedures_in_progress,
     save_procedure,
+    get_procedure_by_id,
 )
 
 urlpatterns = [
@@ -30,8 +30,6 @@ urlpatterns = [
     path("get_tracings_procedures/<int:status>", get_tracings_procedures),
     path("get_dashboard_procedures", get_dashboard_procedures),
     path("update_procedure", update_procedure),
-    path("get_procedure_and_tracing_by_id", get_procedure_and_tracing_by_id),
-    path("get_procedure_by_id/<int:procedure_id>", get_procedure_by_id),
     path("years_for_procedures", years_for_procedures),
     path("save_derive_procedure", save_derive_procedure),
     path("get_tracings_to_approved", get_tracings_to_approved),
@@ -68,4 +66,6 @@ urlpatterns = [
         name="get_procedures_for_user",
     ),
     path("save_procedure", save_procedure, name="save_procedure"),
+    path("get_procedure_by_id/<int:procedure_id>", get_procedure_by_id),
+    path("get_procedure_and_tracing_by_id", get_procedure_and_tracing_by_id),
 ]
