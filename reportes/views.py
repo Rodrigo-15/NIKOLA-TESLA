@@ -1157,7 +1157,7 @@ def reporte_academico_function(expediente_id):
     )
     fecha_inicio = obj_ejecucion.aggregate(Min("curso_grupo__fecha_inicio"))[
         "curso_grupo__fecha_inicio__min"
-    ].strftime("%d/%m/%Y")
+    ].strftime("%d/%m/%Y") if obj_ejecucion else ""
     fecha_final = ""
     condicion = "ESTUDIANTE"
     if expediente.is_graduate == True:
