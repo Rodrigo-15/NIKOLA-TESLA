@@ -32,7 +32,6 @@ class File(models.Model):
         return "Unnamed"
 
 
-
 class ProcedureRequirement(models.Model):
     description = models.CharField(max_length=50)
 
@@ -71,7 +70,7 @@ class Procedure(models.Model):
     description = models.TextField(null=True, blank=True, default="")
     attached_files = models.FileField(upload_to="tramites/", null=True, blank=True)
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
-    reference_doc_number = models.CharField(max_length=20, null=True, blank=True)
+    reference_doc_number = models.CharField(max_length=250, null=True, blank=True)
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     headquarter = models.ForeignKey(Headquarter, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
