@@ -699,8 +699,6 @@ def get_periodos_by_expediente_id(request):
         .distinct()
         .order_by("periodo__nombre")
     )
-
-    print(periodos)
     obj_periodos = []
     for periodo in periodos:
         obj_periodo = {
