@@ -9,9 +9,11 @@ class PersonaViewSet(ModelViewSet):
     queryset = Persona.objects.all()
     serializer_class = PersonSerializer
 
+
 class AreaViewSet(ModelViewSet):
     queryset = Area.objects.all()
     serializer_class = AreaSerializer
+
 
 class PersonaJuridicaViewSet(ModelViewSet):
     queryset = PersonaJuridica.objects.all()

@@ -8,6 +8,7 @@ from desk.models import (
     ProcedureTracing,
     ProcedureType,
 )
+from django.db.models import Count
 
 
 class HeadquarterSerializer(serializers.ModelSerializer):
@@ -141,6 +142,7 @@ class ProcedureTracingsList(serializers.Serializer):
     date = serializers.SerializerMethodField(source="get_date")
     hour = serializers.SerializerMethodField(source="get_hour")
     area_name = serializers.SerializerMethodField(source="get_area_name")
+    estate = serializers.SerializerMethodField(source="get_estate")
 
     def get_date(self, obj):
         return obj.created_at.strftime("%d/%m/%Y")
@@ -189,6 +191,19 @@ class ProcedureTracingsList(serializers.Serializer):
             return area.nombre
         return "No Asignado"
 
+    def get_estate(self, obj):
+        # si es el primer registro de trazabilidad poner el estado en Iniciado si no poner en proceso
+        data = (
+            ProcedureTracing.objects.filter(procedure_id=obj.procedure_id)
+            .order_by("created_at")
+            .first()
+        )
+        if data.id == obj.id:
+            return "Iniciado"
+        elif obj.is_finished:
+            return "Concluido"
+        return "En proceso"
+
 
 class ProcedureListSerializer(serializers.Serializer):
     id = serializers.IntegerField()
@@ -200,6 +215,7 @@ class ProcedureListSerializer(serializers.Serializer):
     person_full_name = serializers.SerializerMethodField(source="get_person_full_name")
     last_action = serializers.SerializerMethodField(source="get_last_action")
     state = serializers.SerializerMethodField(source="get_state")
+    number_of_sheets = serializers.IntegerField()
 
     def get_person_full_name(self, obj):
         file = obj.file

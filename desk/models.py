@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from django.db import models
 
-from core.models import Area, BaseModel, Persona, Headquarter,PersonaJuridica
+from core.models import Area, BaseModel, Persona, Headquarter, PersonaJuridica
 
 # concepto
 from economicos.models import Concepto
@@ -12,7 +12,9 @@ from economicos.models import Concepto
 class File(models.Model):
     person = models.ForeignKey(Persona, on_delete=models.CASCADE, null=True, blank=True)
     area = models.ForeignKey(Area, on_delete=models.CASCADE, null=True, blank=True)
-    legalperson = models.ForeignKey(PersonaJuridica, on_delete=models.CASCADE, null=True, blank=True)
+    legalperson = models.ForeignKey(
+        PersonaJuridica, on_delete=models.CASCADE, null=True, blank=True
+    )
     created_at = models.DateField(auto_now_add=True, auto_now=False)
     updated_at = models.DateField(auto_now_add=False, auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -31,7 +33,6 @@ class File(models.Model):
         if self.area:
             return self.area.nombre
         return "Unnamed"
-
 
 
 class ProcedureRequirement(models.Model):
@@ -79,7 +80,11 @@ class Procedure(models.Model):
     updated_at = models.DateTimeField(auto_now_add=False, auto_now=True)
     number_of_sheets = models.IntegerField(default=0)
     for_the_area = models.ForeignKey(
-        Area, on_delete=models.CASCADE, related_name="for_the_area", null=True, blank=True
+        Area,
+        on_delete=models.CASCADE,
+        related_name="for_the_area",
+        null=True,
+        blank=True,
     )
 
     class Meta:
@@ -164,7 +169,7 @@ class ProcedureTracing(models.Model):
     )
     action_log = models.TextField(null=True, blank=True)
     document_response = models.FileField(
-        upload_to="procedures/document_response/", null=True, blank=True
+        upload_to="tramites/seguimiento/", null=True, blank=True
     )
 
     def save(self, *args, **kwargs):
@@ -199,22 +204,29 @@ class ProcedureTracing(models.Model):
         )
         person = Persona.objects.filter(user=self.user).first()
         if not person:
-            return f"El documento fue derivado desde {self.from_area} a {self.to_area} {extra_message} por {self.user} el dia {date_formatter(self.created_at)}"
-        return f"El documento fue derivado desde {self.from_area} a {self.to_area} {extra_message} por {person.get_full_name()} el dia {date_formatter(self.created_at)}"
+            return f"El tramite fue derivado desde {self.from_area} a {self.to_area} {extra_message} por {self.user} el dia {date_formatter(self.created_at)}"
+        return f"El tramite fue derivado desde {self.from_area} a {self.to_area} {extra_message} por {person.get_full_name()} el dia {date_formatter(self.created_at)}"
 
     @staticmethod
     def get_received_message(self):
         person = Persona.objects.filter(user=self.user).first()
         if not person:
-            return f"El documento fue recepcionado por {self.user} en el area {self.from_area} el dia {date_formatter(self.created_at)}"
-        return f"El documento fue recepcionado por {person.get_full_name()} en el area {self.from_area} el dia {date_formatter(self.created_at)}"
+            return f"El tramite fue recepcionado por {self.user} en el area {self.from_area} el dia {date_formatter(self.created_at)}"
+        return f"El tramite fue recepcionado por {person.get_full_name()} en el area {self.from_area} el dia {date_formatter(self.created_at)}"
 
     @staticmethod
     def get_finished_message(self):
         person = Persona.objects.filter(user=self.user).first()
         if not person:
-            return f"El documento fue finalizado y entregado al tramitante  por el usuario {self.user} en el area {self.from_area} {date_formatter(self.created_at)}"
-        return f"El documento fue finalizado y entregado al tramitante  por el usuario {person.get_full_name()} en el area {self.from_area} {date_formatter(self.created_at)}"
+            return f"El tramite fue finalizado por el usuario {self.user} en el area {self.from_area} {date_formatter(self.created_at)}"
+        return f"El tramite fue finalizado por el usuario {person.get_full_name()} en el area {self.from_area} {date_formatter(self.created_at)}"
+
+    @staticmethod
+    def get_anexed_message(self):
+        person = Persona.objects.filter(user=self.user).first()
+        if not person:
+            return f"El tramite fue anexado al tramite n°{self.procedure.code_number} por el usuario {self.user} en el area {self.from_area} {date_formatter(self.created_at)}"
+        return f"El tramite fue anexado al tramite n°{self.procedure.code_number} por el usuario {person.get_full_name()} en el area {self.from_area} {date_formatter(self.created_at)}"
 
     @staticmethod
     def get_tracing_by_procedure_id(procedure_id):

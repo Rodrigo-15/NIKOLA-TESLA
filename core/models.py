@@ -1,3 +1,4 @@
+from typing import Iterable
 from django.db import models
 
 from zonas.models import Pais
@@ -41,7 +42,7 @@ class Persona(BaseModel):
         ("M", "Masculino"),
         ("F", "Femenino"),
     )
-    sexo = models.CharField(max_length=1, choices=SEXOS)
+    sexo = models.CharField(max_length=1, choices=SEXOS, null=True, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     correo = models.EmailField(max_length=254, null=True, blank=True)
     is_active = models.BooleanField(default=True)
@@ -215,7 +216,8 @@ class Menu(models.Model):
     def __str__(self):
         return f"{self.name} - {self.url} - {self.is_active}"
 
-class PersonaJuridica(models.Model):
+
+class PersonaJuridica(BaseModel):
     tipo_documento = models.ForeignKey(
         TipoDocumento, on_delete=models.CASCADE, null=True, blank=True
     )
@@ -230,11 +232,11 @@ class PersonaJuridica(models.Model):
 
     def __str__(self):
         return f"{self.numero_documento} {self.razon_social} ({self.correo})"
-    
+
     @staticmethod
     def get_persona_juridica_by_numero_id(numero_documento):
         return PersonaJuridica.objects.filter(numero_documento=numero_documento)
-    
+
     @staticmethod
     def get_persona_juridica_by_razaon_social(razon_social):
         return PersonaJuridica.objects.filter(razon_social=razon_social)
