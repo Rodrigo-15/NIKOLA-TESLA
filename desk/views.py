@@ -548,6 +548,15 @@ def get_procedures_in_assigned(request):
         procedures = Procedure.objects.filter(
             id__in=[procedure["procedure"] for procedure in proceduretracing.data]
         )
+        procedures = procedures.filter(
+            Q(code_number__icontains=query)
+            | Q(subject__icontains=query)
+            | Q(file__person__full_name__icontains=query)
+            | Q(file__area__nombre__icontains=query)
+            | Q(file__legalperson__razon_social__icontains=query)
+            | Q(file__person__numero_documento__icontains=query)
+            | Q(file__legalperson__numero_documento__icontains=query),
+        ).order_by("-code_number")
         paginator = CustomPagination()
         paginated_procedures = paginator.paginate_queryset(procedures, request)
         serializer = ProcedureListSerializer(paginated_procedures, many=True)
@@ -654,6 +663,8 @@ def save_procedure(request):
     if request.method == "POST":
         person_id = request.data["person_id"]
         subject = request.data["subject"]
+        type_person = request.data["type_person"]
+        print(type_person)
         description = (
             request.data["description"] if "description" in request.data else ""
         )
@@ -687,16 +698,23 @@ def save_procedure(request):
 
         area_id = request.data["area_id"]
 
-        if person_id == "0":
+        if type_person == "0":
             file = File.objects.filter(area_id=area_id).first()
-        else:
+            if not file:
+                File.objects.create(area_id=area_id)
+        elif type_person == "1":
             file = File.objects.filter(person_id=person_id).first()
-
-        if not file:
-            if person_id == "0":
-                file = File.objects.create(area_id=area_id)
-            else:
-                file = File.objects.create(person_id=person_id)
+            if not file:
+                File.objects.create(person_id=person_id)
+        elif type_person == "2":
+            file = File.objects.filter(legalperson_id=person_id).first()
+            if not file:
+                File.objects.create(legalperson_id=person_id)
+        else:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={"message": "Tipo de persona no valido"},
+            )
 
         procedure = Procedure.objects.create(
             file_id=file.id,
@@ -764,7 +782,7 @@ def update_procedure(request):
             procedure.attached_files = attached_files
         procedure.reference_doc_number = reference_doc_number
         procedure.number_of_sheets = number_of_sheets
-        procedure.for_the_area = for_the_area_id
+        procedure.for_the_area_id = for_the_area_id
         procedure.save()
 
         data = ProcedureSerializer(procedure).data
@@ -845,38 +863,11 @@ def save_derive_procedure(request):
             return Response(status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
-def finally_trace_procedure(request):
-    if request.method == "POST":
-        procedure_id = request.data["procedure_id"]
-        user_id = request.data["user_id"]
-        document_response = request.FILES.get("document_response")
-        from_area_id = (
-            ProcedureTracing.objects.filter(procedure_id=procedure_id)
-            .last()
-            .from_area_id
-        )
-        action = request.data["action"]
-        ref_procedure_tracking_id = (
-            ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
-        )
-        ProcedureTracing.objects.create(
-            procedure_id=procedure_id,
-            from_area_id=from_area_id,
-            user_id=user_id,
-            action=action,
-            ref_procedure_tracking_id=ref_procedure_tracking_id,
-            is_finished=True,
-            document_response=document_response,
-        )
-
-        return Response(status=status.HTTP_200_OK)
-
-
 @api_view(["GET"])
 def get_tracings_to_approved_for_area(request):
     if request.method == "GET":
         user_id = request.GET.get("user_id")
+        query = request.GET.get("query")
         cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
         if not cargo_area:
             areas = []
@@ -896,6 +887,15 @@ def get_tracings_to_approved_for_area(request):
         procedures = Procedure.objects.filter(
             id__in=[procedure["procedure"] for procedure in proceduretracing.data]
         )
+        procedures = procedures.filter(
+            Q(code_number__icontains=query)
+            | Q(subject__icontains=query)
+            | Q(file__person__full_name__icontains=query)
+            | Q(file__area__nombre__icontains=query)
+            | Q(file__legalperson__razon_social__icontains=query)
+            | Q(file__person__numero_documento__icontains=query)
+            | Q(file__legalperson__numero_documento__icontains=query),
+        ).order_by("-code_number")
         paginator = CustomPagination()
         paginated_procedures = paginator.paginate_queryset(procedures, request)
         serializer = ProcedureListSerializer(paginated_procedures, many=True)
@@ -907,6 +907,7 @@ def get_tracings_to_approved_for_area(request):
 def get_tracings_to_approved_for_user(request):
     if request.method == "GET":
         user_id = request.GET.get("user_id")
+        query = request.GET.get("query")
         cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
         if not cargo_area:
             areas = []
@@ -927,6 +928,16 @@ def get_tracings_to_approved_for_user(request):
         procedures = Procedure.objects.filter(
             id__in=[procedure["procedure"] for procedure in proceduretracing.data]
         )
+        procedures = procedures.filter(
+            Q(code_number__icontains=query)
+            | Q(subject__icontains=query)
+            | Q(file__person__full_name__icontains=query)
+            | Q(file__area__nombre__icontains=query)
+            | Q(file__legalperson__razon_social__icontains=query)
+            | Q(file__person__numero_documento__icontains=query)
+            | Q(file__legalperson__numero_documento__icontains=query),
+            user_id=user_id,
+        ).order_by("-code_number")
         paginator = CustomPagination()
         paginated_procedures = paginator.paginate_queryset(procedures, request)
         serializer = ProcedureListSerializer(paginated_procedures, many=True)
@@ -969,9 +980,12 @@ def finally_procedure(request):
         procedure_id = request.data["procedure_id"]
         user_id = request.data["user_id"]
         from_area_id = (
-            CargoArea.objects.filter(persona__user_id=user_id).first().area_id
+            ProcedureTracing.objects.filter(procedure_id=procedure_id)
+            .last()
+            .from_area_id
         )
         action = request.data["action"]
+        document_response = request.FILES.get("document_response")
         ref_procedure_tracking_id = (
             ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
         )
@@ -982,6 +996,7 @@ def finally_procedure(request):
             action=action,
             ref_procedure_tracking_id=ref_procedure_tracking_id,
             is_finished=True,
+            document_response=document_response,
         )
 
         return Response(status=status.HTTP_200_OK)

@@ -53,14 +53,14 @@ urls_dict = {
     },
     "person": {
         "get_person_list": f"{url}core/get_person_list",  # get
-        "get": f"{url}core/persona/id/",  # get
+        "get": f"{url}core/persona/",  # get
         "create": f"{url}core/persona/",  # post
-        "update": f"{url}core/persona/id/",  # put
+        "update": f"{url}core/persona/",  # put
         "change_profile_image": f"{url}core/change_profile_image",
     },
     "person_legal": {
-        "get": f"{url}core/persona_juridica/id/",  # get
+        "get": f"{url}core/persona_juridica/",  # get
         "create": f"{url}core/persona_juridica/",  # post
-        "update": f"{url}core/persona_juridica/id/",  # put
+        "update": f"{url}core/persona_juridica/",  # put
     },
 }

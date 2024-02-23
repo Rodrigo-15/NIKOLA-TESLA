@@ -1,5 +1,6 @@
-from typing import Iterable
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 from zonas.models import Pais
 
@@ -76,6 +77,14 @@ class Persona(BaseModel):
         super(Persona, self).save(*args, **kwargs)
 
 
+@receiver(post_save, sender=Persona)
+def create_desk_file_person(sender, instance, created, **kwargs):
+    if created:
+        from desk.models import File
+
+        File.objects.create(person_id=instance.id)
+
+
 class Periodo(models.Model):
     nombre = models.CharField(max_length=50)
     fecha_inicio = models.DateField()
@@ -143,6 +152,14 @@ class Area(models.Model):
 
     def __str__(self):
         return f"{self.nombre}"
+
+
+@receiver(post_save, sender=Area)
+def create_desk_file_area(sender, instance, created, **kwargs):
+    if created:
+        from desk.models import File
+
+        File.objects.create(area_id=instance.id)
 
 
 class Cargo(models.Model):
@@ -240,3 +257,11 @@ class PersonaJuridica(BaseModel):
     @staticmethod
     def get_persona_juridica_by_razaon_social(razon_social):
         return PersonaJuridica.objects.filter(razon_social=razon_social)
+
+
+@receiver(post_save, sender=PersonaJuridica)
+def create_desk_file_legalperson(sender, instance, created, **kwargs):
+    if created:
+        from desk.models import File
+
+        File.objects.create(legalperson_id=instance.id)
