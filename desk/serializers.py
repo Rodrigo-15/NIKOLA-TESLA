@@ -189,6 +189,12 @@ class ProcedureTracingsList(serializers.Serializer):
         if procedure:
             return procedure.code_number
         return ""
+    
+    def get_area_name(self, obj):
+        area = Area.objects.filter(id=obj.from_area_id).first()
+        if area:
+            return area.nombre
+        return "No Asignado"
 
     def get_area_name(self, obj):
         area = Area.objects.filter(id=obj.from_area_id).first()
