@@ -22,7 +22,6 @@ def get_process_tracking_sheet(data) -> str:
             a = dict(thing)
             trackins.append(a)
         
-        print(trackins[11:-1])
 
         media_root = settings.MEDIA_ROOT
         pdf_folder = os.path.join(media_root, "pdf")
@@ -36,7 +35,6 @@ def get_process_tracking_sheet(data) -> str:
         pdf_file_name = os.path.join(
             pdf_folder, "hoja-seguimiento-{}-{}.pdf".format(code_number, milisecond)
         )
-        print(pdf_file_name)
         if os.path.exists(pdf_file_name):
             os.remove(pdf_file_name)
         #html.write_pdf(pdf_file_name)
@@ -171,7 +169,6 @@ def get_process_tracking_sheet(data) -> str:
                         datosRestantes = []
                     else:
                         datosRestantes = datosTabla[thing: ]
-                    print(datosRestantes)
 
                     time.sleep(0.2)
 
