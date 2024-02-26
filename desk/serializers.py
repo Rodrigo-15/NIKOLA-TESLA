@@ -85,12 +85,17 @@ class ProcedureSerializer(serializers.ModelSerializer):
 
     def get_person_full_name(self, obj):
         file = obj.file
-        if file.person_id is None:
+        if file.person_id is None and file.legalperson_id is None:
             area = Area.objects.filter(id=file.area_id).first()
             return area.nombre
-        elif file.area_id is None:
+        elif file.area_id is None and file.legalperson_id is None:
             person = Persona.objects.filter(id=file.person_id).first()
             return person.get_full_name()
+        elif file.area_id is None and file.person_id is None:
+            legal_person = PersonaJuridica.objects.filter(
+                id=file.legalperson_id
+            ).first()
+            return legal_person.razon_social
         else:
             return "No registrado"
 

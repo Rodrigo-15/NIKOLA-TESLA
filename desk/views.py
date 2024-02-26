@@ -664,7 +664,6 @@ def save_procedure(request):
         person_id = request.data["person_id"]
         subject = request.data["subject"]
         type_person = request.data["type_person"]
-        print(type_person)
         description = (
             request.data["description"] if "description" in request.data else ""
         )
