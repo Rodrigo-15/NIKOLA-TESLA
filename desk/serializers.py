@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from core.models import Persona, Area
+from core.models import Persona, Area, PersonaJuridica
 from desk.models import (
     Headquarter,
     Procedure,
@@ -8,6 +8,7 @@ from desk.models import (
     ProcedureTracing,
     ProcedureType,
 )
+from django.db.models import Count
 
 
 class HeadquarterSerializer(serializers.ModelSerializer):
@@ -84,7 +85,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
 
     def get_person_full_name(self, obj):
         file = obj.file
-        if  file.person_id is None:
+        if file.person_id is None:
             area = Area.objects.filter(id=file.area_id).first()
             return area.nombre
         elif file.area_id is None:
@@ -140,7 +141,8 @@ class ProcedureTracingsList(serializers.Serializer):
     assigned_user = serializers.SerializerMethodField(source="get_assigned_user")
     date = serializers.SerializerMethodField(source="get_date")
     hour = serializers.SerializerMethodField(source="get_hour")
-    area_name = serializers.SerializerMethodField(source = "get_area_name")
+    area_name = serializers.SerializerMethodField(source="get_area_name")
+    estate = serializers.SerializerMethodField(source="get_estate")
 
     def get_date(self, obj):
         return obj.created_at.strftime("%d/%m/%Y")
@@ -189,6 +191,25 @@ class ProcedureTracingsList(serializers.Serializer):
             return area.nombre
         return "No Asignado"
 
+    def get_area_name(self, obj):
+        area = Area.objects.filter(id=obj.from_area_id).first()
+        if area:
+            return area.nombre
+        return "No Asignado"
+
+    def get_estate(self, obj):
+        # si es el primer registro de trazabilidad poner el estado en Iniciado si no poner en proceso
+        data = (
+            ProcedureTracing.objects.filter(procedure_id=obj.procedure_id)
+            .order_by("created_at")
+            .first()
+        )
+        if data.id == obj.id:
+            return "Iniciado"
+        elif obj.is_finished:
+            return "Concluido"
+        return "En proceso"
+
 
 class ProcedureListSerializer(serializers.Serializer):
     id = serializers.IntegerField()
@@ -200,15 +221,23 @@ class ProcedureListSerializer(serializers.Serializer):
     person_full_name = serializers.SerializerMethodField(source="get_person_full_name")
     last_action = serializers.SerializerMethodField(source="get_last_action")
     state = serializers.SerializerMethodField(source="get_state")
+    number_of_sheets = serializers.IntegerField()
 
     def get_person_full_name(self, obj):
         file = obj.file
-        if  file.person_id is None:
+        if file.person_id is None and file.legalperson_id is None:
             area = Area.objects.filter(id=file.area_id).first()
             return area.nombre
-        elif file.area_id is None:
+        elif file.area_id is None and file.legalperson_id is None:
             person = Persona.objects.filter(id=file.person_id).first()
             return person.get_full_name()
+
+        elif file.area_id is None and file.person_id is None:
+            legal_person = PersonaJuridica.objects.filter(
+                id=file.legalperson_id
+            ).first()
+            return legal_person.razon_social
+
         else:
             return "No registrado"
 

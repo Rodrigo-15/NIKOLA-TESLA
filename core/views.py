@@ -74,15 +74,17 @@ def get_person_list(request):
             query = query.upper()
             persons = Persona.objects.filter(full_name__contains=query)[:10]
             if not persons:
-                legalperson = PersonaJuridica.objects.filter(razon_social__contains=query)[:10]
+                legalperson = PersonaJuridica.objects.filter(
+                    razon_social__contains=query
+                )[:10]
 
-        if not persons and  not legalperson:
+        if not persons and not legalperson:
             return Response([])
         if persons:
             serializer = PersonListSerializer(persons, many=True)
             return Response(serializer.data)
         else:
-            serializer = PersonaJuridicaSerializer(legalperson, many=True)
+            serializer = PersonaJuridicaListSerializer(legalperson, many=True)
             return Response(serializer.data)
 
 

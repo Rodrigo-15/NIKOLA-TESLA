@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from core.models import *
+from desk.models import File
 
 
 class PeriodoSerializer(serializers.ModelSerializer):
@@ -46,21 +47,47 @@ class PersonListSerializer(serializers.Serializer):
     apellido_materno = serializers.CharField(max_length=200)
     numero_documento = serializers.CharField(max_length=200)
     full_name = serializers.SerializerMethodField(source="get_full_name")
+    type_person = serializers.SerializerMethodField(source="get_type_person")
 
     def get_full_name(self, obj):
         if not obj:
             return ""
         return obj.get_full_name()
 
-class PersonaJuridicaSerializer(serializers.Serializer):
+    def get_type_person(self, obj):
+        if not obj:
+            return ""
+        return 1
+
+
+class PersonaJuridicaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PersonaJuridica
+        fields = "__all__"
+
+
+class PersonaJuridicaListSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
-    full_name = serializers.SerializerMethodField(source="get_full_name")
     numero_documento = serializers.CharField(max_length=200)
+    full_name = serializers.SerializerMethodField(source="get_full_name")
+    razon_social = serializers.CharField(max_length=200)
+    correo = serializers.CharField(max_length=200)
+    celular = serializers.CharField(max_length=200)
+    persona_contacto = serializers.CharField(max_length=200)
+    tipo_documento = serializers.CharField(max_length=200)
+    type_person = serializers.SerializerMethodField(source="get_type_person")
+
     def get_full_name(self, obj):
         if not obj:
             return ""
         return obj.razon_social
-    
+
+    def get_type_person(self, obj):
+        if not obj:
+            return ""
+        return 2
+
+
 class CargoAreaPersonSerializer(serializers.Serializer):
     id = serializers.IntegerField(source="persona.id", read_only=True)
     user_id = serializers.IntegerField(source="persona.user.id", read_only=True)
@@ -101,4 +128,3 @@ class PeridoExpedienteSerializer(serializers.Serializer):
     fecha_fin = serializers.DateField()
     is_active = serializers.BooleanField()
     is_active_matricula = serializers.BooleanField()
-
