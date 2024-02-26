@@ -6,36 +6,204 @@ import time
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import Paragraph
+from reportlab.platypus import Paragraph, Table, TableStyle
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
-
+from reportlab.lib import colors
 
 def get_process_tracking_sheet(data) -> str:
     try:
         #
+        trackins = []
+
+        for thing in data['trackins']:
+            thing = dict(thing)
+            a = dict(thing)
+            trackins.append(a)
+        
+        print(trackins[11:-1])
+
         media_root = settings.MEDIA_ROOT
         pdf_folder = os.path.join(media_root, "pdf")
         if not os.path.exists(pdf_folder):
             os.makedirs(pdf_folder)
         code_number = data["procedure"]["code_number"]
         #
-        html_string = render_to_string("reports/hoja_seguimiento.html", data)
+        #html_string = render_to_string("reports/hoja_seguimiento.html", data)
         milisecond = str(int(round(time.time() * 1000)))
-        html = HTML(string=html_string)
+        #html = HTML(string=html_string)
         pdf_file_name = os.path.join(
             pdf_folder, "hoja-seguimiento-{}-{}.pdf".format(code_number, milisecond)
         )
+        print(pdf_file_name)
         if os.path.exists(pdf_file_name):
             os.remove(pdf_file_name)
-        html.write_pdf(pdf_file_name)
+        #html.write_pdf(pdf_file_name)
         #
         path_return = os.path.join(
             settings.MEDIA_URL,
             "pdf",
-            "hoja-seguimiento-{}-{}.pdf".format(code_number, milisecond),
+            f"hoja-seguimiento-{code_number}-{milisecond}.pdf",
         )
+
+        pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
+        pdfmetrics.registerFont(TTFont('Arial-Bold', 'arialbd.ttf'))
+        lTop = A4[1] - cm *1.5
+        lBot = cm
+        lLeft = cm*2.5
+        lRight = A4[0] - cm*1.5
+        maxWidht = lRight- lLeft
+        maxHeight = lTop - lBot
+        fontzise = 10
+        fontname = "Arial"
+
+        style = getSampleStyleSheet()
+        style = style["Normal"]
+
+        datosTabla = [['Fecha', 'Accion', 'Oficina']]
+
+        for thing in trackins:
+            a = thing
+            datosTabla.append([f'{a["date"]} {a["hour"]}', a["action_log"], a["area_name"]])
+
+        
+
+        c = canvas.Canvas(pdf_file_name)
+
+        logoUnap = "media\config\logo_UNAP.jpg"
+        logoPostgrado = "media\config\postgrado.png"
+
+        fechaHora = data['procedure']['created_at']
+        tipoTramite = data['procedure']['procedure_type_description']
+        asunto = data['procedure']['subject']
+
+        observacion = data['procedure']['description']
+
+
+        for i in range(len(datosTabla)):
+            if i > 0:
+                datosTabla[i][0] = Paragraph(datosTabla[i][0], style)
+                datosTabla[i][1] = Paragraph(datosTabla[i][1], style)
+                datosTabla[i][2] = Paragraph(datosTabla[i][2], style)
+                
+        def setF(size, name = "Arial"):
+            fontzise = size
+            fontname = name
+            c.setFont(psfontname=fontname, size= fontzise)
+            style.fontzise = fontzise
+
+        #-----encabezado-----#
+        c.drawImage(logoUnap, lLeft, lTop - 37.5, 75, 37.5)
+        c.drawImage(logoPostgrado, lRight- 37.5, lTop- 37.5, 37.5, 37.5)
+
+        setF(12)
+
+        c.drawCentredString(A4[0]/2 + cm, lTop - fontzise - 5, "UNIVERSIDAD NACIONAL DE LA AMAZONIA PERUANA")
+        c.drawCentredString(A4[0]/2 + cm, lTop - fontzise * 3, "ESCUELA DE POSTGRADO")
+
+        #----------inicio-------------#
+        fontname = "Arial-Bold"
+        c.setFont(psfontname= fontname, size= fontzise+3)
+
+        c.drawCentredString(A4[0]/2, lTop - 60, f"TRAMITE N°{data['procedure']['code_number']}EPG-UNAP")
+
+        currenty = lTop - 100
+
+        fontname = "Arial"
+        c.setFont(psfontname= fontname, size= fontzise)
+
+        c.drawString(lLeft, currenty, "TIPO TRAMITE:")
+        currenty -= 30
+        c.drawString(lLeft, currenty, "ASUNTO:")
+        currenty -= 30
+        c.drawString(lLeft, currenty, "FECHA:")
+        currenty -= 30
+        c.drawString(lLeft, currenty, "OBSERVACION:")
+        currenty = lTop - 100
+
+        c.drawString(lLeft + 100, currenty, tipoTramite)
+        currenty -= 30
+        c.drawString(lLeft + 100, currenty, asunto)
+        currenty -= 30
+        c.drawString(lLeft + 100, currenty, fechaHora)
+        currenty -= 30
+
+        observacionPara = Paragraph(observacion, style)
+        observacionPara.wrapOn(c, maxWidht - 100, 1000)
+        observacionPara.drawOn(c, lLeft + 100, currenty - observacionPara.height + fontzise)
+        c.drawString(lLeft, currenty, "OBSERVACION:")
+        currenty -= 30
+
+        c.line(lLeft, currenty, lRight, currenty)
+
+        currenty -= 30
+
+        #--------------area tabla-----------------#
+
+        setF(12, "Arial-Bold")
+        c.drawCentredString(A4[0]/2, currenty, "Historial de Acciones realizadas en el Tramite")
+
+        currenty -= 30
+
+        pageCounter = 1
+
+        def tabla_dinamica(datosTabla: list, currenty, pageCounter):
+            setF(12, "Arial-Bold")
+            lol = True
+            thing = 0
+            while lol:
+                if datosTabla[0] == ['Fecha', 'Accion', 'Oficina']:
+                        pass
+                else: 
+                    datosTabla.insert(0, ['Fecha', 'Accion', 'Oficina'])
+                if thing == 0:
+                    tabla = Table(datosTabla[0:], colWidths=[80, 300, 80])
+                else:
+                    tabla = Table(datosTabla[0:thing], colWidths=[80, 300, 80])
+                tabla.wrap(maxWidht, 1000)
+
+                if tabla._height > currenty - lBot - fontzise - 5:
+                    thing -= 1
+                    continue
+                else:
+                    if thing == 0:
+                        datosRestantes = []
+                    else:
+                        datosRestantes = datosTabla[thing: ]
+                    print(datosRestantes)
+
+                    time.sleep(0.2)
+
+                    tabla.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.gray),
+                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),  # Align all cells' content to the top
+                        ('LINEABOVE', (0, 0), (-1, 0), 1, (0, 0, 0)),  # Add a line above the header row
+                        ('LINEBELOW', (0, 0), (-1, 0), 1, (0, 0, 0)),  # Add a line below the header row
+                        ('WORDWRAP', (0, 0), (-1, -1))  # Enable word wrap for all cells
+                    ]))
+
+                    tabla.wrapOn(c, maxWidht, 1000)
+                    tabla.drawOn(c, lLeft, currenty - tabla._height)
+                    currenty = lTop
+                    
+                    setF(8)
+                    c.drawCentredString(A4[0]/2, lBot, str(pageCounter))
+                    pageCounter += 1
+                    c.showPage()
+                    
+
+                    if len(datosRestantes) != 0:
+                        lol = tabla_dinamica(datosRestantes, currenty, pageCounter)
+                    elif len(datosRestantes) == 0:
+                        lol = False
+            return lol
+
+        tabla_dinamica(datosTabla, currenty, pageCounter)
+
+        c.save()
+
         path_return = path_return.replace("\\", "/")
         return path_return
     except Exception as e:

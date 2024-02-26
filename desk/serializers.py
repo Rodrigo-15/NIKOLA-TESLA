@@ -140,6 +140,7 @@ class ProcedureTracingsList(serializers.Serializer):
     assigned_user = serializers.SerializerMethodField(source="get_assigned_user")
     date = serializers.SerializerMethodField(source="get_date")
     hour = serializers.SerializerMethodField(source="get_hour")
+    area_name = serializers.SerializerMethodField(source = "get_area_name")
 
     def get_date(self, obj):
         return obj.created_at.strftime("%d/%m/%Y")
@@ -181,6 +182,12 @@ class ProcedureTracingsList(serializers.Serializer):
         if procedure:
             return procedure.code_number
         return ""
+    
+    def get_area_name(self, obj):
+        area = Area.objects.filter(id=obj.from_area_id).first()
+        if area:
+            return area.nombre
+        return "No Asignado"
 
 
 class ProcedureListSerializer(serializers.Serializer):

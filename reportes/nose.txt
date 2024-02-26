@@ -1,185 +1,193 @@
-area : {'id': 1, 'nombre': 'oficina de asuntos académicos', 'is_active': True, 'key_name': 'OAA', 'charge_number': 32, 'is_external': False}
-fecha : 12/02/2024
-hora : 08:17 AM
-anio : 2024
-Usuario {
-id : 3466
-nombres : MARIA LUISA
-apellido_paterno : GARCIA
-apellido_materno : TORRES
-numero_documento : 41180647
-correo : mgarciat@postgradounap.edu.pe
-celular : None
-}
-Procedure {
-[
-id : 62
-file_id : 81
-person_id : 1657
-person_full_name : DENIS JIMÉNEZ HUISA
-person_document : 44262442
-code_number : 00060-2024
-procedure_type_id : 3
-procedure_type_description : CERTIFICADO DE ESTUDIOS MAESTRIA
-subject : SOLICITA CERTIFICADO DE ESTUDIOS DE MAESTRIA
-description :
-attached_files : /media/tramites/DENIS_-_CERTIFICADO_DE_ESTUDIOS.pdf
-reference_doc_number :
-headquarter_id : 1
-headquarter_name : IQUITOS
-user_id : 1166
-user_name : TIRSA PEÑA LOPEZ
-created_at : 30/01/2024 11:49:56 AM
-updated_at : 05/02/2024 10:38:03 AM
-state : True
-number_of_sheets : 5
-file : 81
-procedure_type : 3
-user : 1166
-headquarter : 1
-for_the_area : None
-to_area : {'id': 5, 'nombre': 'oficina de asuntos economicos', 'is_active': True, 'key_name': 'OAE', 'charge_number': 1, 'is_external': False}
-]
-[
-id : 64
-file_id : 81
-person_id : 1657
-person_full_name : DENIS JIMÉNEZ HUISA
-person_document : 44262442
-code_number : 00062-2024
-procedure_type_id : 1
-procedure_type_description : OTROS TRAMITES
-subject : Solicita Constancia Administrativa
-description :
-attached_files : /media/tramites/denis_-_c._administrativa.pdf
-reference_doc_number :
-headquarter_id : 1
-headquarter_name : IQUITOS
-user_id : 1166
-user_name : TIRSA PEÑA LOPEZ
-created_at : 30/01/2024 11:53:29 AM
-updated_at : 05/02/2024 10:38:23 AM
-state : True
-number_of_sheets : 5
-file : 81
-procedure_type : 1
-user : 1166
-headquarter : 1
-for_the_area : None
-to_area : {'id': 5, 'nombre': 'oficina de asuntos economicos', 'is_active': True, 'key_name': 'OAE', 'charge_number': 1, 'is_external': False}
-]
-[
-id : 63
-file_id : 81
-person_id : 1657
-person_full_name : DENIS JIMÉNEZ HUISA
-person_document : 44262442
-code_number : 00061-2024
-procedure_type_id : 1
-procedure_type_description : OTROS TRAMITES
-subject : Solicita Constancia de matricula
-description :
-attached_files : /media/tramites/DENIS_-_C._MATRICULA.pdf
-reference_doc_number :
-headquarter_id : 1
-headquarter_name : IQUITOS
-user_id : 1166
-user_name : TIRSA PEÑA LOPEZ
-created_at : 30/01/2024 11:52:16 AM
-updated_at : 05/02/2024 10:38:36 AM
-state : True
-number_of_sheets : 5
-file : 81
-procedure_type : 1
-user : 1166
-headquarter : 1
-for_the_area : None
-to_area : {'id': 5, 'nombre': 'oficina de asuntos economicos', 'is_active': True, 'key_name': 'OAE', 'charge_number': 1, 'is_external': False}
-]
-[
-id : 77
-file_id : 88
-person_id : 3043
-person_full_name : VERONICA VANESSA PANAIFO SOTO
-person_document : 42271809
-code_number : 00075-2024
-procedure_type_id : 3
-procedure_type_description : CERTIFICADO DE ESTUDIOS MAESTRIA
-subject : SOLICITA CERTIFICADO DE ESTUDIOS DE MAESTRIA
-description :
-attached_files : /media/tramites/PANAIFO_SOTO_-_CERTIFICADO_DE_ESTUDIOS.pdf
-reference_doc_number :
-headquarter_id : 1
-headquarter_name : IQUITOS
-user_id : 1166
-user_name : TIRSA PEÑA LOPEZ
-created_at : 30/01/2024 12:22:08 PM
-updated_at : 05/02/2024 10:39:02 AM
-state : True
-number_of_sheets : 7
-file : 88
-procedure_type : 3
-user : 1166
-headquarter : 1
-for_the_area : None
-to_area : {'id': 5, 'nombre': 'oficina de asuntos economicos', 'is_active': True, 'key_name': 'OAE', 'charge_number': 1, 'is_external': False}
-]
-[
-id : 76
-file_id : 88
-person_id : 3043
-person_full_name : VERONICA VANESSA PANAIFO SOTO
-person_document : 42271809
-code_number : 00074-2024
+id : 1
+file_id : 14
+person_id : 3264
+person_full_name : MACK JAK GRANDEZ FLORES
+person_document : 45048808
+code_number : 00001-2024
 procedure_type_id : 2
 procedure_type_description : CONSTANCIA DE EGRESADO
-subject : SOLICITA CONSTANCIA DE EGRESADO
-description :
-attached_files : /media/tramites/PANAIFO_SOTO_-C._EGRESADO.pdf
+subject : Constancia de egresado
+description : completo y se adjunta el voucher de pago original
+attached_files : None
 reference_doc_number :
 headquarter_id : 1
 headquarter_name : IQUITOS
 user_id : 1166
 user_name : TIRSA PEÑA LOPEZ
-created_at : 30/01/2024 12:20:15 PM
-updated_at : 05/02/2024 10:39:17 AM
-state : True
-number_of_sheets : 7
-file : 88
+created_at : 23/01/2024 07:54:22 AM
+updated_at : 30/01/2024 08:18:48 AM
+state : False
+number_of_sheets : 2
+file : 14
 procedure_type : 2
 user : 1166
 headquarter : 1
-for_the_area : None
-to_area : {'id': 5, 'nombre': 'oficina de asuntos economicos', 'is_active': True, 'key_name': 'OAE', 'charge_number': 1, 'is_external': False}
-]
-[
-id : 189
-file_id : 177
-person_id : 3141
-person_full_name : LILIANA PATRICIA WONG VARGAS
-person_document : 72853226
-code_number : 00187-2024
-procedure_type_id : 27
-procedure_type_description : EXAMEN DE SUFICIENCIA
-subject : SOLICITA EXAMEN DE SUFICIENCIA DEL IDIOMA INGLES
-description : ADJUNTA PAGO
-attached_files : /media/tramites/doc00888320240205130348.pdf
-reference_doc_number :
-headquarter_id : 1
-headquarter_name : IQUITOS
+for_the_area : 
+
+id : 1
+procedure_id : 1
+code_number : 00001-2024
+action : El Tramite fue creado por TIRSA PEÑA LOPEZ en el area MESA DE PARTES el dia 23/01/2024 07:54 AM
+action_log : El Tramite fue creado por TIRSA PEÑA LOPEZ en el area MESA DE PARTES el dia 23/01/2024 07:54 AM
+is_finished : False
+is_approved : False
 user_id : 1166
-user_name : TIRSA PEÑA LOPEZ
-created_at : 05/02/2024 13:05:40 PM
-updated_at : 06/02/2024 10:15:41 AM
-state : True
-number_of_sheets : 2
-file : 177
-procedure_type : 27
-user : 1166
-headquarter : 1
-for_the_area : None
-to_area : {'id': 1, 'nombre': 'oficina de asuntos académicos', 'is_active': True, 'key_name': 'OAA', 'charge_number': 31, 'is_external': False}
-]
-}
-procedure_count : 6
-charge_number : 000032
+user : TIRSA PEÑA LOPEZ
+assigned_user_id : None
+assigned_user : No Asignado
+date : 23/01/2024
+hour : 07:54:22 AM
+
+id : 3
+procedure_id : 1
+code_number : 00001-2024
+action : para su tramite correspondiente
+action_log : El documento fue derivado desde MESA DE PARTES a oficina de asuntos académicos  por TIRSA PEÑA LOPEZ el dia 23/01/2024 08:03 AM
+is_finished : False
+is_approved : True
+user_id : 1166
+user : TIRSA PEÑA LOPEZ
+assigned_user_id : None
+assigned_user : No Asignado
+date : 23/01/2024
+hour : 08:03:47 AM
+
+id : 6
+procedure_id : 1
+code_number : 00001-2024
+action : El documento fue recepcionado por ANGÉLICA MARÍA BARDALES VÁSQUEZ en el area oficina de asuntos académicos el dia 23/01/2024 08:05 AM
+action_log : El documento fue recepcionado por ANGÉLICA MARÍA BARDALES VÁSQUEZ en el area oficina de asuntos académicos el dia 23/01/2024 08:05 AM
+is_finished : False
+is_approved : False
+user_id : 874
+user : ANGÉLICA MARÍA BARDALES VÁSQUEZ
+assigned_user_id : None
+assigned_user : No Asignado
+date : 23/01/2024
+hour : 08:05:39 AM
+
+id : 89
+procedure_id : 1
+code_number : 00001-2024
+action : PARA SU IMPLEMENTACION Y TRAMITE CORRESPONDIENTE.
+action_log : El documento fue derivado desde oficina de asuntos académicos a oficina de asuntos académicos  para el usuario mgarciat@postgradounap.edu.pe por ILIA RENGIFO RAMIREZ el dia 24/01/2024 12:14 PM
+is_finished : False
+is_approved : True
+user_id : 865
+user : ILIA RENGIFO RAMIREZ
+assigned_user_id : 864
+assigned_user : MARIA LUISA GARCIA TORRES
+date : 24/01/2024
+hour : 12:14:09 
+
+id : 90
+procedure_id : 1
+code_number : 00001-2024
+action : El documento fue recepcionado por MARIA LUISA GARCIA TORRES en el area oficina de asuntos académicos el dia 24/01/2024 12:15 PM
+action_log : El documento fue recepcionado por MARIA LUISA GARCIA TORRES en el area oficina de asuntos académicos el dia 24/01/2024 12:15 PM
+is_finished : False
+is_approved : False
+user_id : 864
+user : MARIA LUISA GARCIA TORRES
+assigned_user_id : None
+assigned_user : No Asignado
+date : 24/01/2024
+hour : 12:15:46 
+
+id : 103
+procedure_id : 1
+code_number : 00001-2024
+action : SOLICITO REPORTE ECONOMICO DONDE ACREDITE QUE EL ESTUDIANTE NO TIENE DEUDA.
+action_log : El documento fue derivado desde oficina de asuntos académicos a oficina de asuntos economicos  para el usuario nubilluzp@postgradounap.edu.pe por MARIA LUISA GARCIA TORRES el dia 24/01/2024 13:33 PM
+is_finished : False
+is_approved : True
+user_id : 864
+user : MARIA LUISA GARCIA TORRES
+assigned_user_id : 1112
+assigned_user : NATHALY UBILLUZ PORTOCARRERO
+date : 24/01/2024
+hour : 13:33:35 PM
+
+id : 172
+procedure_id : 1
+code_number : 00001-2024
+action : El documento fue recepcionado por NATHALY UBILLUZ PORTOCARRERO en el area oficina de asuntos economicos el dia 29/01/2024 08:25 AM
+action_log : El documento fue recepcionado por NATHALY UBILLUZ PORTOCARRERO en el area oficina de asuntos economicos el dia 29/01/2024 08:25 AM
+is_finished : False
+is_approved : False
+user_id : 1112
+user : NATHALY UBILLUZ PORTOCARRERO
+assigned_user_id : None
+assigned_user : No Asignado
+date : 29/01/2024
+hour : 08:25:26 AM
+
+id : 174
+procedure_id : 1
+code_number : 00001-2024
+action :
+action_log : El documento fue derivado desde oficina de asuntos economicos a oficina de asuntos académicos  por NATHALY UBILLUZ PORTOCARRERO el dia 29/01/2024 08:28 AM
+is_finished : False
+is_approved : True
+user_id : 1112
+user : NATHALY UBILLUZ PORTOCARRERO
+assigned_user_id : None
+assigned_user : No Asignado
+date : 29/01/2024
+hour : 08:28:43 
+
+id : 206
+procedure_id : 1
+code_number : 00001-2024
+action : El documento fue recepcionado por ILIA RENGIFO RAMIREZ en el area oficina de asuntos académicos el dia 29/01/2024 10:34 AM
+action_log : El documento fue recepcionado por ILIA RENGIFO RAMIREZ en el area oficina de asuntos académicos el dia 29/01/2024 10:34 AM
+is_finished : False
+is_approved : False
+user_id : 865
+user : ILIA RENGIFO RAMIREZ
+assigned_user_id : None
+assigned_user : No Asignado
+date : 29/01/2024
+hour : 10:34:53 AM
+
+id : 213
+procedure_id : 1
+code_number : 00001-2024
+action : PARA EL INFORME ECONÓMICO CORRESPONDIENTE
+action_log : El documento fue derivado desde oficina de asuntos académicos a oficina de asuntos economicos  por ILIA RENGIFO RAMIREZ el dia 30/01/2024 08:18 AM
+is_finished : False
+is_approved : True
+user_id : 865
+user : ILIA RENGIFO RAMIREZ
+assigned_user_id : None
+assigned_user : No Asignado
+date : 30/01/2024
+hour : 08:18:48 AM
+
+id : 232
+procedure_id : 1
+code_number : 00001-2024
+action : El documento fue recepcionado por MELIZA SINDY PEÑA GIPA en el area oficina de asuntos economicos el dia 30/01/2024 09:35 AM
+action_log : El documento fue recepcionado por MELIZA SINDY PEÑA GIPA en el area oficina de asuntos economicos el dia 30/01/2024 09:35 AM
+is_finished : False
+is_approved : False
+user_id : 2079
+user : MELIZA SINDY PEÑA GIPA
+assigned_user_id : None
+assigned_user : No Asignado
+date : 30/01/2024
+hour : 09:35:23 AM
+
+id : 623
+procedure_id : 1
+code_number : 00001-2024
+action : YA SE ATENDIO
+action_log : El documento fue finalizado y entregado al tramitante  por el usuario ANGÉLICA MARÍA BARDALES VÁSQUEZ en el area oficina de asuntos académicos 31/01/2024 12:14 PM
+is_finished : True
+is_approved : False
+user_id : 874
+user : ANGÉLICA MARÍA BARDALES VÁSQUEZ
+assigned_user_id : None
+assigned_user : No Asignado
+date : 31/01/2024
+hour : 12:14:48 PM
