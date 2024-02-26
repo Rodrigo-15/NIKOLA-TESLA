@@ -1476,7 +1476,6 @@ def get_charge_procedure_pdf(request):
         "procedure_count": len(obj_procedure),
         "charge_number": text_charge_number,
     }
-
     path = get_charge_procedure(final_data)
     from backend.settings import DEBUG, URL_LOCAL, URL_PROD
 
