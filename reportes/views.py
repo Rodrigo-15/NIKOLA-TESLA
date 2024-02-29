@@ -21,7 +21,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.template.defaulttags import register
 from django.shortcuts import render
-from academicos.models import Matricula, Programa
+from academicos.models import Matricula, Programa, PlanEstudio
+from academicos.serializers import CursosSerializer, MatriculaSerializer
 from admision.models import Expediente
 from admision.serializers.expediente import (
     ExpedienteReportSerializer,
@@ -34,7 +35,7 @@ from django.db.models import Sum, Max, Min
 from rest_framework import status
 from django.db.models import Q
 from decimal import Decimal, ROUND_HALF_UP
-from reportes.academicos import diploma_egresado
+from reportes.academicos import diploma_egresado, diploma_diplomado
 
 
 def DefaultTemplate(request):
@@ -2155,7 +2156,6 @@ def generate_diploma_pdf(request):
             )
 
         expediente = Expediente.objects.filter(id=expediente_id).first()
-
         num_doc = expediente.persona.numero_documento
         persona = (
             expediente.persona.nombres
@@ -2171,15 +2171,44 @@ def generate_diploma_pdf(request):
             + expediente.persona.apellido_materno
         )
         programa = expediente.programa.nombre
-        programa_id = expediente.programa.id
-
-        data = {'num_doc': num_doc, 
-                'persona' : persona,
-                'nombres' : nombres,
-                'apellidos': apellidos,
-                'programa': programa,
-                'programa_id': programa_id,}
-
+        programa_id = expediente.programa
         
-        path_return = diploma_egresado(data)
+        # Assuming Matricula and CursoGrupo are related models with a foreign key relationship
+        data_matricula = Matricula.objects.filter(expediente=expediente_id)
+
+        # Extracting a list of curso_grupo ids from the Matricula queryset
+        curso_grupo_ids = list(data_matricula.values_list('curso_grupo', flat=True))
+
+        # Retrieving CursoGrupo objects based on the extracted ids
+        data_curso = CursoGrupo.objects.filter(id__in=curso_grupo_ids)
+
+        docentes = list(set([curso.docente.full_name() for curso in data_curso]))
+        cursos = [grupocurso.curso.nombre for grupocurso in data_curso]
+        creditos = [grupocurso.curso.creditos for grupocurso in data_curso]
+        notas = [matricula.promedio_final for matricula in data_matricula]
+
+        curso_nota = []
+
+        for i in range(len(cursos)):
+            curso_nota.append([cursos[i], notas[i], creditos[i]])
+        if expediente.programa.tipo.id == 3:
+            data = {'num_doc': num_doc, 
+            'persona' : persona,
+            'nombres' : nombres,
+            'apellidos': apellidos,
+            'programa': programa,
+            'programa_id': programa_id,
+            'fecha_inicio' : expediente.periodo.fecha_inicio,
+            'fecha_final' : expediente.periodo.fecha_fin,
+            'docentes' : docentes,
+            'cursos': curso_nota,}
+            path_return = diploma_diplomado(data)
+        else:
+            data = {'num_doc': num_doc, 
+            'persona' : persona,
+            'nombres' : nombres,
+            'apellidos': apellidos,
+            'programa': programa,
+            'programa_id': programa_id,}
+            path_return = diploma_egresado(data)
         return Response({"path": path_return})
