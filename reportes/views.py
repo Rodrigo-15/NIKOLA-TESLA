@@ -21,7 +21,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.template.defaulttags import register
 from django.shortcuts import render
-from academicos.models import Matricula, Programa
+from academicos.models import Matricula, Programa, PlanEstudio
+from academicos.serializers import CursosSerializer, MatriculaSerializer
 from admision.models import Expediente
 from admision.serializers.expediente import (
     ExpedienteReportSerializer,
@@ -34,6 +35,7 @@ from django.db.models import Sum, Max, Min
 from rest_framework import status
 from django.db.models import Q
 from decimal import Decimal, ROUND_HALF_UP
+from reportes.academicos import diploma_egresado, diploma_diplomado
 
 
 def DefaultTemplate(request):
@@ -2144,15 +2146,6 @@ def generate_txt_bach(request):
 
 @api_view(["GET"])
 def generate_diploma_pdf(request):
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import landscape, A4
-    from reportlab.lib import utils
-    from reportlab.pdfgen import canvas
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.lib.colors import HexColor
-    from reportlab.pdfbase.ttfonts import TTFont
-    import qrcode
-    from PIL import Image
 
     if request.method == "GET":
         expediente_id = request.GET.get("expediente_id")
@@ -2163,7 +2156,6 @@ def generate_diploma_pdf(request):
             )
 
         expediente = Expediente.objects.filter(id=expediente_id).first()
-
         num_doc = expediente.persona.numero_documento
         persona = (
             expediente.persona.nombres
@@ -2179,85 +2171,44 @@ def generate_diploma_pdf(request):
             + expediente.persona.apellido_materno
         )
         programa = expediente.programa.nombre
-        programa_id = expediente.programa.id
+        programa_id = expediente.programa
+        
+        # Assuming Matricula and CursoGrupo are related models with a foreign key relationship
+        data_matricula = Matricula.objects.filter(expediente=expediente_id)
 
-        # fecha
-        fecha = datetime.datetime.now().strftime("%d/%m/%Y")
-        dia = datetime.datetime.now().day
-        mes_id = datetime.datetime.now().strftime("%m")
-        anio = datetime.datetime.now().year
-        mes_array = [
-            {"nombre": "Enero"},
-            {"nombre": "Febrero"},
-            {"nombre": "Marzo"},
-            {"nombre": "Abril"},
-            {"nombre": "Mayo"},
-            {"nombre": "Junio"},
-            {"nombre": "Julio"},
-            {"nombre": "Agosto"},
-            {"nombre": "Septiembre"},
-            {"nombre": "Octubre"},
-            {"nombre": "Noviembre"},
-            {"nombre": "Diciembre"},
-        ]
-        mes_name = mes_array[int(mes_id) - 1].get("nombre")
+        # Extracting a list of curso_grupo ids from the Matricula queryset
+        curso_grupo_ids = list(data_matricula.values_list('curso_grupo', flat=True))
 
-        fecha = f"Iquitos, {dia} de {mes_name} de {anio}"
+        # Retrieving CursoGrupo objects based on the extracted ids
+        data_curso = CursoGrupo.objects.filter(id__in=curso_grupo_ids)
 
-        # Guardar el PDF en la carpeta media
-        media_root = settings.MEDIA_ROOT
-        pdf_folder = os.path.join(media_root)
-        if not os.path.exists(pdf_folder):
-            os.makedirs(pdf_folder)
+        docentes = list(set([curso.docente.full_name() for curso in data_curso]))
+        cursos = [grupocurso.curso.nombre for grupocurso in data_curso]
+        creditos = [grupocurso.curso.creditos for grupocurso in data_curso]
+        notas = [matricula.promedio_final for matricula in data_matricula]
 
-        # Registrar la fuente .otf que no tienes instalada
-        font_path = os.path.join(settings.MEDIA_ROOT, "config", "times.ttf")
-        font_path1 = os.path.join(settings.MEDIA_ROOT, "config", "timesbd.ttf")
-        # Ajusta la ruta
-        pdfmetrics.registerFont(TTFont("times", font_path))
-        pdfmetrics.registerFont(TTFont("timesbd", font_path1))
-        # milisecond
-        milisecond = str(int(round(time.time() * 1000)))
-        # Crear un objeto PDF con orientación horizontal y tamaño de página A4
-        archivoPdf = canvas.Canvas(
-            os.path.join(
-                settings.MEDIA_ROOT,
-                "diplomas",
-                f"diploma_egregasado-{persona}-{num_doc}-{programa}-{milisecond}.pdf",
-            ),
-            landscape(A4),
-        )
+        curso_nota = []
 
-        image_path = os.path.join(
-            settings.MEDIA_ROOT, "config", f"diploma{programa_id}.jpg"
-        )
-        pdf_width, pdf_height = landscape(A4)
-        archivoPdf.drawImage(image_path, 0, 0, width=pdf_width, height=pdf_height)
-
-        if len(persona) <= 32:
-            archivoPdf.setFillColor(HexColor("#02273E"))
-            archivoPdf.setFont("timesbd", 32)
-            archivoPdf.drawCentredString(430, 290, f"{persona}".upper())
+        for i in range(len(cursos)):
+            curso_nota.append([cursos[i], notas[i], creditos[i]])
+        if expediente.programa.tipo.id == 3:
+            data = {'num_doc': num_doc, 
+            'persona' : persona,
+            'nombres' : nombres,
+            'apellidos': apellidos,
+            'programa': programa,
+            'programa_id': programa_id,
+            'fecha_inicio' : expediente.periodo.fecha_inicio,
+            'fecha_final' : expediente.periodo.fecha_fin,
+            'docentes' : docentes,
+            'cursos': curso_nota,}
+            path_return = diploma_diplomado(data)
         else:
-            archivoPdf.setFillColor(HexColor("#02273E"))
-            archivoPdf.setFont("timesbd", 32)
-            archivoPdf.drawCentredString(430, 300, f"{nombres}".upper())
-            archivoPdf.drawCentredString(430, 270, f"{apellidos}".upper())
-
-        archivoPdf.setFillColor(HexColor("#000000"))
-        archivoPdf.setFont("times", 21)
-        archivoPdf.drawString(72, 218, f"{programa}.".title())
-
-        archivoPdf.setFillColor(HexColor("#000000"))
-        archivoPdf.setFont("times", 21)
-        archivoPdf.drawString(500, 185, f"{fecha}.".capitalize())
-
-        archivoPdf.save()
-        # retornar la ruta del archivo PDF
-        path_return = os.path.join(
-            settings.MEDIA_URL,
-            "diplomas",
-            f"diploma_egregasado-{persona}-{num_doc}-{programa}-{milisecond}.pdf",
-        )
-        path_return = path_return.replace("\\", "/")
+            data = {'num_doc': num_doc, 
+            'persona' : persona,
+            'nombres' : nombres,
+            'apellidos': apellidos,
+            'programa': programa,
+            'programa_id': programa_id,}
+            path_return = diploma_egresado(data)
         return Response({"path": path_return})

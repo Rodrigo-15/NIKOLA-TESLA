@@ -252,11 +252,11 @@ class Matricula(models.Model):
     )
     periodo = models.ForeignKey(Periodo, on_delete=models.CASCADE)
     promedio_final = models.DecimalField(
-        max_digits=4,
+       max_digits=4,
         decimal_places=2,
         null=True,
         blank=True,
-    )
+    ) 
     is_publicado = models.BooleanField(default=False)
     is_cerrado = models.BooleanField(default=False)
     is_retirado = models.BooleanField(default=False)

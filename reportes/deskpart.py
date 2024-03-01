@@ -174,6 +174,7 @@ def get_process_tracking_sheet(data) -> str:
                     if thing == 0:
                         datosRestantes = []
                     else:
+
                         datosRestantes = datosTabla[thing:]
 
                     tabla.setStyle(
