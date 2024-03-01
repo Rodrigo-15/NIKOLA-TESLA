@@ -39,6 +39,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     file_id = serializers.IntegerField()
     person_id = serializers.SerializerMethodField(source="get_person_id")
+    area_id = serializers.SerializerMethodField(source="get_area_id")
     person_full_name = serializers.SerializerMethodField(source="get_person_full_name")
     person_document = serializers.SerializerMethodField(source="get_person_document")
     code_number = serializers.CharField()
@@ -56,7 +57,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField(source="get_user_name")
     created_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
     updated_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
-    state = serializers.SerializerMethodField(source="get_state")
+    type_person = serializers.SerializerMethodField(source="get_type_person")
 
     def get_user_name(self, obj):
         person = Persona.objects.filter(user_id=obj.user_id).first()
@@ -100,21 +101,25 @@ class ProcedureSerializer(serializers.ModelSerializer):
             return "No registrado"
 
     def get_person_id(self, obj):
-        person = Persona.objects.filter(id=obj.file.person_id).first()
-        if person:
-            return person.id
-
+        if obj.file.person_id:
+            return obj.file.person_id
+        elif obj.file.legalperson_id:
+            return obj.file.legalperson_id
         return None
 
-    def get_state(self, obj):
-        procedure_tracing = (
-            ProcedureTracing.objects.filter(is_approved=False, procedure_id=obj.id)
-            .exclude(to_area_id=None)
-            .first()
-        )
-        if procedure_tracing:
-            return True
-        return False
+    def get_type_person(self, obj):
+        if obj.file.person_id:
+            return 1
+        elif obj.file.legalperson_id:
+            return 2
+        elif obj.file.area_id:
+            return 0
+        return None
+
+    def get_area_id(self, obj):
+        if obj.file.area_id:
+            return obj.file.area_id
+        return None
 
     def get_attached_file(self, obj):
         if obj.attached_files:
@@ -148,6 +153,7 @@ class ProcedureTracingsList(serializers.Serializer):
     hour = serializers.SerializerMethodField(source="get_hour")
     area_name = serializers.SerializerMethodField(source="get_area_name")
     estate = serializers.SerializerMethodField(source="get_estate")
+    document_response = serializers.FileField()
 
     def get_date(self, obj):
         return obj.created_at.strftime("%d/%m/%Y")
@@ -189,7 +195,7 @@ class ProcedureTracingsList(serializers.Serializer):
         if procedure:
             return procedure.code_number
         return ""
-    
+
     def get_area_name(self, obj):
         area = Area.objects.filter(id=obj.from_area_id).first()
         if area:
@@ -227,6 +233,7 @@ class ProcedureListSerializer(serializers.Serializer):
     last_action = serializers.SerializerMethodField(source="get_last_action")
     state = serializers.SerializerMethodField(source="get_state")
     number_of_sheets = serializers.IntegerField()
+    area_id = serializers.SerializerMethodField(source="get_area_id")
 
     def get_person_full_name(self, obj):
         file = obj.file
@@ -257,11 +264,15 @@ class ProcedureListSerializer(serializers.Serializer):
         return "No registrado"
 
     def get_state(self, obj):
-        procedure_tracing = (
-            ProcedureTracing.objects.filter(is_approved=False, procedure_id=obj.id)
-            .exclude(to_area_id=None)
-            .first()
-        )
-        if procedure_tracing:
-            return True
-        return False
+        if ProcedureTracing.objects.filter(procedure_id=obj.id).count() == 1:
+            return "Iniciado"
+        elif ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_archived:
+            return "Archivado"
+        elif ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_finished:
+            return "Concluido"
+        return "En proceso"
+
+    def get_area_id(self, obj):
+        if obj.file.area_id:
+            return obj.file.area_id
+        return None
