@@ -176,8 +176,6 @@ def get_process_tracking_sheet(data) -> str:
                     else:
                         datosRestantes = datosTabla[thing:]
 
-                    time.sleep(0.2)
-
                     tabla.setStyle(
                         TableStyle(
                             [
