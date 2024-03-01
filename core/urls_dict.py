@@ -24,6 +24,7 @@ urls_dict = {
             "approve_tracing": f"{url}desk/approve_tracing",  # post
             "save_derive_procedure": f"{url}desk/save_derive_procedure",  # post
             "finally_procedure": f"{url}desk/finally_procedure",  # post
+            "archive_procedure": f"{url}desk/archive_procedure",  # post
         },
         "procedure_type": {
             "get": f"{url}desk/procedure_type/",  # get
@@ -41,12 +42,13 @@ urls_dict = {
             "get_procedures_in_started": f"{url}desk/get_procedures_in_started",
             "get_procedures_for_user": f"{url}desk/get_procedures_for_user",
             "get_procedures_in_assigned": f"{url}desk/get_procedures_in_assigned",
+            "get_procedures_finished": f"{url}desk/get_procedures_finished",
             "get_procedure_and_tracing_by_id": f"{url}desk/get_procedure_and_tracing_by_id",
             "save_procedure": f"{url}desk/save_procedure",
             "update_procedure": f"{url}desk/update_procedure",
             "get_procedure_by_id": f"{url}desk/get_procedure_by_id/",
             "get_process_tracking_sheet_pdf": url
-            + "reportes/get_process_tracking_sheet_pdf/?procedure_id={procedure_id}",
+            + "reportes/get_process_tracking_sheet_pdf/?procedure_id=",
             "get_charge_procedure_pdf": url
             + "reportes/get_charge_procedure_pdf/?area_id={area_id}&user_id={user_id}",
         },
