@@ -171,17 +171,21 @@ class ProcedureTracing(models.Model):
     document_response = models.FileField(
         upload_to="tramites/seguimiento/", null=True, blank=True
     )
+    is_archived = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
-        if self.from_area and self.to_area:
+
+        if self.is_finished and self.is_archived:
+            self.action_log = self.action = self.get_archived_message(self)
+        elif self.from_area and self.to_area:
             self.action_log = self.get_derivation_message(self)
-        if self.from_area and not self.to_area and not self.is_finished:
+        elif self.from_area and not self.to_area and not self.is_finished:
             self.action_log = self.get_received_message(self)
             self.action = self.get_received_message(self)
-        if self.from_area and self.is_finished:
+        elif self.from_area and self.is_finished:
             self.action_log = self.get_finished_message(self)
             self.action = self.action
-        if not self.ref_procedure_tracking:
+        elif not self.ref_procedure_tracking:
             self.action_log = self.action = self.get_created_message(self)
 
         super(ProcedureTracing, self).save(*args, **kwargs)
@@ -229,6 +233,13 @@ class ProcedureTracing(models.Model):
         return f"El tramite fue anexado al tramite n°{self.procedure.code_number} por el usuario {person.get_full_name()} en el area {self.from_area} {date_formatter(self.created_at)}"
 
     @staticmethod
+    def get_archived_message(self):
+        person = Persona.objects.filter(user=self.user).first()
+        if not person:
+            return f"El tramite fue archivado por el usuario {self.user} en el area {self.from_area} {date_formatter(self.created_at)}"
+        return f"El tramite fue archivado por el usuario {person.get_full_name()} en el area {self.from_area} {date_formatter(self.created_at)}"
+
+    @staticmethod
     def get_tracing_by_procedure_id(procedure_id):
         return ProcedureTracing.objects.filter(procedure_id=procedure_id)
 
@@ -242,3 +253,19 @@ class ProcedureTracing(models.Model):
 
     def __str__(self):
         return self.action_log if self.action_log else self.action
+
+
+class Anexo(models.Model):
+    procedure = models.ForeignKey(Procedure, on_delete=models.CASCADE)
+    procedure_anexo = models.ForeignKey(
+        Procedure, on_delete=models.CASCADE, related_name="procedure_anexo"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
+    updated_at = models.DateTimeField(auto_now_add=False, auto_now=True)
+
+    class Meta:
+        verbose_name = "anexo"
+        verbose_name_plural = "anexos"
+
+    def __str__(self):
+        return f"{self.procedure} - {self.attached_files}"
