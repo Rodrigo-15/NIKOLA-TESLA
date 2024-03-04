@@ -498,11 +498,12 @@ def get_reporte_ingresos_api(request):
     return response
 
 
-@api_view(["POST"])
+@api_view(["GET"])
 def get_reporte_matricula_pdf(request):
-    expediente_id = request.data.get("expediente")
-    periodo_id = request.data.get("periodo")
+    expediente_id = request.GET.get("expediente")
+    periodo_id = request.GET.get("periodo")
     expediente = reporte_matricula_alumno_function(expediente_id, periodo_id)
+    print(expediente)
     #
     media_root = settings.MEDIA_ROOT
     pdf_folder = os.path.join(media_root, "pdf")
@@ -2173,13 +2174,10 @@ def generate_diploma_pdf(request):
         programa = expediente.programa.nombre
         programa_id = expediente.programa
         
-        # Assuming Matricula and CursoGrupo are related models with a foreign key relationship
         data_matricula = Matricula.objects.filter(expediente=expediente_id)
 
-        # Extracting a list of curso_grupo ids from the Matricula queryset
         curso_grupo_ids = list(data_matricula.values_list('curso_grupo', flat=True))
 
-        # Retrieving CursoGrupo objects based on the extracted ids
         data_curso = CursoGrupo.objects.filter(id__in=curso_grupo_ids)
 
         docentes = list(set([curso.docente.full_name() for curso in data_curso]))
