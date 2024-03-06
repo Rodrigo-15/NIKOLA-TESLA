@@ -25,6 +25,7 @@ urls_dict = {
             "save_derive_procedure": f"{url}desk/save_derive_procedure",  # post
             "finally_procedure": f"{url}desk/finally_procedure",  # post
             "archive_procedure": f"{url}desk/archive_procedure",  # post
+            "anexar_procedure": f"{url}desk/anexar_procedure",  # post
         },
         "procedure_type": {
             "get": f"{url}desk/procedure_type/",  # get
@@ -47,6 +48,9 @@ urls_dict = {
             "save_procedure": f"{url}desk/save_procedure",
             "update_procedure": f"{url}desk/update_procedure",
             "get_procedure_by_id": f"{url}desk/get_procedure_by_id/",
+            "get_procedures_charges": f"{url}desk/get_procedures_charges",
+        },
+        "reports": {
             "get_process_tracking_sheet_pdf": url
             + "reportes/get_process_tracking_sheet_pdf/?procedure_id=",
             "get_charge_procedure_pdf": url

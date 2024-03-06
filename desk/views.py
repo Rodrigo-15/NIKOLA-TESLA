@@ -29,11 +29,15 @@ from desk.models import (
     ProcedureTracing,
     Procedure_ProcReq,
     ProcedureRequirement,
+    Anexo,
+    ProcedureCharge,
 )
 from desk.serializers import (
     ProcedureSerializer,
     ProcedureTracingSerializer,
     ProcedureTracingsList,
+    AnexoListSerializer,
+    ProcedureChargeSerializer,
 )
 
 from core.pagination import CustomPagination
@@ -608,11 +612,13 @@ def get_procedure_and_tracing_by_id(request):
         procedure_id = request.GET.get("procedure_id")
 
         procedure = Procedure.objects.filter(id=procedure_id).first()
+        anexos = Anexo.objects.filter(procedure_id=procedure_id)
         procedure_tracings = ProcedureTracing.objects.filter(
             procedure_id=procedure_id
         ).order_by("-created_at")
 
         serializer_procedure = ProcedureSerializer(procedure)
+        serializer_anexo = AnexoListSerializer(anexos, many=True)
         serializer_procedure_tracings = ProcedureTracingsList(
             procedure_tracings, many=True
         )
@@ -620,6 +626,7 @@ def get_procedure_and_tracing_by_id(request):
         return Response(
             {
                 "procedure": serializer_procedure.data,
+                "anexos": serializer_anexo.data,
                 "procedure_tracings": serializer_procedure_tracings.data,
             }
         )
@@ -1109,7 +1116,40 @@ def archive_procedure(request):
 def anexar_procedure(request):
     if request.method == "POST":
         procedure_id = request.data["procedure_id"]
+        anexo_id = request.data["anexo_id"]
         user_id = request.data["user_id"]
+
+        if not anexo_id or not procedure_id:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={"message": "El anexo no existe"},
+            )
+        # crear el anexo
+        anexo = Anexo.objects.create(
+            procedure_id=procedure_id,
+            procedure_anexo_id=anexo_id,
+        )
+        if not anexo:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={"message": "No se pudo crear el anexo"},
+            )
+        # finalizar el tramite anexado
+        from_area_id = (
+            ProcedureTracing.objects.filter(procedure_id=anexo_id).last().from_area_id
+        )
+        ref_procedure_tracking_id = (
+            ProcedureTracing.objects.filter(procedure_id=anexo_id).last().id
+        )
+        ProcedureTracing.objects.create(
+            procedure_id=anexo_id,
+            from_area_id=from_area_id,
+            user_id=user_id,
+            ref_procedure_tracking_id=ref_procedure_tracking_id,
+            is_finished=True,
+            is_anexed=True,
+        )
+        # mensaje anexo el tramite principal
         from_area_id = (
             ProcedureTracing.objects.filter(procedure_id=procedure_id)
             .last()
@@ -1123,9 +1163,42 @@ def anexar_procedure(request):
             from_area_id=from_area_id,
             user_id=user_id,
             ref_procedure_tracking_id=ref_procedure_tracking_id,
-            is_archived=False,
-            is_finished=False,
+            is_anexed=True,
         )
-        code_number = Procedure.objects.filter(id=procedure_id).first().code_number
 
-        return Response(status=status.HTTP_200_OK, data={"code_number": code_number})
+        return Response(status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_procedures_charges(request):
+    if request.method == "GET":
+        user_id = request.GET.get("user_id")
+        query = request.GET.get("query")
+        date = request.GET.get("date")
+        cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+        if not cargo_area:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={"message": "El usuario no tiene un area asignada"},
+            )
+        data_area = cargo_area.area.all()
+        areas = AreaSerializer(data_area, many=True).data
+
+        procededure_charge = ProcedureCharge.objects.filter(
+            area_id__in=[area["id"] for area in areas]
+        )
+        procededure_charge = (
+            procededure_charge.filter(
+                Q(correlative__icontains=query),
+                **({"created_at__date": date} if date else {}),
+            )
+            .annotate(created_at_date=TruncDate("created_at"))
+            .order_by("-correlative")
+        )
+        paginator = CustomPagination()
+        paginated_procedures_charge = paginator.paginate_queryset(
+            procededure_charge, request
+        )
+        serializer = ProcedureChargeSerializer(paginated_procedures_charge, many=True)
+
+        return paginator.get_paginated_response(serializer.data)

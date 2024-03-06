@@ -267,14 +267,15 @@ def get_charge_procedure(data) -> str:
     try:
         #
         media_root = settings.MEDIA_ROOT
-        pdf_folder = os.path.join(media_root, "pdf")
+        pdf_folder = os.path.join(media_root, "pdf", "hoja_de_cargo")
         if not os.path.exists(pdf_folder):
             os.makedirs(pdf_folder)
         area = data["area"]["nombre"].replace(" ", "_")
+        charge_number = data["charge_number"]
         milisecond = str(int(round(time.time() * 1000)))
         pdf_file_name = os.path.join(
             pdf_folder,
-            "hoja_de_cargo-{}-{}.pdf".format(area, milisecond),
+            "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond),
         )
         if os.path.exists(pdf_file_name):
             os.remove(pdf_file_name)
@@ -309,8 +310,8 @@ def get_charge_procedure(data) -> str:
             style.fontzise = fontzise
 
         # ---------variables o datos adquiridos----------#
-        logoUnap = "media\config\logo_UNAP.jpg"
-        logoPostgrado = "media\config\postgrado.png"
+        logoUnap = "media/config/logo_UNAP.png"
+        logoPostgrado = "media/config/postgrado.png"
 
         areaUsuaria = data["area"]["nombre"].upper()
         usuario = f"{data['usuario']['nombres']}  {data['usuario']['apellido_paterno']}  {data['usuario']['apellido_materno']}".upper()
@@ -357,7 +358,7 @@ def get_charge_procedure(data) -> str:
         c.drawCentredString(
             (limiteDerecha + limiteIzquierda) / 2,
             limiteArriba - 60,
-            "HOJA DE CARGO N°      -MP-EPG-UNAP",
+            charge_number,
         )
 
         fontname = "Arial"
@@ -492,7 +493,8 @@ def get_charge_procedure(data) -> str:
         path_return = os.path.join(
             settings.MEDIA_URL,
             "pdf",
-            "hoja_de_cargo-{}-{}.pdf".format(area, milisecond),
+            "hoja_de_cargo",
+            "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond),
         )
         path_return = path_return.replace("\\", "/")
         return path_return

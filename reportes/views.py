@@ -15,7 +15,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from academicos.models import CursoGrupo, Cursos, Aplazado
 import datetime
-from desk.models import Procedure, ProcedureTracing
+from desk.models import Procedure, ProcedureTracing, ProcedureCharge
 from xlsxwriter.workbook import Workbook
 from io import BytesIO
 from rest_framework.decorators import api_view
@@ -287,9 +287,9 @@ def get_reporte_programas_api(request):
         output.read(),
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    response[
-        "Content-Disposition"
-    ] = 'attachment;filename="reporte-programa-{}.xlsx"'.format(Date)
+    response["Content-Disposition"] = (
+        'attachment;filename="reporte-programa-{}.xlsx"'.format(Date)
+    )
     return response
 
 
@@ -493,9 +493,9 @@ def get_reporte_ingresos_api(request):
         output.read(),
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    response[
-        "Content-Disposition"
-    ] = 'attachment;filename="reporte-ingreso-{}.xlsx"'.format(Date)
+    response["Content-Disposition"] = (
+        'attachment;filename="reporte-ingreso-{}.xlsx"'.format(Date)
+    )
     return response
 
 
@@ -648,7 +648,11 @@ def reporte_acta_function(cursogrupo_id, periodo_id):
         + cursogrupo.docente.persona.apellido_materno
     )
     #
-    programa = cursogrupo.curso.plan_estudio.programa.nombre if cursogrupo.curso.plan_estudio.programa else "EXTRACURRICULAR"
+    programa = (
+        cursogrupo.curso.plan_estudio.programa.nombre
+        if cursogrupo.curso.plan_estudio.programa
+        else "EXTRACURRICULAR"
+    )
     #
     matriculas = Matricula.get_curso_grupo_by_id(cursogrupo_id)
     expedientes = []
@@ -1153,9 +1157,11 @@ def reporte_academico_function(expediente_id):
     # DATOS DE EXPEDIENTE
     expediente = Expediente.objects.filter(id=expediente_id).first()
     # fecha ejecucion y condicion
-    obj_ejecucion = Matricula.objects.filter(
-        expediente_id=expediente_id, is_retirado=False
-    ).exclude(curso_grupo__curso__plan_estudio__programa__isnull=True).values("curso_grupo__fecha_inicio", "curso_grupo__fecha_termino")
+    obj_ejecucion = (
+        Matricula.objects.filter(expediente_id=expediente_id, is_retirado=False)
+        .exclude(curso_grupo__curso__plan_estudio__programa__isnull=True)
+        .values("curso_grupo__fecha_inicio", "curso_grupo__fecha_termino")
+    )
     etapas = Etapa.objects.filter(
         promocion=expediente.promocion, programa_id=expediente.programa.id
     )
@@ -1169,9 +1175,11 @@ def reporte_academico_function(expediente_id):
             "curso_grupo__fecha_termino__max"
         ].strftime("%d/%m/%Y")
         condicion = "EGRESADO"
-    fecha_1_mat = etapas.aggregate(Min("fecha_inicio"))["fecha_inicio__min"].strftime(
-        "%d/%m/%Y"
-    ) if etapas else ""
+    fecha_1_mat = (
+        etapas.aggregate(Min("fecha_inicio"))["fecha_inicio__min"].strftime("%d/%m/%Y")
+        if etapas
+        else ""
+    )
     # DATOS CURSOS
     obj_curso = Cursos.objects.filter(
         plan_estudio__programa__id=expediente.programa.id
@@ -2146,6 +2154,7 @@ def generate_txt_bach(request):
     return Response({"path": path_return})
 
 
+# new code
 @api_view(["GET"])
 def generate_diploma_pdf(request):
 
@@ -2191,24 +2200,28 @@ def generate_diploma_pdf(request):
         for i in range(len(cursos)):
             curso_nota.append([cursos[i], notas[i], creditos[i]])
         if expediente.programa.tipo.id == 3:
-            data = {'num_doc': num_doc, 
-            'persona' : persona,
-            'nombres' : nombres,
-            'apellidos': apellidos,
-            'programa': programa,
-            'programa_id': programa_id,
-            'fecha_inicio' : expediente.periodo.fecha_inicio,
-            'fecha_final' : expediente.periodo.fecha_fin,
-            'docentes' : docentes,
-            'cursos': curso_nota,}
+            data = {
+                "num_doc": num_doc,
+                "persona": persona,
+                "nombres": nombres,
+                "apellidos": apellidos,
+                "programa": programa,
+                "programa_id": programa_id,
+                "fecha_inicio": expediente.periodo.fecha_inicio,
+                "fecha_final": expediente.periodo.fecha_fin,
+                "docentes": docentes,
+                "cursos": curso_nota,
+            }
             path_return = diploma_diplomado(data)
         else:
-            data = {'num_doc': num_doc, 
-            'persona' : persona,
-            'nombres' : nombres,
-            'apellidos': apellidos,
-            'programa': programa,
-            'programa_id': programa_id,}
+            data = {
+                "num_doc": num_doc,
+                "persona": persona,
+                "nombres": nombres,
+                "apellidos": apellidos,
+                "programa": programa,
+                "programa_id": programa_id,
+            }
             path_return = diploma_egresado(data)
         return Response({"path": path_return})
 

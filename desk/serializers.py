@@ -7,6 +7,8 @@ from desk.models import (
     ProcedureRequirement,
     ProcedureTracing,
     ProcedureType,
+    Anexo,
+    ProcedureCharge,
 )
 from django.db.models import Count
 
@@ -58,6 +60,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
     updated_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
     type_person = serializers.SerializerMethodField(source="get_type_person")
+    state = serializers.SerializerMethodField(source="get_state")
 
     def get_user_name(self, obj):
         person = Persona.objects.filter(user_id=obj.user_id).first()
@@ -125,6 +128,15 @@ class ProcedureSerializer(serializers.ModelSerializer):
         if obj.attached_files:
             return obj.attached_files.url
         return "No adjunto"
+
+    def get_state(self, obj):
+        if ProcedureTracing.objects.filter(procedure_id=obj.id).count() == 1:
+            return "Iniciado"
+        elif ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_archived:
+            return "Archivado"
+        elif ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_finished:
+            return "Concluido"
+        return "En proceso"
 
     class Meta:
         model = Procedure
@@ -276,3 +288,64 @@ class ProcedureListSerializer(serializers.Serializer):
         if obj.file.area_id:
             return obj.file.area_id
         return None
+
+
+class AnexoListSerializer(serializers.Serializer):
+    procedure_id = serializers.SerializerMethodField(source="get_procedure_id")
+    code_number = serializers.SerializerMethodField(source="get_code_number")
+    subject = serializers.SerializerMethodField(source="get_subject")
+    description = serializers.SerializerMethodField(source="get_description")
+    creat_at = serializers.SerializerMethodField(source="get_creat_at")
+
+    def get_procedure_id(self, obj):
+        procedure = Procedure.objects.filter(id=obj.procedure_anexo_id).first()
+        if procedure:
+            return procedure.id
+        return ""
+
+    def get_code_number(self, obj):
+        procedure = Procedure.objects.filter(id=obj.procedure_anexo_id).first()
+        if procedure:
+            return procedure.code_number
+        return ""
+
+    def get_subject(self, obj):
+        procedure = Procedure.objects.filter(id=obj.procedure_anexo_id).first()
+        if procedure:
+            return procedure.subject
+        return ""
+
+    def get_description(self, obj):
+        procedure = Procedure.objects.filter(id=obj.procedure_anexo_id).first()
+        if procedure:
+            return procedure.description
+        return ""
+
+    def get_creat_at(self, obj):
+        procedure = Procedure.objects.filter(id=obj.procedure_anexo_id).first()
+        if procedure:
+            return procedure.created_at.strftime("%d/%m/%Y %H:%M:%S %p")
+        return ""
+
+
+class ProcedureChargeSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    correlative = serializers.CharField()
+    area_id = serializers.IntegerField()
+    area_name = serializers.SerializerMethodField(source="get_area_name")
+    user_id = serializers.IntegerField()
+    user_name = serializers.SerializerMethodField(source="get_user_name")
+    created_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
+    path_file = serializers.CharField()
+
+    def get_area_name(self, obj):
+        area = Area.objects.filter(id=obj.area_id).first()
+        if area:
+            return area.nombre
+        return ""
+
+    def get_user_name(self, obj):
+        person = Persona.objects.filter(user_id=obj.user_id).first()
+        if person:
+            return person.get_full_name()
+        return ""
