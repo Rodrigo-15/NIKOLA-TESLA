@@ -26,6 +26,8 @@ from desk.views import (
     get_tracings_to_approved_for_user,
     get_procedures_finished,
     archive_procedure,
+    anexar_procedure,
+    get_procedures_charges,
 )
 
 urlpatterns = [
@@ -64,6 +66,8 @@ urlpatterns = [
     path("approve_tracing", approve_tracing, name="approve_tracing"),
     path("get_procedures_finished", get_procedures_finished),
     path("archive_procedure", archive_procedure),
+    path("anexar_procedure", anexar_procedure),
+    path("get_procedures_charges", get_procedures_charges),
     # OLD
     path("get_tracings_procedures/<int:status>", get_tracings_procedures),
     path("get_dashboard_procedures", get_dashboard_procedures),

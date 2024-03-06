@@ -139,6 +139,36 @@ def date_formatter(date):
     return date.strftime("%d/%m/%Y %H:%M %p")
 
 
+class ProcedureCharge(models.Model):
+    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
+    correlative = models.CharField(max_length=50, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
+    path_file = models.CharField(max_length=250, null=True, blank=True)
+
+    class Meta:
+        verbose_name = "procedure charge"
+        verbose_name_plural = "procedure charges"
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.correlative = self.generate_correlative()
+        super(ProcedureCharge, self).save(*args, **kwargs)
+
+    def generate_correlative(self):
+        # by year and area
+        return f"{ProcedureCharge.get_count_charges_by_year(date.today().year, self.area_id) + 1:05d}-{date.today().year}-{self.area.key_name}-EPG-UNAP"
+
+    @staticmethod
+    def get_count_charges_by_year(year, area_id):
+        return ProcedureCharge.objects.filter(
+            created_at__year=year, area_id=area_id
+        ).count()
+
+    def __str__(self):
+        return f"{self.area} - {self.user}"
+
+
 class ProcedureTracing(models.Model):
     procedure = models.ForeignKey(Procedure, on_delete=models.CASCADE)
     from_area = models.ForeignKey(
@@ -172,10 +202,17 @@ class ProcedureTracing(models.Model):
         upload_to="tramites/seguimiento/", null=True, blank=True
     )
     is_archived = models.BooleanField(default=False)
+    is_anexed = models.BooleanField(default=False)
+    procedure_charge = models.ForeignKey(
+        ProcedureCharge, on_delete=models.CASCADE, null=True, blank=True
+    )
 
     def save(self, *args, **kwargs):
-
-        if self.is_finished and self.is_archived:
+        if self.is_anexed and self.is_finished:
+            self.action_log = self.action = self.get_anexed_message(self)
+        elif self.is_anexed and not self.is_finished:
+            self.action_log = self.action = self.get_in_anexed_message(self)
+        elif self.is_finished and self.is_archived:
             self.action_log = self.action = self.get_archived_message(self)
         elif self.from_area and self.to_area:
             self.action_log = self.get_derivation_message(self)
@@ -228,9 +265,22 @@ class ProcedureTracing(models.Model):
     @staticmethod
     def get_anexed_message(self):
         person = Persona.objects.filter(user=self.user).first()
+        anexo = Anexo.objects.filter(procedure_anexo_id=self.procedure_id).first()
+        procedure = Procedure.objects.filter(id=anexo.procedure_id).first()
+        code_number = procedure.code_number
         if not person:
-            return f"El tramite fue anexado al tramite n°{self.procedure.code_number} por el usuario {self.user} en el area {self.from_area} {date_formatter(self.created_at)}"
-        return f"El tramite fue anexado al tramite n°{self.procedure.code_number} por el usuario {person.get_full_name()} en el area {self.from_area} {date_formatter(self.created_at)}"
+            return f"El trámite actual ha sido anexado al trámite N° {code_number} por el usuario {self.user} en el area {self.from_area} {date_formatter(self.created_at)}"
+        return f"El trámite actual ha sido anexado al trámite N° {code_number} por el usuario {person.get_full_name()} en el area {self.from_area} {date_formatter(self.created_at)}"
+
+    @staticmethod
+    def get_in_anexed_message(self):
+        person = Persona.objects.filter(user=self.user).first()
+        anexo = Anexo.objects.filter(procedure_id=self.procedure_id).first()
+        procedure = Procedure.objects.filter(id=anexo.procedure_anexo_id).first()
+        code_number_anexed = procedure.code_number
+        if not person:
+            return f"El trámite N° {code_number_anexed} ha sido anexado al trámite {self.procedure.code_number} porl el usuario {self.user} en el area {self.from_area} {date_formatter(self.created_at)}"
+        return f"El trámite N° {code_number_anexed} ha sido anexado al trámite {self.procedure.code_number} por el usuario {person.get_full_name()} en el area {self.from_area} {date_formatter(self.created_at)}"
 
     @staticmethod
     def get_archived_message(self):
@@ -268,4 +318,4 @@ class Anexo(models.Model):
         verbose_name_plural = "anexos"
 
     def __str__(self):
-        return f"{self.procedure} - {self.attached_files}"
+        return f"{self.procedure} - {self.procedure_anexo}"
