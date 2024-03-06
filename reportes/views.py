@@ -3,7 +3,8 @@ from desk.serializers import (
     ProcedureTracingSerializer,
     ProcedureTracingsList,
 )
-from .deskpart import get_process_tracking_sheet, get_charge_procedure
+from backend.settings import DEBUG, URL_LOCAL, URL_PROD
+from .deskpart import *
 from weasyprint import HTML
 from django.template.loader import render_to_string
 from csv import excel
@@ -1419,7 +1420,7 @@ def get_process_tracking_sheet_pdf(request):
         "trackins": ProcedureTracingsList(trackins, many=True).data,
     }
     path = get_process_tracking_sheet(final_data)
-    from backend.settings import DEBUG, URL_LOCAL, URL_PROD
+    
 
     url = URL_LOCAL if DEBUG else URL_PROD
     path = path.replace("/media", "media")
@@ -2210,3 +2211,45 @@ def generate_diploma_pdf(request):
             'programa_id': programa_id,}
             path_return = diploma_egresado(data)
         return Response({"path": path_return})
+
+@api_view(["GET"])
+def get_tramites_pendientes_pdf(request):
+    user_id = request.GET.get("user_id")
+    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+
+    area = cargo_area.area.first()
+    
+    if not area:
+        return Response(
+            status=status.HTTP_400_BAD_REQUEST,
+            data={"message": "El usuario no tiene un area asignada"},
+        )
+    area = AreaSerializer(area).data
+    
+    area_id = area.get('id')
+    area_nombre = area.get('nombre')
+    
+    tracings_for_user = ProcedureTracing.objects.filter(
+        from_area= area_id, is_finished=False
+    ).order_by("-created_at")
+
+    procedures = []
+
+    for tracing in tracings_for_user:
+        procedure = ProcedureSerializer(tracing.procedure).data
+
+        if procedure not in procedures:
+
+            procedures.append(procedure)
+
+    data = {
+        "area_usuaria" : area_nombre,
+        "procedures" : procedures
+    }
+    
+    path = get_unfinished_procedures(data)
+
+    url = URL_LOCAL if DEBUG else URL_PROD
+    path = path.replace("/media", "media")
+    path = url + path
+    return Response({"path": path}, status=status.HTTP_200_OK)

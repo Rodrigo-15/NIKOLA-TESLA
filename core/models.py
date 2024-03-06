@@ -147,7 +147,6 @@ class Area(models.Model):
     nombre = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
     key_name = models.CharField(max_length=100, null=True, blank=True)
-    charge_number = models.IntegerField(default=0)
     is_external = models.BooleanField(default=False)
 
     def __str__(self):

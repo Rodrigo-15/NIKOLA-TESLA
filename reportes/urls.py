@@ -83,4 +83,9 @@ urlpatterns = [
         get_charge_procedure_pdf,
         name="get_charge_procedure_pdf",
     ),
+    path(
+        "get_tramites_pendientes_pdf/",
+         get_tramites_pendientes_pdf,
+         name = "get_tramites_pendientes_pdf"
+    ),
 ]
