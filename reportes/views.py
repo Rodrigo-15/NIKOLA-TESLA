@@ -1436,66 +1436,6 @@ def get_process_tracking_sheet_pdf(request):
     return Response({"path": path}, status=status.HTTP_200_OK)
 
 
-@api_view(["GET"])
-def get_charge_procedure_pdf(request):
-    area_id = request.GET.get("area_id")
-    user_id = request.GET.get("user_id")
-
-    if area_id == None or user_id == None:
-        return Response(
-            {"error": "No se encontro el area o el usuario"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    area = Area.objects.filter(id=area_id).first()
-    fecha = datetime.datetime.now().strftime("%d/%m/%Y")
-    hora = datetime.datetime.now().strftime("%H:%M %p")
-    anio = datetime.datetime.now().year
-    usuario = Persona.objects.filter(user_id=user_id).first()
-
-    trackins = ProcedureTracing.objects.filter(
-        user_id=user_id,
-        from_area_id=area_id,
-        to_area_id__isnull=False,
-        is_approved=False,
-    )
-    
-    if trackins.count() == 0:
-        return Response(
-            {"error": "No se encontro el procedimiento"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    obj_procedure  = []
-    for trackin in trackins:
-        procedure = Procedure.objects.filter(id=trackin.procedure_id).first()
-        serialized_procedure = ProcedureSerializer(procedure).data
-        to_area = Area.objects.filter(id=trackin.to_area_id).first()
-        serialized_procedure["to_area"] = AreaSerializer(to_area).data
-        obj_procedure.append(serialized_procedure)
-    
-    charge_number = area.charge_number + 1
-    area.charge_number = charge_number
-    area.save()
-    text_charge_number = str(charge_number).zfill(6)
-
-    final_data = {
-        "area": AreaSerializer(area).data,
-        "fecha": fecha,
-        "hora": hora,
-        "anio": anio,
-        "usuario": PersonaSerializerFilter(usuario).data,
-        "procedure": obj_procedure,
-        "procedure_count": len(obj_procedure),
-        "charge_number": text_charge_number,
-    }
-    path = get_charge_procedure(final_data)
-    from backend.settings import DEBUG, URL_LOCAL, URL_PROD
-
-    url = URL_LOCAL if DEBUG else URL_PROD
-    path = path.replace("/media", "media")
-    path = url + path
-    return Response({"path": path}, status=status.HTTP_200_OK)
-
 
 @api_view(["GET"])
 def reporte_economico_expediente_api(request):
@@ -2261,6 +2201,67 @@ def get_tramites_pendientes_pdf(request):
     }
     
     path = get_unfinished_procedures(data)
+
+    url = URL_LOCAL if DEBUG else URL_PROD
+    path = path.replace("/media", "media")
+    path = url + path
+    return Response({"path": path}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_charge_procedure_pdf(request):
+    area_id = request.GET.get("area_id")
+    user_id = request.GET.get("user_id")
+
+    if area_id == None or user_id == None:
+        return Response(
+            {"error": "No se encontro el area o el usuario"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    area = Area.objects.filter(id=area_id).first()
+    fecha = datetime.datetime.now().strftime("%d/%m/%Y")
+    hora = datetime.datetime.now().strftime("%H:%M %p")
+    anio = datetime.datetime.now().year
+    usuario = Persona.objects.filter(user_id=user_id).first()
+
+    trackins = ProcedureTracing.objects.filter(
+        user_id=user_id,
+        from_area_id=area_id,
+        to_area_id__isnull=False,
+        is_approved=False,
+    )
+    
+    if trackins.count() == 0:
+        return Response(
+            {"error": "No se encontro el procedimiento"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    obj_procedure  = []
+    for trackin in trackins:
+        procedure = Procedure.objects.filter(id=trackin.procedure_id).first()
+        serialized_procedure = ProcedureSerializer(procedure).data
+        to_area = Area.objects.filter(id=trackin.to_area_id).first()
+        serialized_procedure["to_area"] = AreaSerializer(to_area).data
+        obj_procedure.append(serialized_procedure)
+    
+    charge_number = area.charge_number + 1
+    area.charge_number = charge_number
+    area.save()
+    text_charge_number = str(charge_number).zfill(6)
+
+    final_data = {
+        "area": AreaSerializer(area).data,
+        "fecha": fecha,
+        "hora": hora,
+        "anio": anio,
+        "usuario": PersonaSerializerFilter(usuario).data,
+        "procedure": obj_procedure,
+        "procedure_count": len(obj_procedure),
+        "charge_number": text_charge_number,
+    }
+    path = get_charge_procedure(final_data)
+    from backend.settings import DEBUG, URL_LOCAL, URL_PROD
 
     url = URL_LOCAL if DEBUG else URL_PROD
     path = path.replace("/media", "media")
