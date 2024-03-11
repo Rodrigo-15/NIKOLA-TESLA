@@ -2166,7 +2166,7 @@ def generate_diploma_pdf(request):
         return Response({"path": path_return})
 
 @api_view(["GET"])
-def get_tramites_pendientes_pdf(request):
+def get_tramites_pendientes_excel(request):
     user_id = request.GET.get("user_id")
     cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
 

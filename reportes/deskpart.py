@@ -473,7 +473,7 @@ def get_charge_procedure(data) -> str:
         return None
 
 
-def get_unfinished_procedures_for_area(data) -> str:
+def get_unfinished_procedures_for_area_pdf(data) -> str:
 
     def setF(size, name = "Arial"):
         fontzise = size
