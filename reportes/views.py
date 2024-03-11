@@ -2200,7 +2200,7 @@ def get_tramites_pendientes_pdf(request):
         "procedures" : procedures
     }
     
-    path = get_unfinished_procedures(data)
+    path = get_unfinished_procedures_for_area_xlsx(data)
 
     url = URL_LOCAL if DEBUG else URL_PROD
     path = path.replace("/media", "media")

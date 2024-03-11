@@ -11,15 +11,17 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.lib import colors
+from reportlab.graphics.charts.piecharts import Pie
+from reportlab.graphics.shapes import Drawing, String
+from xlsxwriter import Workbook
 
 def tabla_dinamica(datosTabla: list, currenty, pageCounter, setF, c, fontzise, maxWidht, lLeft, lTop, lBot,columns, colWidths):
     setF(12, "Arial-Bold")
     lol = True
     thing = 0
+    porcentaje_sacado = False
     while lol:
-        if datosTabla[0] == columns:
-            pass
-        else:
+        if datosTabla[0] != columns and pageCounter != 1:
             datosTabla.insert(0, columns)
         if thing == 0:
             tabla = Table(datosTabla[0:], colWidths)
@@ -28,8 +30,16 @@ def tabla_dinamica(datosTabla: list, currenty, pageCounter, setF, c, fontzise, m
         tabla.wrap(maxWidht, 1000)
 
         if tabla._height > currenty - lBot - fontzise - 5:
-            thing -= 1
-            continue
+            if not porcentaje_sacado:
+                a = currenty - lBot - fontzise - 5
+                b = a/tabla._height
+                thing = round(len(datosTabla)*b) + 5
+                currenty - lBot - fontzise - 5
+                porcentaje_sacado = True
+                continue
+            else:
+                thing -= 1
+                continue
         else:
             if thing == 0:
                 datosRestantes = []
@@ -53,6 +63,7 @@ def tabla_dinamica(datosTabla: list, currenty, pageCounter, setF, c, fontzise, m
 
             setF(8)
             c.drawCentredString(A4[0] / 2, lBot, str(pageCounter))
+            print(pageCounter)
             pageCounter += 1
             c.showPage()
 
@@ -432,52 +443,11 @@ def get_charge_procedure(data) -> str:
         c.drawCentredString(A4[0] / 2, currentY, "TRAMITES")
 
         currentY -= 20
-
-        def tabla_dinamica(datosTabla: list, currenty, pageCounter):
-            setF(12, "Arial-Bold")
-            lol = True
-            thing = 0
-            while lol:
-                if datosTabla[0] == ["Expediente N°", "Asunto", "Area", "Fecha"]:
-                    pass
-                else:
-                    datosTabla.insert(0, ["Expediente N°", "Asunto", "Area", "Fecha"])
-                if thing == 0:
-                    tabla = Table(datosTabla[0:], [maxWidht * 0.25,maxWidht * 0.25,maxWidht * 0.25,maxWidht * 0.25])
-                else:
-                    tabla = Table(datosTabla[0:thing], [maxWidht * 0.25,maxWidht * 0.25,maxWidht * 0.25,maxWidht * 0.25])
-                tabla.wrap(maxWidht, 1000)
-
-                if tabla._height > currenty - limiteAbajo - fontzise - 5:
-                    thing -= 1
-                    continue
-                else:
-                    if thing == 0:
-                        datosRestantes = []
-                    else:
-
-                        datosRestantes = datosTabla[thing:]
-
-                    tabla.wrapOn(c, maxWidht, 1000)
-                    tabla.drawOn(c, limiteIzquierda, currenty - tabla._height)
-                    currenty = limiteArriba
-
-                    setF(8)
-                    c.drawCentredString(A4[0] / 2, limiteAbajo, str(pageCounter))
-                    pageCounter += 1
-                    c.showPage()
-
-                    if len(datosRestantes) != 0:
-                        lol = tabla_dinamica(datosRestantes, currenty, pageCounter)
-                    elif len(datosRestantes) == 0:
-                        lol = False
-            return lol
-
         for value in tramites:
             for i in range(len(value)):
                 value[i] = Paragraph(value[i], style)   
 
-        tabla_dinamica(tramites, currentY, 1)
+        tabla_dinamica(tramites, currentY, 1, setF, c, fontzise, maxWidht, limiteIzquierda, limiteArriba, limiteAbajo, ["N°", "Asunto", "Area", 'Fecha'], [maxWidht*0.25,maxWidht*0.25,maxWidht*0.25,maxWidht*0.25])
 
         if currentY < 170:
             c.showPage()
@@ -503,7 +473,7 @@ def get_charge_procedure(data) -> str:
         return None
 
 
-def get_unfinished_procedures(data) -> str:
+def get_unfinished_procedures_for_area(data) -> str:
 
     def setF(size, name = "Arial"):
         fontzise = size
@@ -522,11 +492,13 @@ def get_unfinished_procedures(data) -> str:
     # milisecond
     milisecond = str(int(round(time.time() * 1000)))
 
+    area_usuaria = data["area_usuaria"]
+
     path_file =     os.path.join(
         settings.MEDIA_ROOT,
         "pdf",
         "reportes",
-        f"tramites-no-finalizados-{data['area_usuaria']}-{milisecond}.pdf",
+        f"tramites-no-finalizados-{area_usuaria.replace(' ', '_')}-{milisecond}.pdf",
     )
     if os.path.exists(path_file):
             os.remove(path_file)
@@ -545,7 +517,6 @@ def get_unfinished_procedures(data) -> str:
     fontname = "Arial"
     
     maxWidth = lRight - lLeft
-    area_usuaria = data["area_usuaria"]
 
     procedures = data["procedures"]
 
@@ -590,15 +561,158 @@ def get_unfinished_procedures(data) -> str:
     ])
 
     tabla_dinamica(datostabla, lTop -200, 1, setF, c, fontzise, maxWidth, lLeft, lTop, lBottom, ["Codigo", "Asunto", "Tipo", "Solicitante"], [maxWidth*0.12, maxWidth * 0.48, maxWidth*0.2, maxWidth*0.2])
+    #-------------Grafica----------------#
+
+    c.setPageSize(A4[::-1])
+
+    listaDeTipos = []
+
+    listaSumaDeTipos = []
+
+    for procedure in procedures:
+        listaDeTipos.append(procedure["procedure_type_description"])
+
+    for value in listaDeTipos:
+        new = True
+        for par in listaSumaDeTipos:
+            if value in par:
+                par[0] += 1
+                new = False
+        if new:
+            listaSumaDeTipos.append([1, value])
+
+    draw = Drawing(maxWidth, maxWidth)
+
+    pc = Pie()
+    pc.x = 200
+    pc.y = 0
+    pc.width = maxWidth*0.7
+    pc.height = maxWidth*0.7
+    pc.data = []
+    pc.labels = []
+    pc.sideLabels = 1
+    pc.sideLabelsOffset = 0.01
+
+    for counter, value in listaSumaDeTipos:
+        pc.data.append(counter)
+        pc.labels.append(value)
+
+    pc.slices.strokeWidth=0.5
 
     path_return = os.path.join(
             settings.MEDIA_URL,
             "pdf",
             "reportes",
-            f"tramites-no-finalizados-{data['area_usuaria']}-{milisecond}.pdf",
+            f"tramites-no-finalizados-{area_usuaria.replace(' ', '_')}-{milisecond}.pdf",
         )
+    
+    draw.add(pc)
+
+    draw.wrapOn(c, maxWidth,maxWidth)
+
+    draw.drawOn(c, lLeft, 100)
 
 
     c.save()
     path_return = path_return.replace("\\", "/")
     return path_return
+
+def get_unfinished_procedures_for_area_xlsx(data) -> str:
+    media_root = settings.MEDIA_ROOT
+    pdf_folder = os.path.join(media_root, "pdf", "reportes")
+    if not os.path.exists(pdf_folder):
+        os.makedirs(pdf_folder)
+
+    # milisecond
+    milisecond = str(int(round(time.time() * 1000)))
+
+    area_usuaria = data["area_usuaria"]
+
+    path_file =     os.path.join(
+        settings.MEDIA_ROOT,
+        "excel",
+        "reportes",
+        f"tramites-no-finalizados-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
+    )
+    if os.path.exists(path_file):
+            os.remove(path_file)
+
+    
+    procedures = data["procedures"]
+
+    datostabla = [["Codigo", "Asunto", "Tipo", "Solicitante"],]
+
+    for procedure in procedures:
+        datostabla.append([procedure["code_number"], procedure["subject"], procedure["procedure_type_description"], procedure["person_full_name"]])
+
+    file = Workbook(path_file)
+    ws = file.add_worksheet()
+    ws2 = file.add_worksheet()
+
+    ws.write_string(1, 1, f'Area Usuaria: {area_usuaria}')
+
+
+    border_format = file.add_format({'border': 1})  # 1 is for a thin border. You can use other values for different border styles.
+
+    rowCounter = 3
+    largestAsunto = 0
+    for row in datostabla:
+        for i in range(len(row)):
+            ws.write_string(rowCounter, i, row[i], border_format)
+            if i == 2:
+                if len(row[i]) > largestAsunto:
+                    largestAsunto = len(row[i]) 
+        rowCounter += 1
+
+    ws.set_column('A:A', 12.5)
+    ws.set_column('B:B', largestAsunto*2.4)
+
+    ws.set_column('C:D', 50)
+
+    chart = file.add_chart({'type': 'pie'})
+
+    listaDeTipos = []
+
+    listaSumaDeTipos = []
+
+    for procedure in procedures:
+        listaDeTipos.append(procedure["procedure_type_description"])
+
+    for value in listaDeTipos:
+        new = True
+        for par in listaSumaDeTipos:
+            if value in par:
+                par[0] += 1
+                new = False
+        if new:
+            listaSumaDeTipos.append([1, value])
+    currenty = 1
+    for par in listaSumaDeTipos:
+        ws2.write_string(currenty, 1, par[1])
+        ws2.write_number(currenty, 2, par[0])
+        currenty += 1
+        
+
+    listaNumeros = [number[0] for number in listaSumaDeTipos]
+    listaCategorias = [par[1] for par in listaSumaDeTipos]
+    chart.add_series({'name': f'Tramites Pendientes {area_usuaria}',
+                      'categories': ['Sheet2',1,1,len(listaCategorias), 1],
+                      'values': ['Sheet2', 1, 2, len(listaNumeros), 2],
+                      'data_labels':{'category':True,'position':'outside_end', 'percentage' : True}})
+    
+    chart.set_size({'width': 1000, 'height': 1000})
+    chart.set_legend({'none': True})
+    ws.insert_chart('G3', chart)
+
+    file.close()
+
+    path_return = os.path.join(
+        settings.MEDIA_URL,
+        "excel",
+        "reportes",
+        f"tramites-no-finalizados-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
+    )
+
+    path_return = path_return.replace("\\", "/")
+    return path_return
+
