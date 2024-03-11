@@ -3,6 +3,8 @@ from desk.serializers import (
     ProcedureTracingSerializer,
     ProcedureTracingsList,
 )
+from datetime import timedelta, date
+from datetime import datetime
 from backend.settings import DEBUG, URL_LOCAL, URL_PROD
 from .deskpart import *
 from weasyprint import HTML
@@ -2266,4 +2268,45 @@ def get_charge_procedure_pdf(request):
     url = URL_LOCAL if DEBUG else URL_PROD
     path = path.replace("/media", "media")
     path = url + path
+    return Response({"path": path}, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+def get_traffic_in_area_excel(request):
+    fecha_inicio = request.GET.get("fecha_inicio")
+    fecha_fin = request.GET.get("fecha_fin")
+    area_id = request.GET.get("area_id")
+
+    if area_id == None or fecha_inicio == None or fecha_fin == None:
+        return Response(
+            {"error": "No se encontro el area o las fechas"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    from backend.settings import DEBUG, URL_LOCAL, URL_PROD
+
+    fecha_inicio = date(*map(int, fecha_inicio.split('-')))
+    fecha_fin = date(*map(int, fecha_fin.split('-')))
+
+    date_range = [fecha_inicio+ timedelta(days=x) for x in range((fecha_fin - fecha_inicio).days + 1)]
+    tracingList = []
+
+    for fecha in date_range:
+
+        tracing_for_date = ProcedureTracingSerializer(ProcedureTracing.objects.filter(created_at__date = fecha, from_area__id = area_id), many = True).data
+
+        tracingList.append(tracing_for_date)
+
+    area_usuaria = AreaSerializer(Area.objects.filter(id = area_id).first()).data
+
+    for i in range(len(date_range)):
+        date_range[i] = datetime.datetime.strftime(date_range[i], '%Y-%m-%d')
+
+    path = generate_graph_traffic(tracingList, area_usuaria, date_range)
+
+
+
+    url = URL_LOCAL if DEBUG else URL_PROD
+    path = path.replace("/media", "media")
+    path = url + path
+
     return Response({"path": path}, status=status.HTTP_200_OK)

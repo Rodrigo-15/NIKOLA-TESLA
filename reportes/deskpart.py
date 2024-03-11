@@ -634,6 +634,8 @@ def get_unfinished_procedures_for_area_xlsx(data) -> str:
         "reportes",
         f"tramites-no-finalizados-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
     )
+
+    
     if os.path.exists(path_file):
             os.remove(path_file)
 
@@ -651,6 +653,20 @@ def get_unfinished_procedures_for_area_xlsx(data) -> str:
 
     ws.write_string(1, 1, f'Area Usuaria: {area_usuaria}')
 
+    #---------------tabla------------------#
+    headers = datostabla[0:1][0]
+    rows = datostabla[1:]
+
+    print(headers)
+
+    ws.add_table(f"A4:D{len(rows) + 4}",
+                 {'data': rows,
+                  'columns': [
+                      {'header': headers[0]},
+                      {'header': headers[1]},
+                      {'header': headers[2]},
+                      {'header': headers[3]},
+                      ]})
 
     border_format = file.add_format({'border': 1})  # 1 is for a thin border. You can use other values for different border styles.
 
@@ -658,7 +674,6 @@ def get_unfinished_procedures_for_area_xlsx(data) -> str:
     largestAsunto = 0
     for row in datostabla:
         for i in range(len(row)):
-            ws.write_string(rowCounter, i, row[i], border_format)
             if i == 2:
                 if len(row[i]) > largestAsunto:
                     largestAsunto = len(row[i]) 
@@ -678,6 +693,9 @@ def get_unfinished_procedures_for_area_xlsx(data) -> str:
     for procedure in procedures:
         listaDeTipos.append(procedure["procedure_type_description"])
 
+    
+    #----------grafico-------------------#
+
     for value in listaDeTipos:
         new = True
         for par in listaSumaDeTipos:
@@ -686,23 +704,28 @@ def get_unfinished_procedures_for_area_xlsx(data) -> str:
                 new = False
         if new:
             listaSumaDeTipos.append([1, value])
-    currenty = 1
-    for par in listaSumaDeTipos:
-        ws2.write_string(currenty, 1, par[1])
-        ws2.write_number(currenty, 2, par[0])
-        currenty += 1
+
+    for i in range(len(listaSumaDeTipos)):
+        listaSumaDeTipos[i] = listaSumaDeTipos[i][::-1]
+
+    ws2.add_table(f"B2:C{len(listaSumaDeTipos) + 1}",
+                {'data': listaSumaDeTipos,
+                'columns': [
+                    {'header': 'Tipo Tramite'},
+                    {'header': 'Cantidad'},
+                    ]})
         
 
     listaNumeros = [number[0] for number in listaSumaDeTipos]
     listaCategorias = [par[1] for par in listaSumaDeTipos]
     chart.add_series({'name': f'Tramites Pendientes {area_usuaria}',
-                      'categories': ['Sheet2',1,1,len(listaCategorias), 1],
-                      'values': ['Sheet2', 1, 2, len(listaNumeros), 2],
+                      'categories': ['Sheet2',2,1,len(listaCategorias) + 1, 1],
+                      'values': ['Sheet2', 2, 2, len(listaNumeros) + 1, 2],
                       'data_labels':{'category':True,'position':'outside_end', 'percentage' : True}})
     
     chart.set_size({'width': 1000, 'height': 1000})
     chart.set_legend({'none': True})
-    ws.insert_chart('G3', chart)
+    ws2.insert_chart('E3', chart)
 
     file.close()
 
@@ -716,3 +739,68 @@ def get_unfinished_procedures_for_area_xlsx(data) -> str:
     path_return = path_return.replace("\\", "/")
     return path_return
 
+def generate_graph_traffic(tracingList, area_usuaria, date_range) -> str:
+    media_root = settings.MEDIA_ROOT
+    pdf_folder = os.path.join(media_root, "excel", "reportes")
+    if not os.path.exists(pdf_folder):
+        os.makedirs(pdf_folder)
+
+    area_usuaria = area_usuaria["nombre"]
+
+    # milisecond
+    milisecond = str(int(round(time.time() * 1000)))
+
+    path_file =     os.path.join(
+        settings.MEDIA_ROOT,
+        "excel",
+        "reportes",
+         f"trafico-en-area-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
+    )
+    if os.path.exists(path_file):
+            os.remove(path_file)
+
+    file = Workbook(path_file)
+
+    ws = file.add_worksheet()
+
+    chart = file.add_chart({'type': 'line'})
+    cantidades = []
+
+    for value in tracingList:
+        for tracing in value:
+            fecha: str = tracing["created_at"]
+            fecha = fecha.split('T')[0]
+            break
+        cantidades.append(len(value))
+
+    print(date_range)
+    print(cantidades)
+
+    ws.write_column('A1', date_range, file.add_format({'num_format': 'yyyy-mm-dd'}))
+    ws.write_column('B1', cantidades)
+
+    # Create a line chart object.
+    chart = file.add_chart({'type': 'line'})
+
+    # Configure the chart series.
+    chart.add_series({
+        'name': 'Trafico en Area',
+        'categories': f'=Sheet1!$A$1:$A${len(date_range)}',  # Categories (dates)
+        'values': f'=Sheet1!$B$1:$B${len(cantidades)}',  # Values (subscriptions)
+    })
+
+    # Insert the chart into the worksheet starting from cell C1.
+    ws.insert_chart('C1', chart)
+
+    # Close the workbook.
+    file.close()
+
+    path_return = os.path.join(
+        settings.MEDIA_URL,
+        "excel",
+        "reportes",
+        f"trafico-en-area-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
+    )
+
+    path_return = path_return.replace("\\", "/")
+    return path_return
