@@ -1175,17 +1175,9 @@ def get_procedures_charges(request):
         user_id = request.GET.get("user_id")
         query = request.GET.get("query")
         date = request.GET.get("date")
-        cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
-        if not cargo_area:
-            return Response(
-                status=status.HTTP_400_BAD_REQUEST,
-                data={"message": "El usuario no tiene un area asignada"},
-            )
-        data_area = cargo_area.area.all()
-        areas = AreaSerializer(data_area, many=True).data
 
         procededure_charge = ProcedureCharge.objects.filter(
-            area_id__in=[area["id"] for area in areas]
+            user_id=user_id,
         )
         procededure_charge = (
             procededure_charge.filter(
@@ -1202,3 +1194,98 @@ def get_procedures_charges(request):
         serializer = ProcedureChargeSerializer(paginated_procedures_charge, many=True)
 
         return paginator.get_paginated_response(serializer.data)
+
+
+@api_view(["GET"])
+def get_procedures_derivations(request):
+    if request.method == "GET":
+        user_id = request.GET.get("user_id")
+        query = request.GET.get("query")
+        date = request.GET.get("date")
+        cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+        if not cargo_area:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={"message": "El usuario no tiene un area asignada"},
+            )
+        data_area = cargo_area.area.all()
+        areas = AreaSerializer(data_area, many=True).data
+
+        trackins = (
+            ProcedureTracing.objects.filter(
+                user_id=user_id,
+                from_area_id__in=[area["id"] for area in areas],
+                to_area_id__isnull=False,
+                procedure_charge__isnull=True,
+                is_finished=False,
+                is_archived=False,
+            )
+            .exclude(
+                procedure_id__in=ProcedureTracing.objects.filter(
+                    is_finished=True,
+                ).values("procedure_id")
+            )
+            .exclude(
+                procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+                .annotate(count=Count("procedure_id"))
+                .filter(count=1)
+                .values("procedure_id")
+            )
+            .order_by("-created_at")
+        )
+        proceduretracing = ProcedureTracingSerializer(trackins, many=True)
+
+        procedures = Procedure.objects.filter(
+            id__in=[procedure["procedure"] for procedure in proceduretracing.data]
+        )
+        procedures = procedures.filter(
+            Q(code_number__icontains=query)
+            | Q(subject__icontains=query)
+            | Q(file__person__full_name__icontains=query)
+            | Q(file__area__nombre__icontains=query)
+            | Q(file__legalperson__razon_social__icontains=query)
+            | Q(file__person__numero_documento__icontains=query)
+            | Q(file__legalperson__numero_documento__icontains=query),
+            **({"created_at__date": date} if date else {}),
+        ).order_by("-code_number")
+        paginator = CustomPagination()
+        paginated_procedures = paginator.paginate_queryset(procedures, request)
+        serializer = ProcedureListSerializer(paginated_procedures, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+@api_view(["POST"])
+def create_procedure_charge(request):
+    if request.method == "POST":
+
+        user_id = request.data["user_id"]
+        procedures = request.data["procedures"]
+        procedure_charge = ProcedureCharge.objects.create(
+            user_id=user_id,
+        )
+
+        for procedure in procedures:
+            procedure_id = procedure["id"]
+            trankins = (
+                ProcedureTracing.objects.filter(
+                    procedure_id=procedure_id,
+                    user_id=user_id,
+                    is_finished=False,
+                    to_area_id__isnull=False,
+                    procedure_charge__isnull=True,
+                    from_area_id__isnull=False,
+                )
+                .order_by("-created_at")
+                .first()
+            )
+            ProcedureTracing.objects.filter(id=trankins.id).update(
+                procedure_charge_id=procedure_charge.id
+            )
+
+        return Response(
+            status=status.HTTP_200_OK,
+            data={
+                "correlative": procedure_charge.correlative,
+                "id": procedure_charge.id,
+            },
+        )

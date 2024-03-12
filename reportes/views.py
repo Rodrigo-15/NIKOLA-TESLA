@@ -2168,16 +2168,22 @@ def get_process_tracking_sheet_pdf(request):
 
 @api_view(["GET"])
 def get_charge_procedure_pdf(request):
-    area_id = request.GET.get("area_id")
     user_id = request.GET.get("user_id")
+    procedure_charge_id = request.GET.get("procedure_charge_id")
 
-    if area_id == None or user_id == None:
+    if user_id == None:
         return Response(
-            {"error": "No se encontro el area o el usuario"},
+            {"error": "No se encontro  el usuario"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-
-    area = Area.objects.filter(id=area_id).first()
+    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+    if not cargo_area:
+        return Response(
+            status=status.HTTP_400_BAD_REQUEST,
+            data={"message": "El usuario no tiene un area asignada"},
+        )
+    data_area = cargo_area.area.all()
+    areas = AreaSerializer(data_area, many=True).data
     fecha = datetime.datetime.now().strftime("%d/%m/%Y")
     hora = datetime.datetime.now().strftime("%H:%M %p")
     anio = datetime.datetime.now().year
@@ -2185,9 +2191,8 @@ def get_charge_procedure_pdf(request):
 
     trackins = ProcedureTracing.objects.filter(
         user_id=user_id,
-        from_area_id=area_id,
         to_area_id__isnull=False,
-        procedure_charge__isnull=True,
+        procedure_charge_id=procedure_charge_id,
         is_finished=False,
     )
 
@@ -2204,16 +2209,12 @@ def get_charge_procedure_pdf(request):
         serialized_procedure["to_area"] = AreaSerializer(to_area).data
         obj_procedure.append(serialized_procedure)
 
-    procedure_charge = ProcedureCharge.objects.create(area_id=area_id, user_id=user_id)
+    procedure_charge = ProcedureCharge.objects.filter(id=procedure_charge_id).first()
 
     text_charge_number = procedure_charge.correlative
 
-    for trackin in trackins:
-        trackin.procedure_charge_id = procedure_charge.id
-        trackin.save()
-
     final_data = {
-        "area": AreaSerializer(area).data,
+        "area": areas[0],
         "fecha": fecha,
         "hora": hora,
         "anio": anio,

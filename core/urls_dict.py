@@ -49,12 +49,13 @@ urls_dict = {
             "update_procedure": f"{url}desk/update_procedure",
             "get_procedure_by_id": f"{url}desk/get_procedure_by_id/",
             "get_procedures_charges": f"{url}desk/get_procedures_charges",
+            "get_procedures_derivations": f"{url}desk/get_procedures_derivations",
+            "create_procedure_charge": f"{url}desk/create_procedure_charge",
         },
         "reports": {
             "get_process_tracking_sheet_pdf": url
             + "reportes/get_process_tracking_sheet_pdf/?procedure_id=",
-            "get_charge_procedure_pdf": url
-            + "reportes/get_charge_procedure_pdf/?area_id={area_id}&user_id={user_id}",
+            "get_charge_procedure_pdf": url + "reportes/get_charge_procedure_pdf/",
         },
     },
     "person": {

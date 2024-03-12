@@ -140,11 +140,9 @@ def date_formatter(date):
 
 
 class ProcedureCharge(models.Model):
-    area = models.ForeignKey(Area, on_delete=models.CASCADE)
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     correlative = models.CharField(max_length=50, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
-    path_file = models.CharField(max_length=250, null=True, blank=True)
 
     class Meta:
         verbose_name = "procedure charge"
@@ -157,16 +155,14 @@ class ProcedureCharge(models.Model):
 
     def generate_correlative(self):
         # by year and area
-        return f"{ProcedureCharge.get_count_charges_by_year(date.today().year, self.area_id) + 1:05d}-{date.today().year}-{self.area.key_name}-EPG-UNAP"
+        return f"{ProcedureCharge.get_count_charges_by_year(date.today().year) + 1:05d}-{date.today().year}-EPG-UNAP"
 
     @staticmethod
-    def get_count_charges_by_year(year, area_id):
-        return ProcedureCharge.objects.filter(
-            created_at__year=year, area_id=area_id
-        ).count()
+    def get_count_charges_by_year(year):
+        return ProcedureCharge.objects.filter(created_at__year=year).count()
 
     def __str__(self):
-        return f"{self.area} - {self.user}"
+        return f"{self.correlative} - {self.user}"
 
 
 class ProcedureTracing(models.Model):

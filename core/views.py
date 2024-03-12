@@ -14,6 +14,52 @@ def DefaultTemplate(request):
 
 
 @api_view(["GET"])
+def create_hollydays(request):
+    import requests
+    import datetime
+    import json
+    import os
+
+    year = datetime.datetime.now().year
+    url = f"https://date.nager.at/api/v3/PublicHolidays/{year}/PE"
+    response = requests.get(url)
+    feriados = response.json()
+
+    lista_feriados = [
+        feriado["date"] for feriado in feriados
+    ]  # Usando list comprehension
+
+    # Verifica si la carpeta media/config existe, si no, la crea
+    carpeta = "media/config"
+    if not os.path.exists(carpeta):
+        os.makedirs(carpeta)
+
+    # Ruta del archivo donde se guardarán los feriados
+    ruta_archivo = os.path.join(carpeta, f"feriados_{year}.json")
+
+    # Guardar los feriados en un archivo JSON
+    with open(ruta_archivo, "w") as archivo:
+        json.dump(lista_feriados, archivo)
+
+    return Response({"message": "Feriados guardados en el archivo feriados.json"})
+
+
+def hollydays():
+    import json
+    import datetime
+
+    year = datetime.datetime.now().year
+    ruta_archivo = f"media/config/feriados_{year}.json"
+    with open(ruta_archivo, "r") as archivo:
+        feriados = json.load(archivo)
+
+    lista_feriados = []
+    for feriado in feriados:
+        lista_feriados.append(feriado)
+    return lista_feriados
+
+
+@api_view(["GET"])
 def get_periodo_active(request):
     periodo = Periodo.get_periodo_activo()
     serializer = PeriodoSerializer(periodo)
