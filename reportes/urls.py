@@ -83,4 +83,14 @@ urlpatterns = [
         get_charge_procedure_pdf,
         name="get_charge_procedure_pdf",
     ),
+    path(
+        "get_tramites_pendientes_excel/",
+         get_tramites_pendientes_excel,
+         name = "get_tramites_pendientes_excel"
+    ),
+        path(
+        "get_traffic_in_area_excel/",
+         get_traffic_in_area_excel,
+         name = "get_traffic_in_area_excel"
+    ),
 ]
