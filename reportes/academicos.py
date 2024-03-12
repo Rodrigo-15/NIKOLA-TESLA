@@ -498,4 +498,184 @@ def diploma_diplomado(data):
         return path_return
     except Exception as e:
         print(e)
-        return None
+        return 
+    
+def reporte_matricula(data):
+    lLeft = cm*2
+    lRight = A4[0] - cm*2
+    lTop = A4[1] - cm
+    lBottom = cm
+    maxWidth = lRight - lLeft
+
+    fontzise = 10
+    fontname = "Arial"
+
+    def setF(size, name = "Arial"):
+        fontzise = size
+        fontname = name             #simplemente nos ayuda a cambiar las fuentes de todo mas rapido
+        c.setFont(psfontname=fontname, size= fontzise)
+        style.fontSize = fontzise
+        style.fontName = fontname
+        style.leading = size*1.2
+
+    style = getSampleStyleSheet()
+    style1 = style['Normal']
+    style = style["Normal"]
+
+    style1.alignment = 0
+
+    #-----generar qr-------#
+    codigo = 'https://apisunat.com/65baf74a815b810015b21374/documents/new'
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(codigo)
+    qr.make(fit=True)
+
+    QRImage = qr.make_image(fill_color="black", back_color="white")
+
+    img_buffer = BytesIO()
+    QRImage.save(img_buffer)
+    img_buffer.seek(0)
+
+    img_buffer = ImageReader(img_buffer)
+    #--------------------------#
+
+    pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
+    pdfmetrics.registerFont(TTFont('Arial-Bold', 'arialbd.ttf'))
+
+    facultad = 'FACULTAD DE EDUCACION'
+    programa = 'DIPLOMADO EN DOCENCIA UNIVERSITARIA'
+    nombreAlumno = 'ALEGRIA REODRIGUEZ JHONATAN WALDEMA FABRICIO'
+    numExp = '4903'
+    planEstudios = 'xd'
+    correo = 'None'
+    dniAlumno = '71232701'
+    periodo = '2023-II'
+    promocion = '2023-II'
+
+
+    cursos = [['N°', 'CICLO', 'CÓDIGO', 'ASIGNATURA', 'INTENTO', 'SECCION', 'CREDITOS'],['1','1', 'DPC-01', 'INTRODUCCION A LAS COMPETENCIAS DOCENTES', '01', 'A', '4.00'],
+            ['2','1', 'DPC-02', 'INNOVACION, DIVERSISDAD Y EQUIDAD EN LA EDUCACION', '01', 'A', '4.00'],
+            ['3','1', 'DPC-03', 'COMPETENCIAS DIGITALES EN DOCENCIA UNIVERSITARIA', '01', 'A', '4.00'],
+            ['4','1', 'DPC-04', 'METODOLOGIAS ACTIVAS Y TECNICAS DIDACTICAS', '01', 'A', '4.00'],
+            ['5','1', 'DPC-05', 'HERRAMIENTAS Y RECURSOS DOCENTES PARA LA ENSEÑANZA Y EL APRENDIZAJE', '01', 'A', '4.00'],
+            ['6','1', 'DPC-06', 'METODOLOGIA DE LA INVESTIGACION EDUCATIVA', '01', 'A', '4.00'],]
+    
+    logoUnap = "media\config\logo_UNAP.jpg"
+    logoPostgrado = "media\config\postgrado.png"
+
+    #--------------------PAGINA 1-------------------------#
+
+    c = canvas.Canvas('reporte_matricula.pdf')
+
+    c.drawImage(logoUnap, lLeft, lTop - 37.5, 75, 37.5)
+    c.drawImage(logoPostgrado, lRight - 40, lTop - 40, 40, 40)
+
+    setF(10, 'Arial-Bold')
+
+    c.drawCentredString(A4[0]/2, lTop- fontzise - 40, 'UNIVERSISDAD NACIONAL DE LA AMAZONIA PERUANA')
+    c.drawCentredString(A4[0]/2, lTop- 2*fontzise - 45, 'ESCUELA DE POSTGRADO')
+    c.drawCentredString(A4[0]/2, lTop- 3*fontzise - 50, 'OFICINA DE ASUNTOS ACADEMICOS')
+
+    currenty = lTop- 3*fontzise - 50
+
+    setF(15, 'Arial-Bold')
+
+    c.drawCentredString(A4[0]/2, currenty - 40, 'BOLETA DE MATRICULA')
+
+    currenty -= 41
+    setF(7, 'Arial-Bold')
+    leftRightColumn = lLeft + 260
+
+    c.drawString(lLeft, currenty - 30, 'FACULTAD:')
+    c.drawString(leftRightColumn, currenty - 30, 'PROGRAMA:')
+    c.drawString(lLeft, currenty - 50, 'APELLIDOS Y NOMBRES:')
+    c.drawString(lLeft, currenty - 70, 'PLAN DE ESTUDIOS:')
+    c.drawString(lLeft, currenty - 90, 'PERIODO:')
+
+    setF(7)
+
+    c.drawString(lLeft + 45, currenty - 30, facultad)
+    programPara = Paragraph(programa, style)
+    programPara.wrapOn(c, lRight - (leftRightColumn + 45), 1000)
+    programPara.drawOn(c, leftRightColumn + 45, currenty - 32.5 - programPara.height + fontzise)
+    nombrePara = Paragraph(nombreAlumno, style)
+    nombrePara.wrapOn(c,leftRightColumn - (lLeft + 90), 1000)
+    nombrePara.drawOn(c, lLeft + 90, currenty - 52.5 - nombrePara.height + fontzise)
+    c.drawString(lLeft+ 75, currenty - 70, planEstudios)
+    c.drawString(lLeft+ 37, currenty - 90, periodo)
+
+    leftRightColumn = lLeft + 260
+
+    setF(7, 'Arial-Bold')
+
+    c.drawString(leftRightColumn, currenty - 50, 'NUM. EXP.:')
+    c.drawString(leftRightColumn, currenty - 70, 'DOCUENTO DE IDENTIDAD: ')
+
+    setF(7)
+
+    c.drawString(leftRightColumn + 40, currenty - 50, numExp)
+    c.drawString(leftRightColumn + 100, currenty - 70, dniAlumno)
+
+    currenty -= 120
+
+    #-----------------------tabla-------------------------#
+
+    style.alignment = 0
+
+    for value in cursos:
+        for i in range(len(value)):
+            if i == 3 and 'ASIGNATURA' not in value:
+                value[i] = Paragraph(value[i], style)
+
+    tablaCursos = Table(cursos, [maxWidth*0.05,maxWidth*0.1,maxWidth*0.1,maxWidth*0.45,maxWidth*0.1,maxWidth*0.1,maxWidth*0.1,])
+
+    tableStyle = TableStyle([
+            ('GRID', (0, 0), (-1, 0), 1, (0,0,0)),
+            ('BACKGROUND', (0,0), (-1,0),colors.lightgrey),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTSIZE', (0, 0), (-1, -1), fontzise),
+            ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTSIZE', (0,0), (-1, -1), 7),
+            ('FONTNAME', (0,0), (-1,-1), fontname),
+        ])
+
+    tablaCursos.setStyle(tableStyle)
+
+    tablaCursos.wrapOn(c, maxWidth, 1000)
+    tablaCursos.drawOn(c, lLeft, currenty-tablaCursos._height)
+
+    #----------area abajo de la tabla------------#
+
+    currenty -= tablaCursos._height
+
+    c.line(lLeft, currenty, lLeft, currenty - tablaCursos._height)
+    c.line(lRight, currenty, lRight, currenty - tablaCursos._height)
+    c.line(lLeft, currenty - tablaCursos._height, lRight, currenty - tablaCursos._height)
+
+    c.line(lLeft, currenty -20, lRight, currenty - 20)
+    c.line(lLeft, currenty - tablaCursos._height + 20, lRight, currenty - tablaCursos._height + 20)
+    c.line(A4[0]/2, currenty -20, A4[0]/2, currenty - tablaCursos._height)
+
+    setF(7, 'Arial-Bold')
+
+    c.drawString(lLeft + 5, currenty - 13.5, 'OBSERVACIONES: ')
+    c.drawString(lLeft + 300, currenty - 13.5, 'TOTAL DE CREDITOS MATRICULADOS')
+    c.line(lLeft+435, currenty, lLeft + 435, currenty - 20)
+    c.drawString(lLeft + 450, currenty - 13.5, '24.00')
+
+    c.drawString(lLeft + 5, currenty - tablaCursos._height + 7.5, 'Fecha-Hora de Matricula: 09/10/2023 - 08:34')
+    c.drawString((A4[0]/2) + 5, currenty - tablaCursos._height + 7.5, 'Fecha-Hora de Impresión: 09/10/2023 - 08:34')
+
+    c.line(lLeft + 70, currenty - tablaCursos._height + 45, lLeft + 170, currenty - tablaCursos._height + 45)
+    c.drawString(lLeft + 79, currenty - tablaCursos._height + 37, 'FIRMA DEL ESTUDIANTE')
+
+    currenty -= tablaCursos._height
+
+    c.drawImage(img_buffer, (A4[0]/2) - 50, currenty - 110, 100, 100)
+
+    c.save()
