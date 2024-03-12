@@ -369,7 +369,7 @@ def get_charge_procedure(data) -> str:
         c.drawCentredString(
             (limiteDerecha + limiteIzquierda) / 2,
             limiteArriba - 60,
-            charge_number,
+            f"CARGO UNICO N° {charge_number}",
         )
 
         fontname = "Arial"

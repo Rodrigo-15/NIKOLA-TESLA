@@ -28,6 +28,8 @@ from desk.views import (
     archive_procedure,
     anexar_procedure,
     get_procedures_charges,
+    get_procedures_derivations,
+    create_procedure_charge,
 )
 
 urlpatterns = [
@@ -68,6 +70,8 @@ urlpatterns = [
     path("archive_procedure", archive_procedure),
     path("anexar_procedure", anexar_procedure),
     path("get_procedures_charges", get_procedures_charges),
+    path("get_procedures_derivations", get_procedures_derivations),
+    path("create_procedure_charge", create_procedure_charge),
     # OLD
     path("get_tracings_procedures/<int:status>", get_tracings_procedures),
     path("get_dashboard_procedures", get_dashboard_procedures),

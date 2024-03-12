@@ -2212,16 +2212,22 @@ def get_tramites_pendientes_excel(request):
 
 @api_view(["GET"])
 def get_charge_procedure_pdf(request):
-    area_id = request.GET.get("area_id")
     user_id = request.GET.get("user_id")
+    procedure_charge_id = request.GET.get("procedure_charge_id")
 
-    if area_id == None or user_id == None:
+    if user_id == None:
         return Response(
-            {"error": "No se encontro el area o el usuario"},
+            {"error": "No se encontro  el usuario"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-
-    area = Area.objects.filter(id=area_id).first()
+    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+    if not cargo_area:
+        return Response(
+            status=status.HTTP_400_BAD_REQUEST,
+            data={"message": "El usuario no tiene un area asignada"},
+        )
+    data_area = cargo_area.area.all()
+    areas = AreaSerializer(data_area, many=True).data
     fecha = datetime.datetime.now().strftime("%d/%m/%Y")
     hora = datetime.datetime.now().strftime("%H:%M %p")
     anio = datetime.datetime.now().year
@@ -2229,9 +2235,10 @@ def get_charge_procedure_pdf(request):
 
     trackins = ProcedureTracing.objects.filter(
         user_id=user_id,
-        from_area_id=area_id,
         to_area_id__isnull=False,
-        is_approved=False,
+
+        procedure_charge_id=procedure_charge_id,
+        is_finished=False,
     )
     
     if trackins.count() == 0:
@@ -2246,14 +2253,12 @@ def get_charge_procedure_pdf(request):
         to_area = Area.objects.filter(id=trackin.to_area_id).first()
         serialized_procedure["to_area"] = AreaSerializer(to_area).data
         obj_procedure.append(serialized_procedure)
-    
-    charge_number = area.charge_number + 1
-    area.charge_number = charge_number
-    area.save()
-    text_charge_number = str(charge_number).zfill(6)
+    procedure_charge = ProcedureCharge.objects.filter(id=procedure_charge_id).first()
+
+    text_charge_number = procedure_charge.correlative
 
     final_data = {
-        "area": AreaSerializer(area).data,
+        "area": areas[0],
         "fecha": fecha,
         "hora": hora,
         "anio": anio,

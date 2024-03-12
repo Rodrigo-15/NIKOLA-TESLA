@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from core.views import hollydays
 from core.models import Persona, Area, PersonaJuridica
 from desk.models import (
     Headquarter,
@@ -11,6 +12,7 @@ from desk.models import (
     ProcedureCharge,
 )
 from django.db.models import Count
+from datetime import datetime, timedelta
 
 
 class HeadquarterSerializer(serializers.ModelSerializer):
@@ -61,6 +63,13 @@ class ProcedureSerializer(serializers.ModelSerializer):
     updated_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
     type_person = serializers.SerializerMethodField(source="get_type_person")
     state = serializers.SerializerMethodField(source="get_state")
+    due_date = serializers.SerializerMethodField(source="get_due_date")
+    state_date = serializers.SerializerMethodField(source="get_state_date")
+    state_date_description = serializers.SerializerMethodField(
+        source="get_state_date_description"
+    )
+    anaxed_id = serializers.SerializerMethodField(source="get_anaxed_id")
+    anaxed_code_number = serializers.SerializerMethodField(source="get_anaxed_code_number")
 
     def get_user_name(self, obj):
         person = Persona.objects.filter(user_id=obj.user_id).first()
@@ -138,6 +147,133 @@ class ProcedureSerializer(serializers.ModelSerializer):
             return "Concluido"
         return "En proceso"
 
+    def get_due_date(self, obj):
+        # Obtener el tipo de procedimiento y los días hábiles necesarios
+        procedure_type = ProcedureType.objects.filter(id=obj.procedure_type_id).first()
+        procedure_type_days = procedure_type.days
+        # Asumiendo que obj.created_at es un objeto datetime
+        create_date = obj.created_at.date()
+        # Feriados en Perú desde una api externa
+        feriados = hollydays()
+        # Contador para los días hábiles
+        days_added = 0
+        current_date = create_date
+
+        # Bucle para contar solo días hábiles (excluyendo sábados y domingos)
+        while days_added < procedure_type_days:
+            current_date += timedelta(days=1)
+            # Lunes=0, Domingo=6 y feriados
+            if (
+                current_date.weekday() < 5
+                and current_date.strftime("%Y-%m-%d") not in feriados
+            ):
+                days_added += 1
+
+        return current_date.strftime("%Y-%m-%d")
+
+    def get_state_date(self, obj):
+        # Obtener el tipo de procedimiento y los días hábiles necesarios
+        procedure_type = ProcedureType.objects.filter(id=obj.procedure_type_id).first()
+        procedure_type_days = procedure_type.days
+        # verificar la fecha del tramite
+        traking = (
+            ProcedureTracing.objects.filter(procedure_id=obj.id, is_finished=True)
+            .order_by("-created_at")
+            .first()
+        )
+
+        # Asumiendo que obj.created_at es un objeto datetime
+        create_date = obj.created_at.date()
+        # Feriados en Perú desde una api externa
+        feriados = hollydays()
+        # Contador para los días hábiles
+        days_added = 0
+        current_date = create_date
+
+        # Bucle para contar solo días hábiles (excluyendo sábados y dom ingos)
+        while days_added < procedure_type_days:
+            current_date += timedelta(days=1)
+            # Lunes=0, Domingo=6 y feriados
+            if (
+                current_date.weekday() < 5
+                and current_date.strftime("%Y-%m-%d") not in feriados
+            ):
+                days_added += 1
+
+        # calcular si esta en plazo, si esta a menos de 3 dias de venicimiento o si ya vencio VALIDANDO SI EL TRAMITE ESTA CONCLUIDO
+        if traking and traking.is_finished:
+            if current_date < traking.created_at.date():
+                return 3
+            elif current_date - traking.created_at.date() <= timedelta(days=3):
+                return 2
+            else:
+                return 1
+        else:
+            if current_date < datetime.now().date():
+                return 3
+            elif current_date - datetime.now().date() <= timedelta(days=3):
+                return 2
+            else:
+                return 1
+
+    def get_state_date_description(self, obj):
+        # Obtener el tipo de procedimiento y los días hábiles necesarios
+        procedure_type = ProcedureType.objects.filter(id=obj.procedure_type_id).first()
+        procedure_type_days = procedure_type.days
+        # verificar la fecha del tramite
+        traking = (
+            ProcedureTracing.objects.filter(procedure_id=obj.id, is_finished=True)
+            .order_by("-created_at")
+            .first()
+        )
+
+        # Asumiendo que obj.created_at es un objeto datetime
+        create_date = obj.created_at.date()
+        # Feriados en Perú desde una api externa
+        feriados = hollydays()
+        # Contador para los días hábiles
+        days_added = 0
+        current_date = create_date
+
+        # Bucle para contar solo días hábiles (excluyendo sábados y dom ingos)
+        while days_added < procedure_type_days:
+            current_date += timedelta(days=1)
+            # Lunes=0, Domingo=6 y feriados
+            if (
+                current_date.weekday() < 5
+                and current_date.strftime("%Y-%m-%d") not in feriados
+            ):
+                days_added += 1
+
+        # calcular si esta en plazo, si esta a menos de 3 dias de venicimiento o si ya vencio VALIDANDO SI EL TRAMITE ESTA CONCLUIDO
+        if traking and traking.is_finished:
+            if current_date < traking.created_at.date():
+                return "Vencido"
+            elif current_date - traking.created_at.date() <= timedelta(days=3):
+                return f"Por vencer en {(current_date - traking.created_at.date()).days} días"
+            else:
+                return "En plazo"
+        else:
+            if current_date < datetime.now().date():
+                return "Vencido"
+            elif current_date - datetime.now().date() <= timedelta(days=3):
+                return (
+                    f"Por vencer en {(current_date - datetime.now().date()).days} días"
+                )
+            else:
+                return "En plazo"
+
+    def get_anaxed_id(self, obj):
+        anaxed = Anexo.objects.filter(procedure_anexo_id=obj.id).first()
+        if anaxed:
+            return anaxed.procedure_id
+        return None
+
+    def get_anaxed_code_number(self, obj):
+        anaxed = Anexo.objects.filter(procedure_anexo_id=obj.id).first()
+        if anaxed:
+            return anaxed.procedure.code_number
+        return None
     class Meta:
         model = Procedure
         fields = "__all__"
@@ -246,6 +382,11 @@ class ProcedureListSerializer(serializers.Serializer):
     state = serializers.SerializerMethodField(source="get_state")
     number_of_sheets = serializers.IntegerField()
     area_id = serializers.SerializerMethodField(source="get_area_id")
+    due_date = serializers.SerializerMethodField(source="get_due_date")
+    state_date = serializers.SerializerMethodField(source="get_state_date")
+    state_date_description = serializers.SerializerMethodField(
+        source="get_state_date_description"
+    )
 
     def get_person_full_name(self, obj):
         file = obj.file
@@ -289,6 +430,123 @@ class ProcedureListSerializer(serializers.Serializer):
             return obj.file.area_id
         return None
 
+    def get_due_date(self, obj):
+        # Obtener el tipo de procedimiento y los días hábiles necesarios
+        procedure_type = ProcedureType.objects.filter(id=obj.procedure_type_id).first()
+        procedure_type_days = procedure_type.days
+        # Asumiendo que obj.created_at es un objeto datetime
+        create_date = obj.created_at.date()
+        # Feriados en Perú desde una api externa
+        feriados = hollydays()
+        # Contador para los días hábiles
+        days_added = 0
+        current_date = create_date
+
+        # Bucle para contar solo días hábiles (excluyendo sábados y domingos)
+        while days_added < procedure_type_days:
+            current_date += timedelta(days=1)
+            # Lunes=0, Domingo=6 y feriados
+            if (
+                current_date.weekday() < 5
+                and current_date.strftime("%Y-%m-%d") not in feriados
+            ):
+                days_added += 1
+
+        return current_date.strftime("%Y-%m-%d")
+
+    def get_state_date(self, obj):
+        # Obtener el tipo de procedimiento y los días hábiles necesarios
+        procedure_type = ProcedureType.objects.filter(id=obj.procedure_type_id).first()
+        procedure_type_days = procedure_type.days
+        # verificar la fecha del tramite
+        traking = (
+            ProcedureTracing.objects.filter(procedure_id=obj.id, is_finished=True)
+            .order_by("-created_at")
+            .first()
+        )
+
+        # Asumiendo que obj.created_at es un objeto datetime
+        create_date = obj.created_at.date()
+        # Feriados en Perú desde una api externa
+        feriados = hollydays()
+        # Contador para los días hábiles
+        days_added = 0
+        current_date = create_date
+
+        # Bucle para contar solo días hábiles (excluyendo sábados y dom ingos)
+        while days_added < procedure_type_days:
+            current_date += timedelta(days=1)
+            # Lunes=0, Domingo=6 y feriados
+            if (
+                current_date.weekday() < 5
+                and current_date.strftime("%Y-%m-%d") not in feriados
+            ):
+                days_added += 1
+
+        # calcular si esta en plazo, si esta a menos de 3 dias de venicimiento o si ya vencio VALIDANDO SI EL TRAMITE ESTA CONCLUIDO
+        if traking and traking.is_finished:
+            if current_date < traking.created_at.date():
+                return 3
+            elif current_date - traking.created_at.date() <= timedelta(days=3):
+                return 2
+            else:
+                return 1
+        else:
+            if current_date < datetime.now().date():
+                return 3
+            elif current_date - datetime.now().date() <= timedelta(days=3):
+                return 2
+            else:
+                return 1
+
+    def get_state_date_description(self, obj):
+        # Obtener el tipo de procedimiento y los días hábiles necesarios
+        procedure_type = ProcedureType.objects.filter(id=obj.procedure_type_id).first()
+        procedure_type_days = procedure_type.days
+        # verificar la fecha del tramite
+        traking = (
+            ProcedureTracing.objects.filter(procedure_id=obj.id, is_finished=True)
+            .order_by("-created_at")
+            .first()
+        )
+
+        # Asumiendo que obj.created_at es un objeto datetime
+        create_date = obj.created_at.date()
+        # Feriados en Perú desde una api externa
+        feriados = hollydays()
+        # Contador para los días hábiles
+        days_added = 0
+        current_date = create_date
+
+        # Bucle para contar solo días hábiles (excluyendo sábados y dom ingos)
+        while days_added < procedure_type_days:
+            current_date += timedelta(days=1)
+            # Lunes=0, Domingo=6 y feriados
+            if (
+                current_date.weekday() < 5
+                and current_date.strftime("%Y-%m-%d") not in feriados
+            ):
+                days_added += 1
+
+        # calcular si esta en plazo, si esta a menos de 3 dias de venicimiento o si ya vencio VALIDANDO SI EL TRAMITE ESTA CONCLUIDO
+        if traking and traking.is_finished:
+            if current_date < traking.created_at.date():
+                return "Vencido"
+            elif current_date - traking.created_at.date() <= timedelta(days=3):
+                return f"Por vencer en {(current_date - traking.created_at.date()).days} días"
+            else:
+                return "En plazo"
+        else:
+            if current_date < datetime.now().date():
+                return "Vencido"
+            elif current_date - datetime.now().date() <= timedelta(days=3):
+                return (
+                    f"Por vencer en {(current_date - datetime.now().date()).days} días"
+                )
+
+            else:
+                return "En plazo"
+
 
 class AnexoListSerializer(serializers.Serializer):
     procedure_id = serializers.SerializerMethodField(source="get_procedure_id")
@@ -331,18 +589,9 @@ class AnexoListSerializer(serializers.Serializer):
 class ProcedureChargeSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     correlative = serializers.CharField()
-    area_id = serializers.IntegerField()
-    area_name = serializers.SerializerMethodField(source="get_area_name")
     user_id = serializers.IntegerField()
     user_name = serializers.SerializerMethodField(source="get_user_name")
     created_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
-    path_file = serializers.CharField()
-
-    def get_area_name(self, obj):
-        area = Area.objects.filter(id=obj.area_id).first()
-        if area:
-            return area.nombre
-        return ""
 
     def get_user_name(self, obj):
         person = Persona.objects.filter(user_id=obj.user_id).first()
