@@ -68,8 +68,10 @@ class ProcedureSerializer(serializers.ModelSerializer):
     state_date_description = serializers.SerializerMethodField(
         source="get_state_date_description"
     )
-    anaxed_id = serializers.SerializerMethodField(source="get_anaxed_id")
-    anaxed_code_number = serializers.SerializerMethodField(source="get_anaxed_code_number")
+    anexed_id = serializers.SerializerMethodField(source="get_anexed_id")
+    anexed_code_number = serializers.SerializerMethodField(
+        source="get_anexed_code_number"
+    )
 
     def get_user_name(self, obj):
         person = Persona.objects.filter(user_id=obj.user_id).first()
@@ -263,17 +265,18 @@ class ProcedureSerializer(serializers.ModelSerializer):
             else:
                 return "En plazo"
 
-    def get_anaxed_id(self, obj):
-        anaxed = Anexo.objects.filter(procedure_anexo_id=obj.id).first()
-        if anaxed:
-            return anaxed.procedure_id
+    def get_anexed_id(self, obj):
+        anexed = Anexo.objects.filter(procedure_anexo_id=obj.id).first()
+        if anexed:
+            return anexed.procedure_id
         return None
 
-    def get_anaxed_code_number(self, obj):
-        anaxed = Anexo.objects.filter(procedure_anexo_id=obj.id).first()
-        if anaxed:
-            return anaxed.procedure.code_number
+    def get_anexed_code_number(self, obj):
+        anexed = Anexo.objects.filter(procedure_anexo_id=obj.id).first()
+        if anexed:
+            return anexed.procedure.code_number
         return None
+
     class Meta:
         model = Procedure
         fields = "__all__"
