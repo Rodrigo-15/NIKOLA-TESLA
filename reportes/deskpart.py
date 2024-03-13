@@ -534,7 +534,7 @@ def get_charge_procedure(data) -> str:
             limiteArriba,
             limiteAbajo,
             columnasTabla,
-            [maxWidht * 0.15, maxWidht * 0.15, maxWidht * 0.25, maxWidht * 0.18, maxWidht * 0.1, maxWidht * 0.13],
+            [maxWidht * 0.15, maxWidht * 0.20, maxWidht * 0.24, maxWidht * 0.18, maxWidht * 0.1, maxWidht * 0.13],
         )
         # if currentY < 120:
         #     c.showPage()
