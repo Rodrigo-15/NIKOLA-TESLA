@@ -393,7 +393,7 @@ def get_charge_procedure(data) -> str:
             style.fontzise = fontzise
 
         # ---------variables o datos adquiridos----------#
-        logoUnap = "media/config/logo_UNAP.png"
+        logoUnap = "media/config/logo_UNAP.jpg"
         logoPostgrado = "media/config/postgrado.png"
 
         areaUsuaria = data["area"]["nombre"].upper()
@@ -530,7 +530,7 @@ def get_charge_procedure(data) -> str:
             limiteArriba,
             limiteAbajo,
             columnasTabla,
-            [maxWidht * 0.25, maxWidht * 0.25, maxWidht * 0.25, maxWidht * 0.25],
+            [maxWidht * 0.15, maxWidht * 0.25, maxWidht * 0.45, maxWidht * 0.15],
         )
         # if currentY < 120:
         #     c.showPage()

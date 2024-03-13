@@ -86,8 +86,6 @@ class Procedure(models.Model):
         null=True,
         blank=True,
     )
-    code_hash = models.CharField(max_length=250, null=True, blank=True)
-    is_external = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "procedure"

@@ -2252,7 +2252,7 @@ def get_charge_procedure_pdf(request):
     text_charge_number = procedure_charge.correlative
 
     final_data = {
-        "area": areas[0],
+        "area": dict(areas[0]),
         "fecha": fecha,
         "hora": hora,
         "anio": anio,
@@ -2261,6 +2261,8 @@ def get_charge_procedure_pdf(request):
         "procedure_count": len(obj_procedure),
         "charge_number": text_charge_number,
     }
+
+    print(final_data)
     path = get_charge_procedure(final_data)
     path = path.replace("/media", "media")
     return Response({"path": path}, status=status.HTTP_200_OK)
