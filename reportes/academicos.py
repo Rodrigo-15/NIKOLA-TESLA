@@ -140,6 +140,7 @@ def diploma_egresado(data):
         style.leading = 25.2
         style.fontName = "times"
         style.textColor = "#000000"
+        style.alignment = 4  # Justificar
 
         para01 = Paragraph(parrafo1, style)
         para01.wrapOn(archivoPdf, maxWidth, 1000)
@@ -163,6 +164,7 @@ def diploma_egresado(data):
         style.leading = 25.2
         style.fontName = "times"
         style.textColor = "#000000"
+        style.alignment = 4  # Justificar
 
         para02 = Paragraph(parrafo2, style)
         para02.wrapOn(archivoPdf, maxWidth, 1000)
@@ -172,7 +174,7 @@ def diploma_egresado(data):
 
         archivoPdf.setFillColor(HexColor("#000000"))
         archivoPdf.setFont("times", 21)
-        archivoPdf.drawString(500, currenty, f"{fecha}.".capitalize())
+        archivoPdf.drawString(500, 150, f"{fecha}.".capitalize())
 
         style.fontName = "times"
         style.fontSize = 9
