@@ -1289,3 +1289,119 @@ def create_procedure_charge(request):
                 "id": procedure_charge.id,
             },
         )
+
+
+@api_view(["GET"])
+def get_procedures_reports(request):
+    if request.method == "GET":
+
+        query = request.GET.get("query")
+        date = request.GET.get("date")
+
+        procedure_tracings = ProcedureTracing.objects.filter()
+
+        proceduretracing = ProcedureTracingSerializer(procedure_tracings, many=True)
+
+        procedures = Procedure.objects.filter(
+            id__in=[procedure["procedure"] for procedure in proceduretracing.data]
+        )
+        procedures = (
+            procedures.filter(
+                Q(code_number__icontains=query)
+                | Q(subject__icontains=query)
+                | Q(file__person__full_name__icontains=query)
+                | Q(file__area__nombre__icontains=query)
+                | Q(file__legalperson__razon_social__icontains=query)
+                | Q(file__person__numero_documento__icontains=query)
+                | Q(file__legalperson__numero_documento__icontains=query),
+                **({"created_at__date": date} if date else {}),
+            )
+            .annotate(created_at_date=TruncDate("created_at"))
+            .order_by("-code_number")
+        )
+        paginator = CustomPagination()
+        paginated_procedures = paginator.paginate_queryset(procedures, request)
+        serializer = ProcedureListSerializer(paginated_procedures, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+@api_view(["GET"])
+def get_procedure_and_tracing_by_code_number(request):
+    if request.method == "GET":
+        code_number = request.GET.get("code_number")
+
+        procedure = Procedure.objects.filter(code_number=code_number).first()
+        anexos = Anexo.objects.filter(procedure_id=procedure.id)
+        procedure_tracings = ProcedureTracing.objects.filter(
+            procedure_id=procedure.id
+        ).order_by("-created_at")
+
+        serializer_procedure = ProcedureSerializer(procedure)
+        serializer_anexo = AnexoListSerializer(anexos, many=True)
+        serializer_procedure_tracings = ProcedureTracingsList(
+            procedure_tracings, many=True
+        )
+
+        return Response(
+            {
+                "procedure": serializer_procedure.data,
+                "anexos": serializer_anexo.data,
+                "procedure_tracings": serializer_procedure_tracings.data,
+            }
+        )
+
+
+@api_view(["POST"])
+def save_procedure_externo(request):
+    if request.method == "POST":
+        person_id = request.data["person_id"]
+        subject = request.data["subject"]
+        attached_files = request.FILES.get("attached_files")
+        procedure_type_id = request.data["procedure_type_id"]
+
+        person = Persona.objects.filter(id=person_id).first()
+        user_id = person.user_id
+        headquarter_id = 1
+
+        number_of_sheets = 0
+
+        area_id = 3
+        file = File.objects.filter(person_id=person_id).first()
+        if not file:
+            File.objects.create(person_id=person_id)
+
+        procedure = Procedure.objects.create(
+            file_id=file.id,
+            subject=subject,
+            attached_files=attached_files,
+            procedure_type_id=procedure_type_id,
+            headquarter_id=headquarter_id,
+            user_id=user_id,
+            number_of_sheets=number_of_sheets,
+            is_external=True,
+        )
+
+        ProcedureTracing.objects.create(
+            procedure_id=procedure.id,
+            from_area_id=area_id if area_id else None,
+            user_id=user_id,
+        )
+
+        return Response(
+            status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
+        )
+
+
+@api_view(["GET"])
+def generete_code_hash(request):
+    if request.method == "GET":
+
+        procedure = Procedure.objects.all()
+
+        import shortuuid
+
+        for p in procedure:
+            p.code_hash = shortuuid.ShortUUID().random(length=6)
+            p.save()
+        return Response(status=status.HTTP_200_OK, data={"message": "ok"})

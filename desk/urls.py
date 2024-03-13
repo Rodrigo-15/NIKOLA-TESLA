@@ -2,6 +2,7 @@ from django.urls import include, path
 
 from desk.router import router
 from desk.views import (
+    generete_code_hash,
     get_procedure_and_tracing_by_id,
     get_dashboard_procedures,
     get_tracings_procedures,
@@ -30,10 +31,14 @@ from desk.views import (
     get_procedures_charges,
     get_procedures_derivations,
     create_procedure_charge,
+    get_procedures_reports,
+    get_procedure_and_tracing_by_code_number,
+    save_procedure_externo,
 )
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("generete_code_hash", generete_code_hash),
     # new paths
     path("login/", login, name="login"),
     path("get_procedures", get_procedures, name="get_procedures"),
@@ -72,6 +77,12 @@ urlpatterns = [
     path("get_procedures_charges", get_procedures_charges),
     path("get_procedures_derivations", get_procedures_derivations),
     path("create_procedure_charge", create_procedure_charge),
+    path("get_procedures_reports", get_procedures_reports),
+    path(
+        "get_procedure_and_tracing_by_code_number",
+        get_procedure_and_tracing_by_code_number,
+    ),
+    path("save_procedure_externo", save_procedure_externo),
     # OLD
     path("get_tracings_procedures/<int:status>", get_tracings_procedures),
     path("get_dashboard_procedures", get_dashboard_procedures),

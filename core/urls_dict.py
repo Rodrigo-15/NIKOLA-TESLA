@@ -46,16 +46,21 @@ urls_dict = {
             "get_procedures_finished": f"{url}desk/get_procedures_finished",
             "get_procedure_and_tracing_by_id": f"{url}desk/get_procedure_and_tracing_by_id",
             "save_procedure": f"{url}desk/save_procedure",
+            "save_procedure_externo": f"{url}desk/save_procedure_externo",
             "update_procedure": f"{url}desk/update_procedure",
             "get_procedure_by_id": f"{url}desk/get_procedure_by_id/",
             "get_procedures_charges": f"{url}desk/get_procedures_charges",
             "get_procedures_derivations": f"{url}desk/get_procedures_derivations",
             "create_procedure_charge": f"{url}desk/create_procedure_charge",
+            "get_procedure_and_tracing_by_code_number": f"{url}desk/get_procedure_and_tracing_by_code_number",
         },
         "reports": {
+            "get_procedures_reports": f"{url}desk/get_procedures_reports",
             "get_process_tracking_sheet_pdf": url
             + "reportes/get_process_tracking_sheet_pdf/?procedure_id=",
             "get_charge_procedure_pdf": url + "reportes/get_charge_procedure_pdf/",
+            "get_tramites_pendientes_excel": url
+            + "reportes/get_tramites_pendientes_excel/?user_id=",
         },
     },
     "person": {

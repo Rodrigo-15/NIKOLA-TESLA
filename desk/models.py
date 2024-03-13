@@ -86,6 +86,8 @@ class Procedure(models.Model):
         null=True,
         blank=True,
     )
+    code_hash = models.CharField(max_length=250, null=True, blank=True)
+    is_external = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "procedure"
@@ -94,12 +96,18 @@ class Procedure(models.Model):
     def save(self, *args, **kwargs):
         if not self.id:
             self.code_number = self.generate_code()
+            self.code_hash = self.generate_code_hash()
         else:
             self.code_number = Procedure.objects.get(id=self.id).code_number
         super(Procedure, self).save(*args, **kwargs)
 
     def generate_code(self):
         return f"{Procedure.get_count_procedures_by_year(date.today().year) + 1:05d}-{date.today().year}"
+
+    def generate_code_hash(self):
+        import shortuuid
+
+        return shortuuid.ShortUUID().random(length=6)
 
     @staticmethod
     def get_count_procedures_by_year(year):
@@ -206,6 +214,10 @@ class ProcedureTracing(models.Model):
     def save(self, *args, **kwargs):
         if self.is_anexed and self.is_finished:
             self.action_log = self.action = self.get_anexed_message(self)
+        elif not self.ref_procedure_tracking and self.procedure.is_external:
+            self.action_log = self.action = self.get_external_message(self)
+        elif not self.ref_procedure_tracking:
+            self.action_log = self.action = self.get_created_message(self)
         elif self.is_anexed and not self.is_finished:
             self.action_log = self.action = self.get_in_anexed_message(self)
         elif self.is_finished and self.is_archived:
@@ -218,8 +230,6 @@ class ProcedureTracing(models.Model):
         elif self.from_area and self.is_finished:
             self.action_log = self.get_finished_message(self)
             self.action = self.action
-        elif not self.ref_procedure_tracking:
-            self.action_log = self.action = self.get_created_message(self)
 
         super(ProcedureTracing, self).save(*args, **kwargs)
 
@@ -284,6 +294,11 @@ class ProcedureTracing(models.Model):
         if not person:
             return f"El tramite fue archivado por el usuario {self.user} en el area {self.from_area} {date_formatter(self.created_at)}"
         return f"El tramite fue archivado por el usuario {person.get_full_name()} en el area {self.from_area} {date_formatter(self.created_at)}"
+
+    @staticmethod
+    def get_external_message(self):
+        person = Persona.objects.filter(id=self.procedure.file.person_id).first()
+        return f"El tramite fue creado por el usuario {person.get_full_name()} por el sistema en linea {date_formatter(self.created_at)}"
 
     @staticmethod
     def get_tracing_by_procedure_id(procedure_id):

@@ -71,7 +71,7 @@ def reporte_economico_alumno(request):
         return Response(
             {
                 "error": "No se encontró el expediente para el alumno con número de documento {}".format(
-                    numero_documento
+                    73134712
                 )
             },
             status=status.HTTP_404_NOT_FOUND,
@@ -1430,13 +1430,11 @@ def get_process_tracking_sheet_pdf(request):
         "trackins": ProcedureTracingsList(trackins, many=True).data,
     }
     path = get_process_tracking_sheet(final_data)
-    
 
     url = URL_LOCAL if DEBUG else URL_PROD
     path = path.replace("/media", "media")
     path = url + path
     return Response({"path": path}, status=status.HTTP_200_OK)
-
 
 
 @api_view(["GET"])
@@ -2099,7 +2097,6 @@ def generate_txt_bach(request):
 # new code
 @api_view(["GET"])
 def generate_diploma_pdf(request):
-
     if request.method == "GET":
         expediente_id = request.GET.get("expediente_id")
         if expediente_id == None:
@@ -2125,10 +2122,10 @@ def generate_diploma_pdf(request):
         )
         programa = expediente.programa.nombre
         programa_id = expediente.programa
-        
+
         data_matricula = Matricula.objects.filter(expediente=expediente_id)
 
-        curso_grupo_ids = list(data_matricula.values_list('curso_grupo', flat=True))
+        curso_grupo_ids = list(data_matricula.values_list("curso_grupo", flat=True))
 
         data_curso = CursoGrupo.objects.filter(id__in=curso_grupo_ids)
 
@@ -2167,25 +2164,26 @@ def generate_diploma_pdf(request):
             path_return = diploma_egresado(data)
         return Response({"path": path_return})
 
+
 @api_view(["GET"])
 def get_tramites_pendientes_excel(request):
     user_id = request.GET.get("user_id")
     cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
 
     area = cargo_area.area.first()
-    
+
     if not area:
         return Response(
             status=status.HTTP_400_BAD_REQUEST,
             data={"message": "El usuario no tiene un area asignada"},
         )
     area = AreaSerializer(area).data
-    
-    area_id = area.get('id')
-    area_nombre = area.get('nombre')
-    
+
+    area_id = area.get("id")
+    area_nombre = area.get("nombre")
+
     tracings_for_user = ProcedureTracing.objects.filter(
-        from_area= area_id, is_finished=False
+        from_area=area_id, is_finished=False
     ).order_by("-created_at")
 
     procedures = []
@@ -2197,11 +2195,8 @@ def get_tramites_pendientes_excel(request):
 
             procedures.append(procedure)
 
-    data = {
-        "area_usuaria" : area_nombre,
-        "procedures" : procedures
-    }
-    
+    data = {"area_usuaria": area_nombre, "procedures": procedures}
+
     path = get_unfinished_procedures_for_area_xlsx(data)
 
     url = URL_LOCAL if DEBUG else URL_PROD
@@ -2236,17 +2231,16 @@ def get_charge_procedure_pdf(request):
     trackins = ProcedureTracing.objects.filter(
         user_id=user_id,
         to_area_id__isnull=False,
-
         procedure_charge_id=procedure_charge_id,
         is_finished=False,
     )
-    
+
     if trackins.count() == 0:
         return Response(
             {"error": "No se encontro el procedimiento"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    obj_procedure  = []
+    obj_procedure = []
     for trackin in trackins:
         procedure = Procedure.objects.filter(id=trackin.procedure_id).first()
         serialized_procedure = ProcedureSerializer(procedure).data
@@ -2268,12 +2262,9 @@ def get_charge_procedure_pdf(request):
         "charge_number": text_charge_number,
     }
     path = get_charge_procedure(final_data)
-    from backend.settings import DEBUG, URL_LOCAL, URL_PROD
-
-    url = URL_LOCAL if DEBUG else URL_PROD
     path = path.replace("/media", "media")
-    path = url + path
     return Response({"path": path}, status=status.HTTP_200_OK)
+
 
 @api_view(["GET"])
 def get_traffic_in_area_excel(request):
@@ -2286,29 +2277,35 @@ def get_traffic_in_area_excel(request):
             {"error": "No se encontro el area o las fechas"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    
+
     from backend.settings import DEBUG, URL_LOCAL, URL_PROD
 
-    fecha_inicio = date(*map(int, fecha_inicio.split('-')))
-    fecha_fin = date(*map(int, fecha_fin.split('-')))
+    fecha_inicio = date(*map(int, fecha_inicio.split("-")))
+    fecha_fin = date(*map(int, fecha_fin.split("-")))
 
-    date_range = [fecha_inicio+ timedelta(days=x) for x in range((fecha_fin - fecha_inicio).days + 1)]
+    date_range = [
+        fecha_inicio + timedelta(days=x)
+        for x in range((fecha_fin - fecha_inicio).days + 1)
+    ]
     tracingList = []
 
     for fecha in date_range:
 
-        tracing_for_date = ProcedureTracingSerializer(ProcedureTracing.objects.filter(created_at__date = fecha, from_area__id = area_id), many = True).data
+        tracing_for_date = ProcedureTracingSerializer(
+            ProcedureTracing.objects.filter(
+                created_at__date=fecha, from_area__id=area_id
+            ),
+            many=True,
+        ).data
 
         tracingList.append(tracing_for_date)
 
-    area_usuaria = AreaSerializer(Area.objects.filter(id = area_id).first()).data
+    area_usuaria = AreaSerializer(Area.objects.filter(id=area_id).first()).data
 
     for i in range(len(date_range)):
-        date_range[i] = datetime.datetime.strftime(date_range[i], '%Y-%m-%d')
+        date_range[i] = datetime.datetime.strftime(date_range[i], "%Y-%m-%d")
 
     path = generate_graph_traffic(tracingList, area_usuaria, date_range)
-
-
 
     url = URL_LOCAL if DEBUG else URL_PROD
     path = path.replace("/media", "media")
