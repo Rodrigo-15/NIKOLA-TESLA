@@ -2246,6 +2246,7 @@ def get_charge_procedure_pdf(request):
         serialized_procedure = ProcedureSerializer(procedure).data
         to_area = Area.objects.filter(id=trackin.to_area_id).first()
         serialized_procedure["to_area"] = AreaSerializer(to_area).data
+        serialized_procedure["action"] = trackin.action
         obj_procedure.append(serialized_procedure)
     procedure_charge = ProcedureCharge.objects.filter(id=procedure_charge_id).first()
 
@@ -2262,7 +2263,6 @@ def get_charge_procedure_pdf(request):
         "charge_number": text_charge_number,
     }
 
-    print(final_data)
     path = get_charge_procedure(final_data)
     path = path.replace("/media", "media")
     return Response({"path": path}, status=status.HTTP_200_OK)

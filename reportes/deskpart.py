@@ -383,7 +383,7 @@ def get_charge_procedure(data) -> str:
         style = getSampleStyleSheet()
         style = style["Normal"]
 
-        columnasTabla = ["Expediente N°", "Asunto", "Area", "Fecha"]
+        columnasTabla = ["Expediente N°", "Asunto", "Accion","Area", "Folios","Fecha"]
 
         # ----funciones---------#
         def setF(size, name="Arial"):
@@ -411,7 +411,9 @@ def get_charge_procedure(data) -> str:
                 [
                     value["code_number"],
                     value["subject"].upper(),
+                    value["action"].upper(),
                     value["to_area"]["nombre"].upper(),
+                    value['number_of_sheets'],
                     fechaaa,
                 ],
             )
@@ -517,7 +519,9 @@ def get_charge_procedure(data) -> str:
         currentY -= 20
         for value in tramites:
             for i in range(len(value)):
-                value[i] = Paragraph(value[i], style)
+                if i != 4:
+                    value[i] = Paragraph(value[i], style)
+
         tabla_dinamica(
             tramites,
             currentY,
@@ -530,7 +534,7 @@ def get_charge_procedure(data) -> str:
             limiteArriba,
             limiteAbajo,
             columnasTabla,
-            [maxWidht * 0.15, maxWidht * 0.25, maxWidht * 0.45, maxWidht * 0.15],
+            [maxWidht * 0.15, maxWidht * 0.15, maxWidht * 0.25, maxWidht * 0.18, maxWidht * 0.1, maxWidht * 0.13],
         )
         # if currentY < 120:
         #     c.showPage()
