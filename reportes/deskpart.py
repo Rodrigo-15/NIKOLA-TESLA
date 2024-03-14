@@ -744,7 +744,7 @@ def get_unfinished_procedures_for_area_xlsx(data) -> str:
     path_file = os.path.join(
         settings.MEDIA_ROOT,
         "excel",
-        "deskpart",
+        "reportes",
         f"tramites-no-finalizados-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
     )
 
@@ -903,18 +903,24 @@ def generate_graph_traffic(tracingList, area_usuaria, date_range) -> str:
     chart = file.add_chart({"type": "line"})
     cantidades = []
 
+    datosTabla = [['Fecha', 'N° Tramites']]
+
     for value in tracingList:
-        for tracing in value:
-            fecha: str = tracing["created_at"]
-            fecha = fecha.split("T")[0]
-            break
         cantidades.append(len(value))
 
-    print(date_range)
-    print(cantidades)
+    for i in range(len(cantidades)):
+        datosTabla.append([date_range[i], cantidades[i]])
 
-    ws.write_column("A1", date_range, file.add_format({"num_format": "yyyy-mm-dd"}))
-    ws.write_column("B1", cantidades)
+    ws.add_table(
+        f"A1:B{len(datosTabla) + 1}",
+        {
+            "data": datosTabla[1:],
+            "columns": [
+                {"header": datosTabla[0][0]},
+                {"header": datosTabla[0][1]},
+            ],
+        },
+    )
 
     # Create a line chart object.
     chart = file.add_chart({"type": "line"})
@@ -922,14 +928,14 @@ def generate_graph_traffic(tracingList, area_usuaria, date_range) -> str:
     # Configure the chart series.
     chart.add_series(
         {
-            "name": "Trafico en Area",
-            "categories": f"=Sheet1!$A$1:$A${len(date_range)}",  # Categories (dates)
-            "values": f"=Sheet1!$B$1:$B${len(cantidades)}",  # Values (subscriptions)
+            "name": f"Trafico en {area_usuaria}",
+            "categories": f"=Sheet1!$A$2:$A${len(date_range)+1}",  # Categories (dates)
+            "values": f"=Sheet1!$B$2:$B${len(cantidades)+1}",  # Values (subscriptions)-
         }
     )
 
     # Insert the chart into the worksheet starting from cell C1.
-    ws.insert_chart("C1", chart)
+    ws.insert_chart("E5", chart)
 
     # Close the workbook.
     file.close()
@@ -937,7 +943,7 @@ def generate_graph_traffic(tracingList, area_usuaria, date_range) -> str:
     path_return = os.path.join(
         settings.MEDIA_URL,
         "excel",
-        "deskpart",
+        "reportes",
         f"trafico-en-area-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
     )
 

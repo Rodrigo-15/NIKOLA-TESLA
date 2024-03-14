@@ -2272,13 +2272,23 @@ def get_charge_procedure_pdf(request):
 def get_traffic_in_area_excel(request):
     fecha_inicio = request.GET.get("fecha_inicio")
     fecha_fin = request.GET.get("fecha_fin")
-    area_id = request.GET.get("area_id")
+    user_id = request.GET.get("user_id")
 
-    if area_id == None or fecha_inicio == None or fecha_fin == None:
+    if user_id == None or fecha_inicio == None or fecha_fin == None:
         return Response(
             {"error": "No se encontro el area o las fechas"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+    
+    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+    if not cargo_area:
+        return Response(
+            status=status.HTTP_400_BAD_REQUEST,
+            data={"message": "El usuario no tiene un area asignada"},
+        )
+    
+    area = AreaSerializer(cargo_area.area, many= True).data
+    
 
     from backend.settings import DEBUG, URL_LOCAL, URL_PROD
 
@@ -2292,17 +2302,16 @@ def get_traffic_in_area_excel(request):
     tracingList = []
 
     for fecha in date_range:
-
         tracing_for_date = ProcedureTracingSerializer(
             ProcedureTracing.objects.filter(
-                created_at__date=fecha, from_area__id=area_id
+                created_at__date=fecha, from_area__id= area[0]["id"]
             ),
             many=True,
         ).data
 
         tracingList.append(tracing_for_date)
 
-    area_usuaria = AreaSerializer(Area.objects.filter(id=area_id).first()).data
+    area_usuaria = area[0]
 
     for i in range(len(date_range)):
         date_range[i] = datetime.datetime.strftime(date_range[i], "%Y-%m-%d")
