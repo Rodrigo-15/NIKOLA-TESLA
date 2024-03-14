@@ -2248,6 +2248,8 @@ def get_charge_procedure_pdf(request):
         serialized_procedure["to_area"] = AreaSerializer(to_area).data
         serialized_procedure["action"] = trackin.action
         obj_procedure.append(serialized_procedure)
+
+
     procedure_charge = ProcedureCharge.objects.filter(id=procedure_charge_id).first()
 
     text_charge_number = procedure_charge.correlative
@@ -2323,3 +2325,72 @@ def get_traffic_in_area_excel(request):
     path = url + path
 
     return Response({"path": path}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_tramites_dentro_fuera_de_plazo(request):
+    user_id = request.GET.get("user_id")
+
+    if user_id == None:
+        return Response(
+            {"error": "No se encontro el area o las fechas"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+    if not cargo_area:
+        return Response(
+            status=status.HTTP_400_BAD_REQUEST,
+            data={"message": "El usuario no tiene un area asignada"},
+        )
+    
+    area = AreaSerializer(cargo_area.area, many= True).data
+    area = area[0]
+
+    cargo_area = CargoArea.objects.filter(area__id = area["id"])
+
+    trackins = []
+
+    for value in cargo_area:
+        trackins.append(ProcedureTracing(user__area_id = cargo_area.user_id))
+
+
+    obj_procedure = []
+    for trackin in trackins:
+        procedure = Procedure.objects.filter(id=trackin.procedure_id).first()
+        serialized_procedure = ProcedureSerializer(procedure).data
+        to_area = Area.objects.filter(id=trackin.to_area_id).first()
+        serialized_procedure["to_area"] = AreaSerializer(to_area).data
+        serialized_procedure["action"] = trackin.action
+        obj_procedure.append(serialized_procedure)
+
+    print(obj_procedure)
+
+    procedureList = Procedure.objects.filter(user__area = area["id"])
+
+@api_view(["GET"])
+def get_constancia_registro(request):
+    procedure_id = request.GET.get("procedure_id")
+
+    if procedure_id == None:
+        return Response(
+            {"error": "No se encontro  el procedure"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    procedure: Procedure = Procedure.objects.filter(id = procedure_id).first()
+
+    procedureType = procedure.procedure_type.concepto
+
+    fecha, hora = str(procedure.created_at).split(' ')
+
+    persona = f"{procedure.file.person.nombres} {procedure.file.person.apellido_paterno} {procedure.file.person.apellido_materno}"
+    
+    dni = procedure.file.person.numero_documento
+
+    data = [persona, dni, procedureType, fecha]
+
+    path = generate_constancia_de_registro(data)
+    path = path.replace("/media", "media")
+    return Response({"path": path}, status=status.HTTP_200_OK)
+

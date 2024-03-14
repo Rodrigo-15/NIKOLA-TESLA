@@ -949,3 +949,93 @@ def generate_graph_traffic(tracingList, area_usuaria, date_range) -> str:
 
     path_return = path_return.replace("\\", "/")
     return path_return
+
+def generate_tramites_dentro_fuera_de_plazo_excel(data) -> str:
+    return str(data)
+
+def generate_constancia_de_registro(data)-> str:
+    lLeft = 2*cm
+    lRigth = A4[1] - 2*cm
+    lTop = A4[0] - 2*cm
+    lBot = cm
+
+    media_root = settings.MEDIA_ROOT
+    pdf_folder = os.path.join(media_root, "pdf", "constanciaRegistro")
+    if not os.path.exists(pdf_folder):
+        os.makedirs(pdf_folder)
+
+    milisecond = str(int(round(time.time() * 1000)))
+    pdf_file_name = os.path.join(
+        pdf_folder,
+        "constanciaDeRegistro-{}-{}.pdf".format(data[1], milisecond),
+    )
+    if os.path.exists(pdf_file_name):
+        os.remove(pdf_file_name)
+
+    maxWidth = lRigth - lLeft
+
+    def setF(size, name = "Arial"):
+        fontzise = size
+        fontname = name             #simplemente nos ayuda a cambiar las fuentes de todo mas rapido
+        c.setFont(psfontname=fontname, size= fontzise)
+        style.fontSize = fontzise
+        style.fontName = fontname
+        style.leading = size
+
+    logoUnap = "media/config/logo_UNAP.jpg"
+    logoPostgrado = "media/config/postgrado.png"
+
+    fontzise = 10
+    fontname = "Arial"
+
+    style = getSampleStyleSheet()
+    style = style["Normal"]
+
+    pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
+    pdfmetrics.registerFont(TTFont('Arial-Bold', 'arialbd.ttf'))
+
+    estudiante = [data[0], data[1]]
+
+    tipoTramite = data[2]
+
+    c = canvas.Canvas(pdf_file_name, A4[::-1])
+
+    c.drawImage(logoUnap, lLeft + 100, lTop - 75, 150, 75)
+    c.drawImage(logoPostgrado, lRigth - 200, lTop - 75, 75, 75)
+
+    setF(18, "Arial-Bold")
+
+    style.alignment = 1
+
+    c.drawCentredString(A4[1]/2, lTop - 135, 'CONSTANCIA DE REGISTRO')
+
+    setF(18)
+
+    parrafo01 = Paragraph('La escuela de Postgrado, hace constar mediante el presente que:', style)
+    parrafo01.wrapOn(canv=c, aW= maxWidth, aH=1000)
+    parrafo01.drawOn(c, lLeft, lTop - 175)
+
+    setF(16)
+
+    c.drawString(lLeft+180, lTop - 210, 'Nombres y Apellidos: ')
+    c.drawString(lLeft+180, lTop - 240, 'DNI: ')
+
+    setF(16, "Arial-Bold")
+
+    c.drawString(lLeft+340, lTop - 210, estudiante[0])
+    c.drawString(lLeft+340, lTop - 240, estudiante[1])
+
+    parrafo02 = Paragraph(f'Ha registrado con fecha {data[3]} su {tipoTramite}.', style)
+    parrafo02.wrapOn(c, maxWidth, 1000)
+    parrafo02.drawOn(c, lLeft, lTop - 300)
+
+    c.save()
+
+    path_return = os.path.join(
+    settings.MEDIA_URL,
+    "pdf",
+    "constanciaRegistro",
+    "constanciaDeRegistro-{}-{}.pdf".format(data[1], milisecond),
+)
+    path_return = path_return.replace("\\", "/")
+    return path_return
