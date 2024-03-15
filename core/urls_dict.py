@@ -45,14 +45,13 @@ urls_dict = {
             "get_procedures_in_assigned": f"{url}desk/get_procedures_in_assigned",
             "get_procedures_finished": f"{url}desk/get_procedures_finished",
             "get_procedure_and_tracing_by_id": f"{url}desk/get_procedure_and_tracing_by_id",
+            "get_tracings_to_approved_for_external": f"{url}desk/get_tracings_to_approved_for_external",
             "save_procedure": f"{url}desk/save_procedure",
-            "save_procedure_externo": f"{url}desk/save_procedure_externo",
             "update_procedure": f"{url}desk/update_procedure",
             "get_procedure_by_id": f"{url}desk/get_procedure_by_id/",
             "get_procedures_charges": f"{url}desk/get_procedures_charges",
             "get_procedures_derivations": f"{url}desk/get_procedures_derivations",
             "create_procedure_charge": f"{url}desk/create_procedure_charge",
-            "get_procedure_and_tracing_by_code_number": f"{url}desk/get_procedure_and_tracing_by_code_number",
         },
         "reports": {
             "get_procedures_reports": f"{url}desk/get_procedures_reports",
@@ -61,6 +60,10 @@ urls_dict = {
             "get_charge_procedure_pdf": url + "reportes/get_charge_procedure_pdf/",
             "get_tramites_pendientes_excel": url
             + "reportes/get_tramites_pendientes_excel/?user_id=",
+        },
+        "external": {
+            "save_procedure_externo": f"{url}desk/save_procedure_externo",
+            "get_procedure_and_tracing_by_code_number": f"{url}desk/get_procedure_and_tracing_by_code_number",
         },
     },
     "person": {

@@ -100,6 +100,7 @@ class Procedure(models.Model):
         else:
             self.code_number = Procedure.objects.get(id=self.id).code_number
         super(Procedure, self).save(*args, **kwargs)
+        self.notification_email()
 
     def generate_code(self):
         return f"{Procedure.get_count_procedures_by_year(date.today().year) + 1:05d}-{date.today().year}"
@@ -122,6 +123,141 @@ class Procedure(models.Model):
     @staticmethod
     def get_procedure_by_id(procedure_id):
         return Procedure.objects.filter(id=procedure_id)
+
+    def notification_email(self):
+        import resend
+        from backend.settings import EMAIL_FROM, EMAIL_KEY, URL_PROD
+
+        resend.api_key = EMAIL_KEY
+        code_number = self.code_number
+        code_hash = self.code_hash
+        logoUnap = f"{URL_PROD}media/config/logo_UNAP.svg"
+        html_content = f"""
+            <html>
+                <head>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                    }}
+                    .header {{
+                        background-color: #f2f2f2;
+                        padding: 20px;
+                        text-align: center;
+                    }}
+                    .content {{
+                        margin: 20px;
+                        text-align: center;
+                    }}
+                    .footer {{
+                        background-color: #f2f2f2;
+                        padding: 10px;
+                        text-align: center;
+                        font-size: 12px;
+                    }}
+                    .bg-gray-100 {{
+                        background-color: #f2f2f2;
+                        padding: 20px;
+                        text-align: center;
+                    }}
+                    .bg-white {{
+                        background-color: #fff;
+                        padding: 20px;
+                        margin: 20px;
+                    }}
+                    .bg-slate-100 {{
+                        background-color: #708090;
+                        padding: 20px;
+                    }}
+                    .text-3xl {{
+                        font-size: 24px;
+                    }}
+                    .font-bold {{
+                        font-weight: bold;
+                    }}
+                    .text-primary-800{{
+                        color: #333366;
+                    }}
+                    .text-xl {{
+                        font-size: 20px;
+                    }}
+                    .text-primary-600 {{
+                        color: #4d4dff;
+                    }}
+                    .text-xs {{
+                        font-size: 12px;
+                    }}
+                    .text-white {{
+                        color: #fff;
+                    }}
+                    .bg-[#3b5998] {{
+                        background-color: #3b5998;
+                    }}
+                    .hover\:bg-[#3b5998]\/90:hover {{
+                        background-color: rgba(59, 89, 152, 0.9);
+                    }}
+                    .icon-tabler-outline {{
+                        fill: none;
+                        stroke: currentColor;
+                        stroke-width: 2;
+                        stroke-linecap: round;
+                        stroke-linejoin: round;
+                    }}
+                </style>
+                </head>
+                <body>
+                
+                    <div class="header">
+                <div class="bg-gray-100">
+                <img src="{logoUnap}" alt="logo-unap" style="width:180px; margin: auto;" />
+                <div class="flex flex-col items-center">
+                <h2 class="text-3xl font-bold text-primary-800">Expediente N° {code_number}</h2>
+                <h3 class="text-xl font-semibold">
+                                    Código de trámite: <span class="text-primary-600">{code_hash}</span>
+                </h3>
+                </div>
+                </div>
+                <div class="bg-white">
+                <p>
+                <span class="font-bold">Remitente: </span> {self.file.person.nombres} {self.file.person.apellido_paterno} {self.file.person.apellido_materno}
+                </p>
+                <p>
+                <span class="font-bold">Tipo de trámite: </span>{self.procedure_type.description}
+                </p>
+                <p>
+                <span class="font-bold">Fecha de registro: </span> {self.created_at.strftime("%d/%m/%Y %H:%M %p")}
+                </p>
+                <p>
+                <span class="font-bold">Asunto: </span> {self.subject}
+                </p>
+                </div>
+                <div class="flex flex-col items-center p-4">
+                <button type="button" class="text-white bg-[#3b5998] hover:bg-[#3b5998]/90 focus:ring-4 focus:outline-none focus:ring-[#3b5998]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#3b5998]/55 me-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-download">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
+                <path d="M7 11l5 5l5 -5"></path>
+                <path d="M12 4l0 12"></path>
+                </svg>
+                                consulta tu trámite en línea
+                </button>
+                </div>
+                <div class="py-4 bg-slate-100"></div>
+                </div>
+                
+                </body>
+                </html>"""
+
+        params = {
+            "from": f"Notificación <{EMAIL_FROM}>",
+            "to": [f"{self.file.person.correo}"],
+            "subject": "REGISTRO DE TRAMITE EN LINEA - EPG-UNAP",
+            "html": html_content,
+            "headers": {"X-Entity-Ref-ID": "123456789"},
+            # "attachments": [{"filename": "invoice.pdf", "content": list(f)}],
+        }
+
+        email = resend.Emails.send(params)
+        pass
 
     def __str__(self):
         return f"{self.file_id} - {self.code_number} - {self.subject} - {self.procedure_type} -\
@@ -298,7 +434,7 @@ class ProcedureTracing(models.Model):
     @staticmethod
     def get_external_message(self):
         person = Persona.objects.filter(id=self.procedure.file.person_id).first()
-        return f"El tramite fue creado por el usuario {person.get_full_name()} por el sistema en linea {date_formatter(self.created_at)}"
+        return f"El tramite fue creado por el usuario {person.get_full_name()} por el sistema en linea el dia {date_formatter(self.created_at)}"
 
     @staticmethod
     def get_tracing_by_procedure_id(procedure_id):
