@@ -149,7 +149,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
             return "Concluido"
         return "En proceso"
 
-    def get_due_date(self, obj):
+    def get_due_date(self, obj: Procedure):
         # Obtener el tipo de procedimiento y los días hábiles necesarios
         procedure_type = ProcedureType.objects.filter(id=obj.procedure_type_id).first()
         procedure_type_days = procedure_type.days
