@@ -21,7 +21,7 @@ def tabla_dinamica(
     currenty,
     pageCounter,
     setF,
-    c,
+    c: canvas.Canvas,
     fontzise,
     maxWidht,
     lLeft,
@@ -105,6 +105,8 @@ def tabla_dinamica(
             pageCounter += 1
 
             if len(datosRestantes) != 0:
+                c.showPage()
+                currenty = lTop
                 lol = tabla_dinamica(
                     datosRestantes,
                     currenty,
