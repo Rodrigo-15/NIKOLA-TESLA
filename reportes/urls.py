@@ -103,4 +103,9 @@ urlpatterns = [
          get_constancia_registro,
          name = "get_constancia_registro"
     ),
+        path(
+        "get_tramites_area_excel/",
+         get_tramites_area_excel,
+         name = "get_tramites_area_excel"
+    ),
 ]
