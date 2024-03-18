@@ -148,6 +148,7 @@ class Area(models.Model):
     is_active = models.BooleanField(default=True)
     key_name = models.CharField(max_length=100, null=True, blank=True)
     is_external = models.BooleanField(default=False)
+    correo = models.EmailField(max_length=254, null=True, blank=True)
 
     def __str__(self):
         return f"{self.nombre}"

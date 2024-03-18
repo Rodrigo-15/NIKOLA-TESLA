@@ -35,6 +35,7 @@ from desk.views import (
     get_procedure_and_tracing_by_code_number,
     save_procedure_externo,
     get_tracings_to_approved_for_external,
+    save_procedure_externo_register,
 )
 
 urlpatterns = [
@@ -88,6 +89,10 @@ urlpatterns = [
     path("save_procedure_externo", save_procedure_externo),
     path(
         "get_tracings_to_approved_for_external", get_tracings_to_approved_for_external
+    ),
+    path(
+        "save_procedure_externo_register",
+        save_procedure_externo_register,
     ),
     # OLD
     path("get_tracings_procedures/<int:status>", get_tracings_procedures),

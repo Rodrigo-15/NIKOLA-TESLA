@@ -2249,7 +2249,6 @@ def get_charge_procedure_pdf(request):
         serialized_procedure["action"] = trackin.action
         obj_procedure.append(serialized_procedure)
 
-
     procedure_charge = ProcedureCharge.objects.filter(id=procedure_charge_id).first()
 
     text_charge_number = procedure_charge.correlative
@@ -2264,7 +2263,6 @@ def get_charge_procedure_pdf(request):
         "procedure_count": len(obj_procedure),
         "charge_number": text_charge_number,
     }
-
     path = get_charge_procedure(final_data)
     path = path.replace("/media", "media")
     return Response({"path": path}, status=status.HTTP_200_OK)
@@ -2281,16 +2279,15 @@ def get_traffic_in_area_excel(request):
             {"error": "No se encontro el area o las fechas"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    
+
     cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
     if not cargo_area:
         return Response(
             status=status.HTTP_400_BAD_REQUEST,
             data={"message": "El usuario no tiene un area asignada"},
         )
-    
-    area = AreaSerializer(cargo_area.area, many= True).data
-    
+
+    area = AreaSerializer(cargo_area.area, many=True).data
 
     from backend.settings import DEBUG, URL_LOCAL, URL_PROD
 
@@ -2306,7 +2303,7 @@ def get_traffic_in_area_excel(request):
     for fecha in date_range:
         tracing_for_date = ProcedureTracingSerializer(
             ProcedureTracing.objects.filter(
-                created_at__date=fecha, from_area__id= area[0]["id"]
+                created_at__date=fecha, from_area__id=area[0]["id"]
             ),
             many=True,
         ).data
@@ -2343,17 +2340,16 @@ def get_tramites_dentro_fuera_de_plazo(request):
             status=status.HTTP_400_BAD_REQUEST,
             data={"message": "El usuario no tiene un area asignada"},
         )
-    
-    area = AreaSerializer(cargo_area.area, many= True).data
+
+    area = AreaSerializer(cargo_area.area, many=True).data
     area = area[0]
 
-    cargo_area = CargoArea.objects.filter(area__id = area["id"])
+    cargo_area = CargoArea.objects.filter(area__id=area["id"])
 
     trackins = []
 
     for value in cargo_area:
-        trackins.append(ProcedureTracing(user__area_id = cargo_area.user_id))
-
+        trackins.append(ProcedureTracing(user__area_id=cargo_area.user_id))
 
     obj_procedure = []
     for trackin in trackins:
@@ -2366,7 +2362,8 @@ def get_tramites_dentro_fuera_de_plazo(request):
 
     print(obj_procedure)
 
-    procedureList = Procedure.objects.filter(user__area = area["id"])
+    procedureList = Procedure.objects.filter(user__area=area["id"])
+
 
 @api_view(["GET"])
 def get_constancia_registro(request):
@@ -2378,14 +2375,14 @@ def get_constancia_registro(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    procedure: Procedure = Procedure.objects.filter(id = procedure_id).first()
+    procedure: Procedure = Procedure.objects.filter(id=procedure_id).first()
 
     procedureType = procedure.procedure_type.concepto
 
-    fecha, hora = str(procedure.created_at).split(' ')
+    fecha, hora = str(procedure.created_at).split(" ")
 
     persona = f"{procedure.file.person.nombres} {procedure.file.person.apellido_paterno} {procedure.file.person.apellido_materno}"
-    
+
     dni = procedure.file.person.numero_documento
 
     data = [persona, dni, procedureType, fecha]
@@ -2393,4 +2390,3 @@ def get_constancia_registro(request):
     path = generate_constancia_de_registro(data)
     path = path.replace("/media", "media")
     return Response({"path": path}, status=status.HTTP_200_OK)
-

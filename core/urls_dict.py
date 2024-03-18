@@ -63,6 +63,7 @@ urls_dict = {
         },
         "external": {
             "save_procedure_externo": f"{url}desk/save_procedure_externo",
+            "save_procedure_externo_register": f"{url}desk/save_procedure_externo_register",
             "get_procedure_and_tracing_by_code_number": f"{url}desk/get_procedure_and_tracing_by_code_number",
         },
     },
