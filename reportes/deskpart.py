@@ -393,7 +393,7 @@ def get_charge_procedure(data) -> str:
             style.fontzise = fontzise
 
         # ---------variables o datos adquiridos----------#
-        logoUnap = "media/config/logo_UNAP.jpg"
+        logoUnap = "media/config/logo_UNAP.png"
         logoPostgrado = "media/config/postgrado.png"
 
         areaUsuaria = data["area"]["nombre"].upper()

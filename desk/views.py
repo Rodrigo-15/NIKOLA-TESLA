@@ -347,6 +347,23 @@ def get_user_profile(request):
         )
 
 
+# generators
+
+
+@api_view(["GET"])
+def generete_code_hash(request):
+    if request.method == "GET":
+
+        procedure = Procedure.objects.all()
+
+        import shortuuid
+
+        for p in procedure:
+            p.code_hash = shortuuid.ShortUUID().random(length=6)
+            p.save()
+        return Response(status=status.HTTP_200_OK, data={"message": "ok"})
+
+
 # new modification
 @api_view(["POST"])
 @check_app_name()
@@ -977,9 +994,18 @@ def approve_tracing(request):
             .last()
             .id
         )
+        procedure = Procedure.objects.filter(id=procedure_id).first()
         ProcedureTracing.objects.filter(id=tracing_id).update(is_approved=True)
 
-        from_area_id = ProcedureTracing.objects.filter(id=tracing_id).first().to_area_id
+        if procedure.is_external:
+            from_area_id = (
+                ProcedureTracing.objects.filter(id=tracing_id).first().from_area_id
+            )
+
+        else:
+            from_area_id = (
+                ProcedureTracing.objects.filter(id=tracing_id).first().to_area_id
+            )
         ref_procedure_tracking_id = (
             ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
         )
@@ -1330,8 +1356,11 @@ def get_procedures_reports(request):
 def get_procedure_and_tracing_by_code_number(request):
     if request.method == "GET":
         code_number = request.GET.get("code_number")
+        code_hash = request.GET.get("code_hash")
 
-        procedure = Procedure.objects.filter(code_number=code_number).first()
+        procedure = Procedure.objects.filter(
+            code_number=code_number, code_hash=code_hash
+        ).first()
         anexos = Anexo.objects.filter(procedure_id=procedure.id)
         procedure_tracings = ProcedureTracing.objects.filter(
             procedure_id=procedure.id
@@ -1356,17 +1385,27 @@ def get_procedure_and_tracing_by_code_number(request):
 def save_procedure_externo(request):
     if request.method == "POST":
         person_id = request.data["person_id"]
+        correo = request.data["correo"]
+        celular = request.data["celular"]
         subject = request.data["subject"]
         attached_files = request.FILES.get("attached_files")
         procedure_type_id = request.data["procedure_type_id"]
-
-        person = Persona.objects.filter(id=person_id).first()
-        user_id = person.user_id
         headquarter_id = 1
 
         number_of_sheets = 0
+        # actualizar persona persona si el correo o celular estan null o ambos
+        person = Persona.objects.filter(id=person_id).first()
+        person.correo = correo
+        person.celular = celular
+        person.save()
 
         area_id = 3
+        user_id = (
+            CargoArea.objects.filter(area__id=area_id)
+            .values("persona__user_id")
+            .first()
+        )["persona__user_id"]
+
         file = File.objects.filter(person_id=person_id).first()
         if not file:
             File.objects.create(person_id=person_id)
@@ -1394,14 +1433,117 @@ def save_procedure_externo(request):
 
 
 @api_view(["GET"])
-def generete_code_hash(request):
+def get_tracings_to_approved_for_external(request):
     if request.method == "GET":
+        user_id = request.GET.get("user_id")
+        query = request.GET.get("query")
+        cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+        if not cargo_area:
+            areas = []
+        data_area = cargo_area.area.all()
+        areas = AreaSerializer(data_area, many=True).data
+        if not areas:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={"message": "El usuario no tiene un area asignada"},
+            )
+        area_id = [area["id"] for area in areas]
+        tracings_for_area = ProcedureTracing.objects.filter(
+            is_approved=False, assigned_user_id=None, from_area_id__in=area_id
+        ).order_by("-created_at")
+        proceduretracing = ProcedureTracingSerializer(tracings_for_area, many=True)
 
-        procedure = Procedure.objects.all()
+        procedures = Procedure.objects.filter(
+            id__in=[procedure["procedure"] for procedure in proceduretracing.data],
+            is_external=True,
+        ).exclude(
+            id__in=ProcedureTracing.objects.values("procedure_id")
+            .annotate(count=Count("procedure_id"))
+            .filter(count__gt=1)
+            .values("procedure_id"),
+        )
+        procedures = procedures.filter(
+            Q(code_number__icontains=query)
+            | Q(subject__icontains=query)
+            | Q(file__person__full_name__icontains=query)
+            | Q(file__area__nombre__icontains=query)
+            | Q(file__legalperson__razon_social__icontains=query)
+            | Q(file__person__numero_documento__icontains=query)
+            | Q(file__legalperson__numero_documento__icontains=query),
+        ).order_by("-code_number")
+        paginator = CustomPagination()
+        paginated_procedures = paginator.paginate_queryset(procedures, request)
+        serializer = ProcedureListSerializer(paginated_procedures, many=True)
 
-        import shortuuid
+        return paginator.get_paginated_response(serializer.data)
 
-        for p in procedure:
-            p.code_hash = shortuuid.ShortUUID().random(length=6)
-            p.save()
-        return Response(status=status.HTTP_200_OK, data={"message": "ok"})
+
+@api_view(["POST"])
+def save_procedure_externo_register(request):
+    if request.method == "POST":
+        # data person
+        nombres = request.data["nombres"]
+        numero_documento = request.data["numero_documento"]
+        tipo_documento_id = 1
+        apellido_paterno = request.data["apellido_paterno"]
+        apellido_materno = request.data["apellido_materno"]
+        correo = request.data["correo"]
+        celular = request.data["celular"]
+        # data procedure
+        subject = request.data["subject"]
+        attached_files = request.FILES.get("attached_files")
+        procedure_type_id = request.data["procedure_type_id"]
+        headquarter_id = 1
+
+        number_of_sheets = 0
+        # creeate person
+        obj_person = Persona.objects.filter(
+            numero_documento=numero_documento, tipo_documento_id=tipo_documento_id
+        ).first()
+        if obj_person:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={"message": "La persona ya existe"},
+            )
+        person = Persona.objects.create(
+            nombres=nombres,
+            numero_documento=numero_documento,
+            tipo_documento_id=tipo_documento_id,
+            apellido_paterno=apellido_paterno,
+            apellido_materno=apellido_materno,
+            correo=correo,
+            celular=celular,
+        )
+        person_id = person.id
+
+        area_id = 3
+        user_id = (
+            CargoArea.objects.filter(area__id=area_id)
+            .values("persona__user_id")
+            .first()
+        )["persona__user_id"]
+
+        file = File.objects.filter(person_id=person_id).first()
+        if not file:
+            File.objects.create(person_id=person_id)
+
+        procedure = Procedure.objects.create(
+            file_id=file.id,
+            subject=subject,
+            attached_files=attached_files,
+            procedure_type_id=procedure_type_id,
+            headquarter_id=headquarter_id,
+            user_id=user_id,
+            number_of_sheets=number_of_sheets,
+            is_external=True,
+        )
+
+        ProcedureTracing.objects.create(
+            procedure_id=procedure.id,
+            from_area_id=area_id if area_id else None,
+            user_id=user_id,
+        )
+
+        return Response(
+            status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
+        )

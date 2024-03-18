@@ -1,5 +1,5 @@
 from django.urls import include, path
-
+from desk import consumers
 from desk.router import router
 from desk.views import (
     generete_code_hash,
@@ -34,11 +34,15 @@ from desk.views import (
     get_procedures_reports,
     get_procedure_and_tracing_by_code_number,
     save_procedure_externo,
+    get_tracings_to_approved_for_external,
+    save_procedure_externo_register,
 )
 
 urlpatterns = [
     path("", include(router.urls)),
     path("generete_code_hash", generete_code_hash),
+    # channels
+    path("ws/some_path/", consumers.MyConsumer.as_asgi()),
     # new paths
     path("login/", login, name="login"),
     path("get_procedures", get_procedures, name="get_procedures"),
@@ -83,6 +87,13 @@ urlpatterns = [
         get_procedure_and_tracing_by_code_number,
     ),
     path("save_procedure_externo", save_procedure_externo),
+    path(
+        "get_tracings_to_approved_for_external", get_tracings_to_approved_for_external
+    ),
+    path(
+        "save_procedure_externo_register",
+        save_procedure_externo_register,
+    ),
     # OLD
     path("get_tracings_procedures/<int:status>", get_tracings_procedures),
     path("get_dashboard_procedures", get_dashboard_procedures),
