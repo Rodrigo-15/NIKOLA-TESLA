@@ -2360,10 +2360,9 @@ def get_tramites_dentro_fuera_de_plazo(request):
         serialized_procedure["action"] = trackin.action
         obj_procedure.append(serialized_procedure)
 
-    print(obj_procedure)
+    procedureList = Procedure.objects.filter(user__area = area["id"])
 
-    procedureList = Procedure.objects.filter(user__area=area["id"])
-
+    print(procedureList)
 
 @api_view(["GET"])
 def get_constancia_registro(request):
