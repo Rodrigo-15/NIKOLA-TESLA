@@ -1503,7 +1503,7 @@ def save_procedure_externo_register(request):
         if obj_person:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
-                data={"message": "La persona ya existe"},
+                data={"message": "La persona ya se encuentra registrada"},
             )
         person = Persona.objects.create(
             nombres=nombres,
