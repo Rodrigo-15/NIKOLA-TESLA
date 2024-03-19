@@ -349,7 +349,6 @@ def get_user_profile(request):
 
 # generators
 
-
 @api_view(["GET"])
 def generete_code_hash(request):
     if request.method == "GET":
