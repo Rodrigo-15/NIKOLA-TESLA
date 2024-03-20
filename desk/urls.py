@@ -5,7 +5,6 @@ from desk.views import (
     generete_code_hash,
     get_procedure_and_tracing_by_id,
     get_dashboard_procedures,
-    get_tracings_procedures,
     update_procedure,
     years_for_procedures,
     save_derive_procedure,
@@ -95,7 +94,6 @@ urlpatterns = [
         save_procedure_externo_register,
     ),
     # OLD
-    path("get_tracings_procedures/<int:status>", get_tracings_procedures),
     path("get_dashboard_procedures", get_dashboard_procedures),
     path("years_for_procedures", years_for_procedures),
     path("get_areas", get_areas, name="get_areas"),
