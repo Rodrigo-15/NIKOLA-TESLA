@@ -96,7 +96,7 @@ urlpatterns = [
     ),
     # OLD
     path("get_tracings_procedures/<int:status>", get_tracings_procedures),
-    path("get_dashboard_procedures", get_dashboard_procedures),
+    path("get_dashboard_procedures/", get_dashboard_procedures),
     path("years_for_procedures", years_for_procedures),
     path("get_areas", get_areas, name="get_areas"),
     path(
