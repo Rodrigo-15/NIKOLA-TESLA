@@ -269,26 +269,6 @@ def get_finished_procedures():
 
 
 @api_view(["GET"])
-def get_dashboard_procedures(request):
-    """Get count of procedures"""
-
-    if request.method == "GET":
-        counters = get_counters_procedure()
-
-        procedures_started = counters.get("started").get("count")
-        procedures_in_progress = counters.get("in_progress").get("count")
-        procedures_finished = counters.get("finished").get("count")
-
-        return Response(
-            {
-                "started": procedures_started,
-                "in_progress": procedures_in_progress,
-                "finished": procedures_finished,
-            }
-        )
-
-
-@api_view(["GET"])
 def get_tracings_procedures(request, status):
     if request.method == "GET":
         if status == 0:
@@ -348,6 +328,7 @@ def get_user_profile(request):
 
 
 # generators
+
 
 @api_view(["GET"])
 def generete_code_hash(request):
@@ -1545,4 +1526,24 @@ def save_procedure_externo_register(request):
 
         return Response(
             status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
+        )
+
+
+@api_view(["GET"])
+def get_dashboard_procedures(request):
+    """Get count of procedures"""
+
+    if request.method == "GET":
+        counters = get_counters_procedure()
+
+        procedures_started = counters.get("started").get("count")
+        procedures_in_progress = counters.get("in_progress").get("count")
+        procedures_finished = counters.get("finished").get("count")
+
+        return Response(
+            {
+                "started": procedures_started,
+                "in_progress": procedures_in_progress,
+                "finished": procedures_finished,
+            }
         )

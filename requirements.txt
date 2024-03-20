@@ -33,3 +33,4 @@ qrcode[pil]
 resend
 channels
 channels-redis
+shortuuid
