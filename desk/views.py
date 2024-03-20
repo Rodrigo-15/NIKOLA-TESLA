@@ -1547,14 +1547,16 @@ def get_dashboard_procedures(request):
         )
     
     today = date.today()
+
+    fecha_inicio = ""
     
-    if time_filter == 1:
+    if time_filter == "1":
         fecha_inicio = today - timedelta(days= 90)
-    elif time_filter == 2:
+    elif time_filter == "2":
         fecha_inicio = today - timedelta(days= 180)
-    elif time_filter == 3:
+    elif time_filter == "3":
         fecha_inicio = today - timedelta(days= 365)
-    elif time_filter == 4:
+    elif time_filter == "4":
         dia, mes, año = today.strftime("%d/%m/%Y").split("/")
         fecha_inicio = f"01/01/{año}"
         fecha_inicio = datetime.strptime(fecha_inicio, "%d/%m/%Y")
@@ -1594,7 +1596,7 @@ def get_dashboard_procedures(request):
     i = 0
 
     filtred_trackins = ProcedureTracing.objects.filter(
-            to_area_id__in=area["id"], is_approved=False, assigned_user_id=None
+            to_area_id=area["id"], is_approved=False, assigned_user_id=None
         ).order_by("-created_at")
     proceduretracing = ProcedureTracingSerializer(filtred_trackins, many=True)
 
