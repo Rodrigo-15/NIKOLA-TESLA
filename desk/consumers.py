@@ -1,15 +1,18 @@
-from channels.generic.websocket import AsyncWebsocketConsumer
 import json
+from channels.generic.websocket import WebsocketConsumer
 
 
-class MyConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        await self.accept()
-        print("connected")
+class MyConsumer(WebsocketConsumer):
+    def connect(self):
+        print("Connected")
+        self.accept()
 
-    async def disconnect(self, close_code):
-        print("disconnected", close_code)
+    def disconnect(self, close_code):
+        print("Disconnected")
         pass
 
-    async def receive(self, text_data):
-        print("receive", text_data)
+    def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        message = text_data_json["message"]
+
+        self.send(text_data=json.dumps({"message": message}))

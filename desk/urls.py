@@ -4,7 +4,7 @@ from desk.router import router
 from desk.views import (
     generete_code_hash,
     get_procedure_and_tracing_by_id,
-    get_dashboard_procedures,
+    get_dashboard_desk,
     update_procedure,
     years_for_procedures,
     save_derive_procedure,
@@ -40,8 +40,6 @@ from desk.views import (
 urlpatterns = [
     path("", include(router.urls)),
     path("generete_code_hash", generete_code_hash),
-    # channels
-    path("ws/some_path/", consumers.MyConsumer.as_asgi()),
     # new paths
     path("login/", login, name="login"),
     path("get_procedures", get_procedures, name="get_procedures"),
@@ -94,7 +92,7 @@ urlpatterns = [
         save_procedure_externo_register,
     ),
     # OLD
-    path("get_dashboard_procedures", get_dashboard_procedures),
+    path("get_dashboard_desk", get_dashboard_desk),
     path("years_for_procedures", years_for_procedures),
     path("get_areas", get_areas, name="get_areas"),
     path(

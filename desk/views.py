@@ -1298,7 +1298,7 @@ def save_procedure_externo_register(request):
 
 
 @api_view(["GET"])
-def get_dashboard_procedures(request):
+def get_dashboard_desk(request):
     """Get count of procedures"""
     user_id = request.GET.get("user_id")
     time_filter = request.GET.get("time_filter")
