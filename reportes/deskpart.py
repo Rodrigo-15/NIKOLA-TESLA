@@ -107,7 +107,7 @@ def tabla_dinamica(
             if len(datosRestantes) != 0:
                 c.showPage()
                 currenty = lTop
-                lol = tabla_dinamica(
+                lol, altura, alturay = tabla_dinamica(
                     datosRestantes,
                     currenty,
                     pageCounter,
@@ -121,9 +121,13 @@ def tabla_dinamica(
                     columns,
                     colWidths,
                 )
+
+                currenty -= altura
+
             elif len(datosRestantes) == 0:
                 lol = False
-    return lol
+                currenty -= tabla.height
+    return lol, tabla._height, currenty
 
 
 def get_process_tracking_sheet(data) -> str:
@@ -524,7 +528,7 @@ def get_charge_procedure(data) -> str:
                 if i != 4:
                     value[i] = Paragraph(value[i], style)
 
-        tabla_dinamica(
+        lol, altura, currentY = tabla_dinamica(
             tramites,
             currentY,
             1,
@@ -538,11 +542,7 @@ def get_charge_procedure(data) -> str:
             columnasTabla,
             [maxWidht * 0.15, maxWidht * 0.20, maxWidht * 0.24, maxWidht * 0.18, maxWidht * 0.1, maxWidht * 0.13],
         )
-        # if currentY < 120:
-        #     c.showPage()
-        #     currentY = 250
-        # else:
-        currentY -= 250
+        
         c.setFont(psfontname="Arial-Bold", size=fontzise + 3)
         c.drawCentredString(A4[0] / 2, currentY, "RECIBIDO CONFORME")
 

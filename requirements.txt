@@ -34,3 +34,4 @@ resend
 channels
 channels-redis
 shortuuid
+daphne

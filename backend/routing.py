@@ -1,12 +1,6 @@
-from channels.auth import AuthMiddlewareStack
-from channels.routing import ProtocolTypeRouter, URLRouter
-import backend.routing
+from django.urls import path
+from desk.consumers import DeskSocket
 
-
-application = ProtocolTypeRouter(
-    {
-        "websocket": AuthMiddlewareStack(
-            URLRouter(backend.routing.websocket_urlpatterns)
-        ),
-    }
-)
+websocket_urlpatterns = [
+    path("ws/desk/", DeskSocket.as_asgi()),
+]
