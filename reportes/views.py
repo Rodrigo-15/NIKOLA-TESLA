@@ -2360,10 +2360,9 @@ def get_tramites_dentro_fuera_de_plazo(request):
         serialized_procedure["action"] = trackin.action
         obj_procedure.append(serialized_procedure)
 
-    print(obj_procedure)
+    procedureList = Procedure.objects.filter(user__area = area["id"])
 
-    procedureList = Procedure.objects.filter(user__area=area["id"])
-
+    print(procedureList)
 
 @api_view(["GET"])
 def get_constancia_registro(request):
@@ -2389,4 +2388,110 @@ def get_constancia_registro(request):
 
     path = generate_constancia_de_registro(data)
     path = path.replace("/media", "media")
+    return Response({"path": path}, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+def get_tramites_area_excel(request):
+    user_id = request.GET.get("user_id")
+    fecha_inicio = request.GET.get("fecha_inicio")
+    fecha_fin = request.GET.get("fecha_fin")
+    año = request.GET.get("año")
+    state = request.GET.get("state")
+    state_date = request.GET.get("state_date")
+
+    if user_id == None:
+        return Response(
+            {"error": "No se encontro el usuario"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+    
+    if not cargo_area:
+        return Response(
+            status=status.HTTP_400_BAD_REQUEST,
+            data={"message": "El usuario no tiene un area asignada"},
+        )
+
+    area = (AreaSerializer(cargo_area.area, many=True).data)[0]
+
+    tracings_for_user = ProcedureTracing.objects.filter(
+        from_area=area["id"]).order_by("-created_at")
+
+    procedures = []
+
+    for tracing in tracings_for_user:
+        procedure = ProcedureSerializer(tracing.procedure).data
+
+        if procedure not in procedures:
+
+            procedures.append(procedure)
+    i = 0
+    for l in range(len(procedures)):
+        try:
+            if state == None and state_date != None:
+                if procedures[i]["state_date"] != state_date:
+                    procedures.pop(i)
+                else:
+                    i+=1
+            elif state != None and state_date == None:
+                if procedures[i]["state"] != state:
+                    procedures.pop(i)
+                else:
+                    i+=1
+            elif state != None and state_date != None:
+                if procedures[i]["state"] != state or procedures[i]["state_date"] != state_date:
+                    procedures.pop(i)
+                else:
+                    i+=1
+        except IndexError:
+            break
+    
+    if fecha_fin == None and fecha_inicio == None and año == None:
+        pass
+    elif fecha_fin == None and fecha_inicio == None and año != None:
+        fecha_inicio = f"{año}-01-01"
+        fecha_fin = f"{año}-12-31"
+        fecha_inicio = date(*map(int, fecha_inicio.split("-")))
+        fecha_fin = date(*map(int, fecha_fin.split("-")))
+
+        date_range = [
+            fecha_inicio + timedelta(days=x)
+            for x in range((fecha_fin - fecha_inicio).days + 1)
+        ]
+
+        i = 0
+        for l in range(len(procedures)):
+            try:
+                if procedures[i]["created_at"] not in date_range:
+                    procedures.pop(i)
+                else:
+                    i += 1
+            except IndexError:
+                break
+    elif fecha_fin != None and fecha_inicio != None and año == None:
+        fecha_inicio = date(*map(int, fecha_inicio.split("-")))
+        fecha_fin = date(*map(int, fecha_fin.split("-")))
+
+        date_range = [
+            fecha_inicio + timedelta(days=x)
+            for x in range((fecha_fin - fecha_inicio).days + 1)
+        ]
+
+        for l in range(len(procedures)):
+            try:
+                if procedures[i]["created_at"] not in date_range:
+                    procedures.pop(i)
+                else:
+                    i += 1
+            except IndexError:
+                break
+
+    data = {"area_usuaria": area["nombre"], "procedures": procedures}
+
+    path = get_unfinished_procedures_for_area_xlsx(data)
+
+    url = URL_LOCAL if DEBUG else URL_PROD
+    path = path.replace("/media", "media")
+    path = url + path
     return Response({"path": path}, status=status.HTTP_200_OK)
