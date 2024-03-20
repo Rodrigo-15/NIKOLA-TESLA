@@ -2429,6 +2429,7 @@ def get_tramites_area_excel(request):
 
             procedures.append(procedure)
     i = 0
+    
     for l in range(len(procedures)):
         try:
             if state == None and state_date != None:
