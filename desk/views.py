@@ -1628,10 +1628,18 @@ def get_dashboard_procedures(request):
 
     dates = [procedure["created_at"] for procedure in procedures]
 
-    print(dates)
-    print(date_range)
-
     fechas_contadas = [[fecha, dates.count(fecha)] for fecha in date_range]
+
+    i = 0
+    
+    for l in range(len(fechas_contadas)):
+        try:
+            if fechas_contadas[i][1] == 0:
+                fechas_contadas.pop(i)
+            else:
+                i += 1 
+        except IndexError:
+            break
 
     for procedure in procedures:
         if procedure["state_date"] == 1:
