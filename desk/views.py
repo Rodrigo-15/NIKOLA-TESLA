@@ -1562,8 +1562,8 @@ def get_dashboard_procedures(request):
         fecha_inicio = datetime.strptime(fecha_inicio, "%d/%m/%Y")
 
     date_range = [
-        fecha_inicio + timedelta(days=x)
-        for x in range((date.today() - fecha_inicio).days + 1)
+        datetime.strftime(fecha_inicio + timedelta(days=x), "%d/%m/%Y")
+        for x in range((datetime.strptime(str(date.today()), "%Y-%m-%d") - fecha_inicio).days + 1)
     ]
 
     if user_id == None:
@@ -1583,7 +1583,7 @@ def get_dashboard_procedures(request):
     area = (AreaSerializer(cargo_area.area, many=True).data)[0]
 
     tracings_for_user = ProcedureTracing.objects.filter(
-        from_area=area["id"]).order_by("-created_at")
+        from_area__id=area["id"]).order_by("-created_at")
 
     procedures = []
 
@@ -1606,6 +1606,9 @@ def get_dashboard_procedures(request):
     
     percentage_aproved = (len(procedures) - len(procedures_not_aproved))/len(procedures)
 
+    for procedure in procedures:
+        procedure["created_at"] = procedure["created_at"].split(" ")[0]
+
     for l in range(len(procedures)):
         try:
             if procedures[i]['created_at'] not in date_range:
@@ -1624,6 +1627,9 @@ def get_dashboard_procedures(request):
     
 
     dates = [procedure["created_at"] for procedure in procedures]
+
+    print(dates)
+    print(date_range)
 
     fechas_contadas = [[fecha, dates.count(fecha)] for fecha in date_range]
 
