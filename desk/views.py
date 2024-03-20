@@ -17,6 +17,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from datetime import timedelta, datetime, date
+
 from accounts.serializers import GroupSerializer, UserSerializer
 from core.models import Apps, Menu, Persona, Area
 
@@ -649,9 +651,12 @@ def get_tracings_to_approved_for_area(request):
         user_id = request.GET.get("user_id")
         query = request.GET.get("query")
         cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+
         if not cargo_area:
             areas = []
+
         data_area = cargo_area.area.all()
+
         areas = AreaSerializer(data_area, many=True).data
         if not areas:
             return Response(
@@ -1295,18 +1300,112 @@ def save_procedure_externo_register(request):
 @api_view(["GET"])
 def get_dashboard_procedures(request):
     """Get count of procedures"""
+    user_id = request.GET.get("user_id")
+    time_filter = request.GET.get("time_filter")
 
-    if request.method == "GET":
-        counters = get_counters_procedure()
-
-        procedures_started = counters.get("started").get("count")
-        procedures_in_progress = counters.get("in_progress").get("count")
-        procedures_finished = counters.get("finished").get("count")
-
+    if time_filter == None:
         return Response(
-            {
-                "started": procedures_started,
-                "in_progress": procedures_in_progress,
-                "finished": procedures_finished,
-            }
+            {"error": "no a dado un filtro de tiempo"},
+            status= status.HTTP_400_BAD_REQUEST,
         )
+    
+    today = date.today()
+    
+    if time_filter == 1:
+        fecha_inicio = today - timedelta(days= 90)
+    elif time_filter == 2:
+        fecha_inicio = today - timedelta(days= 180)
+    elif time_filter == 3:
+        fecha_inicio = today - timedelta(days= 365)
+    elif time_filter == 4:
+        dia, mes, año = today.strftime("%d/%m/%Y").split("/")
+        fecha_inicio = f"01/01/{año}"
+        fecha_inicio = datetime.strptime(fecha_inicio, "%d/%m/%Y")
+
+    date_range = [
+        fecha_inicio + timedelta(days=x)
+        for x in range((date.today() - fecha_inicio).days + 1)
+    ]
+
+    if user_id == None:
+        return Response(
+            {"error": "No se encontro el usuario"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+    
+    if not cargo_area:
+        return Response(
+            status=status.HTTP_400_BAD_REQUEST,
+            data={"message": "El usuario no tiene un area asignada"},
+        )
+
+    area = (AreaSerializer(cargo_area.area, many=True).data)[0]
+
+    tracings_for_user = ProcedureTracing.objects.filter(
+        from_area=area["id"]).order_by("-created_at")
+
+    procedures = []
+
+    for tracing in tracings_for_user:
+        procedure = ProcedureSerializer(tracing.procedure).data
+
+        if procedure not in procedures:
+
+            procedures.append(procedure)
+    i = 0
+
+    filtred_trackins = ProcedureTracing.objects.filter(
+            to_area_id__in=area["id"], is_approved=False, assigned_user_id=None
+        ).order_by("-created_at")
+    proceduretracing = ProcedureTracingSerializer(filtred_trackins, many=True)
+
+    procedures_not_aproved = Procedure.objects.filter(
+            id__in=[procedure["procedure"] for procedure in proceduretracing.data]
+        )
+    
+    percentage_aproved = (len(procedures) - len(procedures_not_aproved))/len(procedures)
+
+    for l in range(len(procedures)):
+        try:
+            if procedures[i]['created_at'] not in date_range:
+                procedures.pop(i)
+            else:
+                i += 1
+        except IndexError:
+            break
+    
+    plazos = {"en_plazo": 0, "por_vencer": 0, "vencidos" : 0}
+    estados = {
+        "iniciados": 0,
+        "en_proceso": 0, 
+        "archivados": 0, 
+        "concluidos": 0}
+    
+
+    dates = [procedure["created_at"] for procedure in procedures]
+
+    fechas_contadas = [[fecha, dates.count(fecha)] for fecha in date_range]
+
+    for procedure in procedures:
+        if procedure["state_date"] == 1:
+            plazos["vencidos"] += 1
+        elif procedure["state_date"] == 2:
+            plazos["por_vencer"] += 1
+        elif procedure["state_date"] == 3:
+            plazos["en_plazo"] += 1
+
+        if procedure["state"] == "Iniciado":
+            estados["iniciados"] += 1
+        elif procedure["state"] == "Archivado":
+            estados["archivados"] += 1
+        elif procedure["state"] == "Concluido":
+            estados["concluidos"] += 1
+        elif procedure["state"] == "En proceso":
+            estados["en_proceso"] += 1
+
+    return Response({"dates": fechas_contadas,
+                     "state_procedure" : estados,
+                     "state_date" : plazos,
+                     "started_procedures" : percentage_aproved})

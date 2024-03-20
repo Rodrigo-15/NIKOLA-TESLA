@@ -2364,6 +2364,7 @@ def get_tramites_dentro_fuera_de_plazo(request):
 
     print(procedureList)
 
+
 @api_view(["GET"])
 def get_constancia_registro(request):
     procedure_id = request.GET.get("procedure_id")
@@ -2389,6 +2390,7 @@ def get_constancia_registro(request):
     path = generate_constancia_de_registro(data)
     path = path.replace("/media", "media")
     return Response({"path": path}, status=status.HTTP_200_OK)
+
 
 @api_view(["GET"])
 def get_tramites_area_excel(request):
@@ -2427,6 +2429,7 @@ def get_tramites_area_excel(request):
 
             procedures.append(procedure)
     i = 0
+    
     for l in range(len(procedures)):
         try:
             if state == None and state_date != None:
@@ -2495,3 +2498,4 @@ def get_tramites_area_excel(request):
     path = path.replace("/media", "media")
     path = url + path
     return Response({"path": path}, status=status.HTTP_200_OK)
+
