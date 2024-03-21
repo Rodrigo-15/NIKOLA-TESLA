@@ -12,8 +12,12 @@ class DeskSocket(WebsocketConsumer):
         pass
 
     def receive(self, text_data):
-        print("Received")
-        text_data_json = json.loads(text_data)
-        message = text_data_json["message"]
 
-        self.send(text_data=json.dumps({"message": message}))
+        print("Received")
+        try:
+            text_data_json = json.loads(text_data)
+            message = text_data_json["message"]
+            self.send(text_data=json.dumps({"message": message}))
+        except json.decoder.JSONDecodeError as e:
+            print("Error decoding JSON")
+            pass
