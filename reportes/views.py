@@ -2397,7 +2397,7 @@ def get_tramites_area_excel(request):
     user_id = request.GET.get("user_id")
     fecha_inicio = request.GET.get("fecha_inicio")
     fecha_fin = request.GET.get("fecha_fin")
-    año = request.GET.get("año")
+    year = request.GET.get("year")
     state = request.GET.get("state")
     state_date = request.GET.get("state_date")
 
@@ -2429,7 +2429,7 @@ def get_tramites_area_excel(request):
 
             procedures.append(procedure)
     i = 0
-    
+     
     for l in range(len(procedures)):
         try:
             if state == None and state_date != None:
@@ -2450,11 +2450,11 @@ def get_tramites_area_excel(request):
         except IndexError:
             break
     
-    if fecha_fin == None and fecha_inicio == None and año == None:
+    if fecha_fin == None and fecha_inicio == None and year== None:
         pass
-    elif fecha_fin == None and fecha_inicio == None and año != None:
-        fecha_inicio = f"{año}-01-01"
-        fecha_fin = f"{año}-12-31"
+    elif fecha_fin == None and fecha_inicio == None and year != None:
+        fecha_inicio = f"{year}-01-01"
+        fecha_fin = f"{year}-12-31"
         fecha_inicio = date(*map(int, fecha_inicio.split("-")))
         fecha_fin = date(*map(int, fecha_fin.split("-")))
 
@@ -2476,7 +2476,7 @@ def get_tramites_area_excel(request):
             except IndexError:
                 break
 
-    elif fecha_fin != None and fecha_inicio != None and año == None:
+    elif fecha_fin != None and fecha_inicio != None and year == None:
         fecha_inicio = date(*map(int, fecha_inicio.split("-")))
         fecha_fin = date(*map(int, fecha_fin.split("-")))
 
