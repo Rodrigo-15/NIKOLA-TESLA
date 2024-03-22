@@ -2463,15 +2463,19 @@ def get_tramites_area_excel(request):
             for x in range((fecha_fin - fecha_inicio).days + 1)
         ]
 
+        date_range = [date.strftime(fecha, '%d/%m/%Y') for fecha in date_range]
+
         i = 0
+
         for l in range(len(procedures)):
             try:
-                if procedures[i]["created_at"] not in date_range:
+                if procedures[i]["created_at"].split(" ")[0] not in date_range:
                     procedures.pop(i)
                 else:
                     i += 1
             except IndexError:
                 break
+
     elif fecha_fin != None and fecha_inicio != None and año == None:
         fecha_inicio = date(*map(int, fecha_inicio.split("-")))
         fecha_fin = date(*map(int, fecha_fin.split("-")))
@@ -2481,9 +2485,11 @@ def get_tramites_area_excel(request):
             for x in range((fecha_fin - fecha_inicio).days + 1)
         ]
 
+        date_range = [date.strftime(fecha, '%d/%m/%Y') for fecha in date_range]
+
         for l in range(len(procedures)):
             try:
-                if procedures[i]["created_at"] not in date_range:
+                if procedures[i]["created_at"].split(" ")[0] not in date_range:
                     procedures.pop(i)
                 else:
                     i += 1
