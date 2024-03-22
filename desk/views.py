@@ -1299,7 +1299,7 @@ def save_procedure_externo_register(request):
 
 
 @api_view(["GET"])
-def get_dashboard_desk(request):
+def get_dashboard_desk_area(request):
     """Get count of procedures"""
     user_id = request.GET.get("user_id")
     time_filter = request.GET.get("time_filter")
@@ -1346,12 +1346,166 @@ def get_dashboard_desk(request):
             data={"message": "El usuario no tiene un area asignada"},
         )
 
-    area = (AreaSerializer(cargo_area.area, many=True).data)[0]
+    areas = (AreaSerializer(cargo_area.area, many=True).data)
 
-    #----------obtenemos todos los tramites del area--------#
+    returnList = []
+
+    for area in areas:
+        #----------obtenemos todos los tramites del area--------#
+
+        tracings_for_user = ProcedureTracing.objects.filter(
+            from_area__id=area["id"]).order_by("-created_at")
+
+        procedures = []
+
+        for tracing in tracings_for_user:
+            procedure = ProcedureSerializer(tracing.procedure).data
+
+            if procedure not in procedures:
+
+                procedures.append(procedure)
+        i = 0
+
+        ###-------se saca el porcentaje de tramites aprobados-----------####
+
+        filtred_trackins = ProcedureTracing.objects.filter(
+                to_area_id=area["id"], is_approved=False, assigned_user_id=None
+            ).order_by("-created_at")
+        proceduretracing = ProcedureTracingSerializer(filtred_trackins, many=True)
+
+        procedures_not_aproved = Procedure.objects.filter(
+                id__in=[procedure["procedure"] for procedure in proceduretracing.data]
+            )
+        
+        percentage_aproved = (len(procedures) - len(procedures_not_aproved))/len(procedures)
+
+        ###------------------------------------------------###
+
+        for procedure in procedures:
+            procedure["created_at"] = procedure["created_at"].split(" ")[0]  #tomamos solo la fecha, la hora no nos importa
+
+        for l in range(len(procedures)):
+            try:
+                if procedures[i]['created_at'] not in date_range:   #tomamos solo los tramites que fueron creados en nuestro rango de tiempo
+                    procedures.pop(i)
+                else:
+                    i += 1
+            except IndexError:
+                break
+        
+        plazos = {"en_plazo": 0, "por_vencer": 0, "vencidos" : 0}
+        estados = {
+            "iniciados": 0,
+            "en_proceso": 0, 
+            "archivados": 0, 
+            "concluidos": 0}
+        
+        dates = defaultdict(lambda: {"finalizados": 0, "archivados": 0, "en_proceso": 0, "iniciados": 0})
+        
+        trakins = ProcedureTracingSerializer(ProcedureTracing.objects.filter(procedure_id__in =[procedure["id"] for procedure in procedures]).order_by("-created_at"), many = True).data
+
+    # Procesar trakins y procedures juntos
+        for data in [trakins, procedures]:
+            for item in data:
+                fecha = item["created_at"].split("T")[0].replace("-", "/")
+                dia, mes, año = fecha.split("/")
+                fecha = f"{dia}/{mes}/{año}"
+
+                # Actualizar los conteos correspondientes en el diccionario
+                if item.get("is_finished"):
+                    dates[fecha]["finalizados"] += 1
+                elif item.get("is_archived"):
+                    dates[fecha]["archivados"] += 1
+                else:
+                    dates[fecha]["en_proceso"] += 1
+
+            if "is_finished" not in item and "is_archived" not in item:
+                dates[fecha]["iniciados"] += 1
+
+
+        i = 0
+        for l in range(len(dates)):
+            try:
+                a = dates[i]["iniciados"] + dates[i]["en_proceso"] + dates[i]["finalizados"] +dates[i]["archivados"]
+                if a == 0:
+                    dates.pop(i)
+                else:
+                    i += 1
+            except IndexError:
+                break
+
+
+
+        i = 0
+        
+    # for l in range(len(fechas_contadas)):
+        #    try:
+        #       if fechas_contadas[i][1] == 0:
+        #          fechas_contadas.pop(i)      #quitamos las fechas que tengan 0 creados
+        #     else:
+            #        i += 1 
+            #except IndexError:
+            #   break
+
+        for procedure in procedures:
+            if procedure["state"] != "Archivado" and procedure["state"] != "Concluido":
+                if procedure["state_date"] == 1:
+                    plazos["vencidos"] += 1
+                elif procedure["state_date"] == 2:
+                    plazos["por_vencer"] += 1
+                elif procedure["state_date"] == 3:
+                    plazos["en_plazo"] += 1
+
+            if procedure["state"] == "Iniciado":
+                estados["iniciados"] += 1
+            elif procedure["state"] == "Archivado":
+                estados["archivados"] += 1
+            elif procedure["state"] == "Concluido":
+                estados["concluidos"] += 1
+            elif procedure["state"] == "En proceso":
+                estados["en_proceso"] += 1
+        returnList.append({"dates": dates,
+                     "state_procedure" : estados,
+                     "state_date" : plazos,
+                     "started_procedures" : percentage_aproved})
+
+    return Response(returnList)
+
+
+@api_view(["GET"])
+def get_dashboard_desk_usuario(request):
+    """Get count of procedures"""
+    usuario_id = request.GET.get("user_id")
+    time_filter = request.GET.get("time_filter")
+
+    if time_filter == None:
+        return Response(
+            {"error": "no a dado un filtro de tiempo"},
+            status= status.HTTP_400_BAD_REQUEST,
+        )
+    
+    #-----elegimos nuestro rango de fechas----------#
+    
+    today = date.today()
+
+    fecha_inicio = ""
+    
+    if time_filter == "1":
+        fecha_inicio = today - timedelta(days= 90)
+    elif time_filter == "2":
+        fecha_inicio = today - timedelta(days= 180)
+    elif time_filter == "3":
+        fecha_inicio = today - timedelta(days= 365)
+    elif time_filter == "4":
+        dia, mes, año = today.strftime("%d/%m/%Y").split("/")
+        fecha_inicio = f"01/01/{año}"
+        fecha_inicio = datetime.strptime(fecha_inicio, "%d/%m/%Y")
+
+    date_range = [fecha_inicio + timedelta(days=x) for x in range((today - fecha_inicio).days + 1)]
+    date_range = [d.strftime("%d/%m/%Y") for d in date_range]
 
     tracings_for_user = ProcedureTracing.objects.filter(
-        from_area__id=area["id"]).order_by("-created_at")
+        user_id= usuario_id).order_by("-created_at")
 
     procedures = []
 
@@ -1361,12 +1515,13 @@ def get_dashboard_desk(request):
         if procedure not in procedures:
 
             procedures.append(procedure)
+
     i = 0
 
     ###-------se saca el porcentaje de tramites aprobados-----------####
 
     filtred_trackins = ProcedureTracing.objects.filter(
-            to_area_id=area["id"], is_approved=False, assigned_user_id=None
+         procedure_id__in=[procedure["id"] for procedure in procedures], is_approved=False, assigned_user_id=None
         ).order_by("-created_at")
     proceduretracing = ProcedureTracingSerializer(filtred_trackins, many=True)
 
@@ -1435,17 +1590,17 @@ def get_dashboard_desk(request):
 
     i = 0
     
-   # for l in range(len(fechas_contadas)):
+# for l in range(len(fechas_contadas)):
     #    try:
-     #       if fechas_contadas[i][1] == 0:
-      #          fechas_contadas.pop(i)      #quitamos las fechas que tengan 0 creados
-       #     else:
+    #       if fechas_contadas[i][1] == 0:
+    #          fechas_contadas.pop(i)      #quitamos las fechas que tengan 0 creados
+    #     else:
         #        i += 1 
         #except IndexError:
-         #   break
+        #   break
 
     for procedure in procedures:
-        if procedure["state"] != "Archivado" or procedure["state"] != "Conluido":
+        if procedure["state"] != "Archivado" and procedure["state"] != "Concluido":
             if procedure["state_date"] == 1:
                 plazos["vencidos"] += 1
             elif procedure["state_date"] == 2:
@@ -1462,8 +1617,8 @@ def get_dashboard_desk(request):
         elif procedure["state"] == "En proceso":
             estados["en_proceso"] += 1
 
+            
     return Response({"dates": dates,
                      "state_procedure" : estados,
                      "state_date" : plazos,
                      "started_procedures" : percentage_aproved})
-
