@@ -2195,9 +2195,9 @@ def get_tramites_pendientes_excel(request):
 
             procedures.append(procedure)
 
-    data = {"area_usuaria": area_nombre, "procedures": procedures}
+    data = {"area_usuaria": area_nombre, "procedures": procedures, 'name': 'tramites-no-finalizados'}
 
-    path = get_unfinished_procedures_for_area_xlsx(data)
+    path = get_procedure_data_xlsx(data)
 
     url = URL_LOCAL if DEBUG else URL_PROD
     path = path.replace("/media", "media")
@@ -2496,9 +2496,9 @@ def get_tramites_area_excel(request):
             except IndexError:
                 break
 
-    data = {"area_usuaria": area["nombre"], "procedures": procedures}
+    data = {"area_usuaria": area["nombre"], "procedures": procedures, 'name': 'tramites'}
 
-    path = get_unfinished_procedures_for_area_xlsx(data)
+    path = get_procedure_data_xlsx(data)
 
     url = URL_LOCAL if DEBUG else URL_PROD
     path = path.replace("/media", "media")
