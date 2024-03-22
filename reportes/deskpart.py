@@ -738,7 +738,7 @@ def get_unfinished_procedures_for_area_pdf(data) -> str:
     return path_return
 
 
-def get_unfinished_procedures_for_area_xlsx(data) -> str:
+def get_procedure_data_xlsx(data) -> str:
     media_root = settings.MEDIA_ROOT
     pdf_folder = os.path.join(media_root, "excel", "deskpart")
     if not os.path.exists(pdf_folder):
@@ -753,7 +753,7 @@ def get_unfinished_procedures_for_area_xlsx(data) -> str:
         settings.MEDIA_ROOT,
         "excel",
         "reportes",
-        f"tramites-no-finalizados-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
+        f"{data['name']}-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
     )
 
     if os.path.exists(path_file):
@@ -876,8 +876,8 @@ def get_unfinished_procedures_for_area_xlsx(data) -> str:
     path_return = os.path.join(
         settings.MEDIA_URL,
         "excel",
-        "deskpart",
-        f"tramites-no-finalizados-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
+        "reportes",
+        f"{data['name']}-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
     )
 
     path_return = path_return.replace("\\", "/")
