@@ -2137,46 +2137,6 @@ def generate_diploma_pdf(request):
 
 
 @api_view(["GET"])
-def get_tramites_pendientes_excel(request):
-    user_id = request.GET.get("user_id")
-    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
-
-    area = cargo_area.area.first()
-
-    if not area:
-        return Response(
-            status=status.HTTP_400_BAD_REQUEST,
-            data={"message": "El usuario no tiene un area asignada"},
-        )
-    area = AreaSerializer(area).data
-
-    area_id = area.get("id")
-    area_nombre = area.get("nombre")
-
-    tracings_for_user = ProcedureTracing.objects.filter(
-        from_area=area_id, is_finished=False
-    ).order_by("-created_at")
-
-    procedures = []
-
-    for tracing in tracings_for_user:
-        procedure = ProcedureSerializer(tracing.procedure).data
-
-        if procedure not in procedures:
-
-            procedures.append(procedure)
-
-    data = {"area_usuaria": area_nombre, "procedures": procedures, 'name': 'tramites-no-finalizados'}
-
-    path = get_procedure_data_xlsx(data)
-
-    url = URL_LOCAL if DEBUG else URL_PROD
-    path = path.replace("/media", "media")
-    path = url + path
-    return Response({"path": path}, status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
 def get_charge_procedure_pdf(request):
     user_id = request.GET.get("user_id")
     procedure_charge_id = request.GET.get("procedure_charge_id")
@@ -2269,103 +2229,6 @@ def get_process_tracking_sheet_pdf(request):
 
 
 @api_view(["GET"])
-def get_traffic_in_area_excel(request):
-    fecha_inicio = request.GET.get("fecha_inicio")
-    fecha_fin = request.GET.get("fecha_fin")
-    user_id = request.GET.get("user_id")
-
-    if user_id == None or fecha_inicio == None or fecha_fin == None:
-        return Response(
-            {"error": "No se encontro el area o las fechas"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
-    if not cargo_area:
-        return Response(
-            status=status.HTTP_400_BAD_REQUEST,
-            data={"message": "El usuario no tiene un area asignada"},
-        )
-
-    area = AreaSerializer(cargo_area.area, many=True).data
-
-    from backend.settings import DEBUG, URL_LOCAL, URL_PROD
-
-    fecha_inicio = date(*map(int, fecha_inicio.split("-")))
-    fecha_fin = date(*map(int, fecha_fin.split("-")))
-
-    date_range = [
-        fecha_inicio + timedelta(days=x)
-        for x in range((fecha_fin - fecha_inicio).days + 1)
-    ]
-    tracingList = []
-
-    for fecha in date_range:
-        tracing_for_date = ProcedureTracingSerializer(
-            ProcedureTracing.objects.filter(
-                created_at__date=fecha, from_area__id=area[0]["id"]
-            ),
-            many=True,
-        ).data
-
-        tracingList.append(tracing_for_date)
-
-    area_usuaria = area[0]
-
-    for i in range(len(date_range)):
-        date_range[i] = datetime.datetime.strftime(date_range[i], "%Y-%m-%d")
-
-    path = generate_graph_traffic(tracingList, area_usuaria, date_range)
-
-    url = URL_LOCAL if DEBUG else URL_PROD
-    path = path.replace("/media", "media")
-    path = url + path
-
-    return Response({"path": path}, status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
-def get_tramites_dentro_fuera_de_plazo(request):
-    user_id = request.GET.get("user_id")
-
-    if user_id == None:
-        return Response(
-            {"error": "No se encontro el area o las fechas"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
-    if not cargo_area:
-        return Response(
-            status=status.HTTP_400_BAD_REQUEST,
-            data={"message": "El usuario no tiene un area asignada"},
-        )
-
-    area = AreaSerializer(cargo_area.area, many=True).data
-    area = area[0]
-
-    cargo_area = CargoArea.objects.filter(area__id=area["id"])
-
-    trackins = []
-
-    for value in cargo_area:
-        trackins.append(ProcedureTracing(user__area_id=cargo_area.user_id))
-
-    obj_procedure = []
-    for trackin in trackins:
-        procedure = Procedure.objects.filter(id=trackin.procedure_id).first()
-        serialized_procedure = ProcedureSerializer(procedure).data
-        to_area = Area.objects.filter(id=trackin.to_area_id).first()
-        serialized_procedure["to_area"] = AreaSerializer(to_area).data
-        serialized_procedure["action"] = trackin.action
-        obj_procedure.append(serialized_procedure)
-
-    procedureList = Procedure.objects.filter(user__area=area["id"])
-
-    print(procedureList)
-
-
-@api_view(["GET"])
 def get_constancia_registro(request):
     procedure_id = request.GET.get("procedure_id")
 
@@ -2430,7 +2293,7 @@ def get_tramites_area_excel(request):
 
             procedures.append(procedure)
     i = 0
-     
+
     for l in range(len(procedures)):
         try:
             if state == None and state_date != None:
@@ -2453,8 +2316,8 @@ def get_tramites_area_excel(request):
                     i += 1
         except IndexError:
             break
-    
-    if fecha_fin == None and fecha_inicio == None and year== None:
+
+    if fecha_fin == None and fecha_inicio == None and year == None:
         pass
     elif fecha_fin == None and fecha_inicio == None and year != None:
         fecha_inicio = f"{year}-01-01"
@@ -2467,7 +2330,7 @@ def get_tramites_area_excel(request):
             for x in range((fecha_fin - fecha_inicio).days + 1)
         ]
 
-        date_range = [date.strftime(fecha, '%d/%m/%Y') for fecha in date_range]
+        date_range = [date.strftime(fecha, "%d/%m/%Y") for fecha in date_range]
 
         i = 0
 
@@ -2489,7 +2352,7 @@ def get_tramites_area_excel(request):
             for x in range((fecha_fin - fecha_inicio).days + 1)
         ]
 
-        date_range = [date.strftime(fecha, '%d/%m/%Y') for fecha in date_range]
+        date_range = [date.strftime(fecha, "%d/%m/%Y") for fecha in date_range]
 
         for l in range(len(procedures)):
             try:
@@ -2500,7 +2363,11 @@ def get_tramites_area_excel(request):
             except IndexError:
                 break
 
-    data = {"area_usuaria": area["nombre"], "procedures": procedures, 'name': 'tramites'}
+    data = {
+        "area_usuaria": area["nombre"],
+        "procedures": procedures,
+        "name": "tramites",
+    }
 
     path = get_procedure_data_xlsx(data)
 
