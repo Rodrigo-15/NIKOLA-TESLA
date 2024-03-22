@@ -1589,7 +1589,6 @@ def get_dashboard_procedures(request):
 
     tracings_for_user = ProcedureTracing.objects.filter(
         from_area__id=area["id"]).order_by("-created_at")
-    
 
     procedures = []
 
@@ -1703,3 +1702,4 @@ def get_dashboard_procedures(request):
                      "state_procedure" : estados,
                      "state_date" : plazos,
                      "started_procedures" : percentage_aproved})
+
