@@ -141,7 +141,7 @@ def get_process_tracking_sheet(data) -> str:
             trackins.append(a)
 
         media_root = settings.MEDIA_ROOT
-        pdf_folder = os.path.join(media_root, "pdf")
+        pdf_folder = os.path.join(media_root, "pdf", "hoja_seguimiento")
         if not os.path.exists(pdf_folder):
             os.makedirs(pdf_folder)
         code_number = data["procedure"]["code_number"]
@@ -155,12 +155,6 @@ def get_process_tracking_sheet(data) -> str:
         if os.path.exists(pdf_file_name):
             os.remove(pdf_file_name)
         # html.write_pdf(pdf_file_name)
-        #
-        path_return = os.path.join(
-            settings.MEDIA_URL,
-            "pdf",
-            f"hoja-seguimiento-{code_number}-{milisecond}.pdf",
-        )
 
         pdfmetrics.registerFont(TTFont("Arial", "arial.ttf"))
         pdfmetrics.registerFont(TTFont("Arial-Bold", "arialbd.ttf"))
@@ -346,7 +340,12 @@ def get_process_tracking_sheet(data) -> str:
         tabla_dinamica(datosTabla, currenty, pageCounter)
 
         c.save()
-
+        path_return = os.path.join(
+            settings.MEDIA_URL,
+            "pdf",
+            "hoja_seguimiento",
+            f"hoja-seguimiento-{code_number}-{milisecond}.pdf",
+        )
         path_return = path_return.replace("\\", "/")
         return path_return
     except Exception as e:
@@ -389,7 +388,7 @@ def get_charge_procedure(data) -> str:
         style = getSampleStyleSheet()
         style = style["Normal"]
 
-        columnasTabla = ["Expediente N°", "Asunto", "Accion","Area", "Folios","Fecha"]
+        columnasTabla = ["Expediente N°", "Asunto", "Accion", "Area", "Folios", "Fecha"]
 
         # ----funciones---------#
         def setF(size, name="Arial"):
@@ -419,7 +418,7 @@ def get_charge_procedure(data) -> str:
                     value["subject"].upper(),
                     value["action"].upper(),
                     value["to_area"]["nombre"].upper(),
-                    value['number_of_sheets'],
+                    value["number_of_sheets"],
                     fechaaa,
                 ],
             )
@@ -540,9 +539,16 @@ def get_charge_procedure(data) -> str:
             limiteArriba,
             limiteAbajo,
             columnasTabla,
-            [maxWidht * 0.15, maxWidht * 0.20, maxWidht * 0.24, maxWidht * 0.18, maxWidht * 0.1, maxWidht * 0.13],
+            [
+                maxWidht * 0.15,
+                maxWidht * 0.20,
+                maxWidht * 0.24,
+                maxWidht * 0.18,
+                maxWidht * 0.1,
+                maxWidht * 0.13,
+            ],
         )
-        
+
         c.setFont(psfontname="Arial-Bold", size=fontzise + 3)
         c.drawCentredString(A4[0] / 2, currentY, "RECIBIDO CONFORME")
 
@@ -905,7 +911,7 @@ def generate_graph_traffic(tracingList, area_usuaria, date_range) -> str:
     chart = file.add_chart({"type": "line"})
     cantidades = []
 
-    datosTabla = [['Fecha', 'N° Tramites']]
+    datosTabla = [["Fecha", "N° Tramites"]]
 
     for value in tracingList:
         cantidades.append(len(value))
@@ -952,13 +958,15 @@ def generate_graph_traffic(tracingList, area_usuaria, date_range) -> str:
     path_return = path_return.replace("\\", "/")
     return path_return
 
+
 def generate_tramites_dentro_fuera_de_plazo_excel(data) -> str:
     return str(data)
 
-def generate_constancia_de_registro(data)-> str:
-    lLeft = 2*cm
-    lRigth = A4[1] - 2*cm
-    lTop = A4[0] - 2*cm
+
+def generate_constancia_de_registro(data) -> str:
+    lLeft = 2 * cm
+    lRigth = A4[1] - 2 * cm
+    lTop = A4[0] - 2 * cm
     lBot = cm
 
     media_root = settings.MEDIA_ROOT
@@ -976,10 +984,12 @@ def generate_constancia_de_registro(data)-> str:
 
     maxWidth = lRigth - lLeft
 
-    def setF(size, name = "Arial"):
+    def setF(size, name="Arial"):
         fontzise = size
-        fontname = name             #simplemente nos ayuda a cambiar las fuentes de todo mas rapido
-        c.setFont(psfontname=fontname, size= fontzise)
+        fontname = (
+            name  # simplemente nos ayuda a cambiar las fuentes de todo mas rapido
+        )
+        c.setFont(psfontname=fontname, size=fontzise)
         style.fontSize = fontzise
         style.fontName = fontname
         style.leading = size
@@ -993,8 +1003,8 @@ def generate_constancia_de_registro(data)-> str:
     style = getSampleStyleSheet()
     style = style["Normal"]
 
-    pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
-    pdfmetrics.registerFont(TTFont('Arial-Bold', 'arialbd.ttf'))
+    pdfmetrics.registerFont(TTFont("Arial", "arial.ttf"))
+    pdfmetrics.registerFont(TTFont("Arial-Bold", "arialbd.ttf"))
 
     estudiante = [data[0], data[1]]
 
@@ -1009,35 +1019,37 @@ def generate_constancia_de_registro(data)-> str:
 
     style.alignment = 1
 
-    c.drawCentredString(A4[1]/2, lTop - 135, 'CONSTANCIA DE REGISTRO')
+    c.drawCentredString(A4[1] / 2, lTop - 135, "CONSTANCIA DE REGISTRO")
 
     setF(18)
 
-    parrafo01 = Paragraph('La escuela de Postgrado, hace constar mediante el presente que:', style)
-    parrafo01.wrapOn(canv=c, aW= maxWidth, aH=1000)
+    parrafo01 = Paragraph(
+        "La escuela de Postgrado, hace constar mediante el presente que:", style
+    )
+    parrafo01.wrapOn(canv=c, aW=maxWidth, aH=1000)
     parrafo01.drawOn(c, lLeft, lTop - 175)
 
     setF(16)
 
-    c.drawString(lLeft+180, lTop - 210, 'Nombres y Apellidos: ')
-    c.drawString(lLeft+180, lTop - 240, 'DNI: ')
+    c.drawString(lLeft + 180, lTop - 210, "Nombres y Apellidos: ")
+    c.drawString(lLeft + 180, lTop - 240, "DNI: ")
 
     setF(16, "Arial-Bold")
 
-    c.drawString(lLeft+340, lTop - 210, estudiante[0])
-    c.drawString(lLeft+340, lTop - 240, estudiante[1])
+    c.drawString(lLeft + 340, lTop - 210, estudiante[0])
+    c.drawString(lLeft + 340, lTop - 240, estudiante[1])
 
-    parrafo02 = Paragraph(f'Ha registrado con fecha {data[3]} su {tipoTramite}.', style)
+    parrafo02 = Paragraph(f"Ha registrado con fecha {data[3]} su {tipoTramite}.", style)
     parrafo02.wrapOn(c, maxWidth, 1000)
     parrafo02.drawOn(c, lLeft, lTop - 300)
 
     c.save()
 
     path_return = os.path.join(
-    settings.MEDIA_URL,
-    "pdf",
-    "constanciaRegistro",
-    "constanciaDeRegistro-{}-{}.pdf".format(data[1], milisecond),
-)
+        settings.MEDIA_URL,
+        "pdf",
+        "constanciaRegistro",
+        "constanciaDeRegistro-{}-{}.pdf".format(data[1], milisecond),
+    )
     path_return = path_return.replace("\\", "/")
     return path_return

@@ -1409,35 +1409,6 @@ def roman_number(number):
 
 
 @api_view(["GET"])
-def get_process_tracking_sheet_pdf(request):
-    procedure_id = request.GET.get("procedure_id")
-    if procedure_id == None:
-        return Response(
-            {"error": "No se encontro el procedimiento"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    procedure = Procedure.objects.filter(id=procedure_id).first()
-    if procedure == None:
-        return Response(
-            {"error": "No se encontro el procedimiento"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    trackins = ProcedureTracing.objects.filter(procedure_id=procedure_id)
-    final_data = {
-        "procedure": ProcedureSerializer(procedure).data,
-        "trackins": ProcedureTracingsList(trackins, many=True).data,
-    }
-    path = get_process_tracking_sheet(final_data)
-
-    url = URL_LOCAL if DEBUG else URL_PROD
-    path = path.replace("/media", "media")
-    path = url + path
-    return Response({"path": path}, status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
 def reporte_economico_expediente_api(request):
     if request.method == "GET":
         expediente_id = request.GET.get("expediente")
@@ -2269,6 +2240,35 @@ def get_charge_procedure_pdf(request):
 
 
 @api_view(["GET"])
+def get_process_tracking_sheet_pdf(request):
+    procedure_id = request.GET.get("procedure_id")
+    if procedure_id == None:
+        return Response(
+            {"error": "No se encontro el procedimiento"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    procedure = Procedure.objects.filter(id=procedure_id).first()
+    if procedure == None:
+        return Response(
+            {"error": "No se encontro el procedimiento"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    trackins = ProcedureTracing.objects.filter(procedure_id=procedure_id)
+    final_data = {
+        "procedure": ProcedureSerializer(procedure).data,
+        "trackins": ProcedureTracingsList(trackins, many=True).data,
+    }
+    path = get_process_tracking_sheet(final_data)
+
+    url = URL_LOCAL if DEBUG else URL_PROD
+    path = path.replace("/media", "media")
+    path = url + path
+    return Response({"path": path}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
 def get_traffic_in_area_excel(request):
     fecha_inicio = request.GET.get("fecha_inicio")
     fecha_fin = request.GET.get("fecha_fin")
@@ -2360,7 +2360,7 @@ def get_tramites_dentro_fuera_de_plazo(request):
         serialized_procedure["action"] = trackin.action
         obj_procedure.append(serialized_procedure)
 
-    procedureList = Procedure.objects.filter(user__area = area["id"])
+    procedureList = Procedure.objects.filter(user__area=area["id"])
 
     print(procedureList)
 
@@ -2408,7 +2408,7 @@ def get_tramites_area_excel(request):
         )
 
     cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
-    
+
     if not cargo_area:
         return Response(
             status=status.HTTP_400_BAD_REQUEST,
@@ -2417,8 +2417,9 @@ def get_tramites_area_excel(request):
 
     area = (AreaSerializer(cargo_area.area, many=True).data)[0]
 
-    tracings_for_user = ProcedureTracing.objects.filter(
-        from_area=area["id"]).order_by("-created_at")
+    tracings_for_user = ProcedureTracing.objects.filter(from_area=area["id"]).order_by(
+        "-created_at"
+    )
 
     procedures = []
 
@@ -2429,27 +2430,30 @@ def get_tramites_area_excel(request):
 
             procedures.append(procedure)
     i = 0
-    
+
     for l in range(len(procedures)):
         try:
             if state == None and state_date != None:
                 if procedures[i]["state_date"] != state_date:
                     procedures.pop(i)
                 else:
-                    i+=1
+                    i += 1
             elif state != None and state_date == None:
                 if procedures[i]["state"] != state:
                     procedures.pop(i)
                 else:
-                    i+=1
+                    i += 1
             elif state != None and state_date != None:
-                if procedures[i]["state"] != state or procedures[i]["state_date"] != state_date:
+                if (
+                    procedures[i]["state"] != state
+                    or procedures[i]["state_date"] != state_date
+                ):
                     procedures.pop(i)
                 else:
-                    i+=1
+                    i += 1
         except IndexError:
             break
-    
+
     if fecha_fin == None and fecha_inicio == None and año == None:
         pass
     elif fecha_fin == None and fecha_inicio == None and año != None:
@@ -2498,4 +2502,3 @@ def get_tramites_area_excel(request):
     path = path.replace("/media", "media")
     path = url + path
     return Response({"path": path}, status=status.HTTP_200_OK)
-
