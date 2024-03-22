@@ -1445,12 +1445,13 @@ def get_dashboard_desk(request):
          #   break
 
     for procedure in procedures:
-        if procedure["state_date"] == 1:
-            plazos["vencidos"] += 1
-        elif procedure["state_date"] == 2:
-            plazos["por_vencer"] += 1
-        elif procedure["state_date"] == 3:
-            plazos["en_plazo"] += 1
+        if procedure["state"] != "Archivado" or procedure["state"] != "Conluido":
+            if procedure["state_date"] == 1:
+                plazos["vencidos"] += 1
+            elif procedure["state_date"] == 2:
+                plazos["por_vencer"] += 1
+            elif procedure["state_date"] == 3:
+                plazos["en_plazo"] += 1
 
         if procedure["state"] == "Iniciado":
             estados["iniciados"] += 1
