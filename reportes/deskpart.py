@@ -562,6 +562,7 @@ def get_charge_procedure(data) -> str:
             "hoja_de_cargo",
             "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond),
         )
+        print(path_return)
         path_return = path_return.replace("\\", "/")
         return path_return
     except Exception as e:
