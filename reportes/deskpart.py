@@ -232,7 +232,10 @@ def get_process_tracking_sheet(data) -> str:
         currenty = lTop - 100
 
         fontname = "Arial"
-        c.setFont(psfontname=fontname, size=fontzise)
+
+        setF(fontzise, "Arial-Bold")
+
+        c.setFont(psfontname="Arial-Bold", size=fontzise)
         c.drawString(lLeft, currenty, "CREADO POR:")
         currenty -= 30
         c.drawString(lLeft, currenty, "TIPO TRAMITE:")
@@ -247,6 +250,8 @@ def get_process_tracking_sheet(data) -> str:
         currenty -= 30
         c.drawString(lLeft, currenty, "OBSERVACION:")
         currenty = lTop - 100
+
+        setF(fontzise, "Arial")
 
         c.drawString(lLeft + 100, currenty, usuario)
         currenty -= 30
@@ -266,7 +271,6 @@ def get_process_tracking_sheet(data) -> str:
         observacionPara.drawOn(
             c, lLeft + 100, currenty - observacionPara.height + fontzise
         )
-        c.drawString(lLeft, currenty, "OBSERVACION:")
         currenty -= 30
 
         c.line(lLeft, currenty, lRight, currenty)
