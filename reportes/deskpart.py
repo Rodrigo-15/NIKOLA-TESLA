@@ -126,7 +126,7 @@ def tabla_dinamica(
 
             elif len(datosRestantes) == 0:
                 lol = False
-                currenty -= tabla.height
+                currenty -= tabla._height
     return lol, tabla._height, currenty
 
 
