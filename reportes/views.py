@@ -2213,12 +2213,15 @@ def get_process_tracking_sheet_pdf(request):
             {"error": "No se encontro el procedimiento"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+    
 
     trackins = ProcedureTracing.objects.filter(procedure_id=procedure_id)
     final_data = {
         "procedure": ProcedureSerializer(procedure).data,
         "trackins": ProcedureTracingsList(trackins, many=True).data,
     }
+
+    print(final_data["procedure"])
     path = get_process_tracking_sheet(final_data)
 
     url = URL_LOCAL if DEBUG else URL_PROD
