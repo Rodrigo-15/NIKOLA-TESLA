@@ -1386,13 +1386,12 @@ def get_dashboard_desk_area(request):
             procedure["created_at"] = procedure["created_at"].split(" ")[0]  #tomamos solo la fecha, la hora no nos importa
 
         for l in range(len(procedures)):
-            try:
-                if procedures[i]['created_at'] not in date_range:   #tomamos solo los tramites que fueron creados en nuestro rango de tiempo
-                    procedures.pop(i)
-                else:
-                    i += 1
-            except IndexError:
-                break
+            if procedures[l]['created_at'] not in date_range:   #tomamos solo los tramites que fueron creados en nuestro rango de tiempo
+                procedures[l] = 0
+
+        thing = [procedure for procedure in procedures if procedure != 0]
+
+        procedures = thing
         
         plazos = {"en_plazo": 0, "por_vencer": 0, "vencidos" : 0}
         estados = {
@@ -1409,7 +1408,7 @@ def get_dashboard_desk_area(request):
         for data in [trakins, procedures]:
             for item in data:
                 fecha = item["created_at"].split("T")[0].replace("-", "/")
-                dia, mes, año = fecha.split("/")
+                año, mes, dia = fecha.split("/")
                 fecha = f"{dia}/{mes}/{año}"
 
                 # Actualizar los conteos correspondientes en el diccionario
@@ -1422,7 +1421,7 @@ def get_dashboard_desk_area(request):
 
         for procedure in procedures:
             for datel in date_range:
-                fecha = item["created_at"].split("T")[0].replace("-", "/")
+                fecha = procedure["created_at"].split("T")[0].replace("-", "/")
                 dia, mes, año = fecha.split("/")
                 fecha = f"{dia}/{mes}/{año}"
                 if fecha == datel:
@@ -1457,10 +1456,39 @@ def get_dashboard_desk_area(request):
                 estados["concluidos"] += 1
             elif procedure["state"] == "En proceso":
                 estados["en_proceso"] += 1
-        returnList.append({"dates": dates,
-                     "state_procedure" : estados,
-                     "state_date" : plazos,
-                     "started_procedures" : percentage_aproved})
+        weekGroups = {}
+
+        for key in dates.keys():
+            try:
+                fecha = datetime.strptime(key, "%Y/%m/%d")
+            except ValueError:
+                fecha = datetime.strptime(key, "%d/%m/%Y")
+
+            week_start = fecha - timedelta(days=fecha.weekday())
+
+            week_start = date.strftime(week_start, "%d/%m/%Y")
+
+            if week_start in weekGroups:
+                weekGroups[week_start]['iniciados'] += dates[key]["iniciados"]
+                weekGroups[week_start]['en_proceso'] += dates[key]["en_proceso"]
+                weekGroups[week_start]['archivados'] += dates[key]["archivados"]
+                weekGroups[week_start]['finalizados'] += dates[key]["finalizados"]
+            else:
+                weekGroups[week_start] = {"iniciados" : dates[key]["iniciados"],
+                                        "en_proceso" : dates[key]["en_proceso"],
+                                        "archivados": dates[key]["archivados"],
+                                        "finalizados": dates[key]["finalizados"]}
+                
+        weekGroupsf = {}
+        lista = [week for week in weekGroups.keys()]
+        for i in range(len(weekGroups)):
+            weekGroupsf[f"Semana{i+1}"] = weekGroups[lista[i]]
+
+                
+        returnList.append({"dates": weekGroupsf,
+                        "state_procedure" : estados,
+                        "state_date" : plazos,
+                        "started_procedures" : percentage_aproved})
 
     return Response(returnList)
 
@@ -1531,13 +1559,12 @@ def get_dashboard_desk_usuario(request):
         procedure["created_at"] = procedure["created_at"].split(" ")[0]  #tomamos solo la fecha, la hora no nos importa
 
     for l in range(len(procedures)):
-        try:
-            if procedures[i]['created_at'] not in date_range:   #tomamos solo los tramites que fueron creados en nuestro rango de tiempo
-                procedures.pop(i)
-            else:
-                i += 1
-        except IndexError:
-            break
+            if procedures[l]['created_at'] not in date_range:   #tomamos solo los tramites que fueron creados en nuestro rango de tiempo
+                procedures[l] = 0
+
+    thing = [procedure for procedure in procedures if procedure != 0]
+
+    procedures = thing
     
     plazos = {"en_plazo": 0, "por_vencer": 0, "vencidos" : 0}
     estados = {
@@ -1554,7 +1581,7 @@ def get_dashboard_desk_usuario(request):
     for data in [trakins, procedures]:
         for item in data:
             fecha = item["created_at"].split("T")[0].replace("-", "/")
-            dia, mes, año = fecha.split("/")
+            año, mes, dia = fecha.split("/")
             fecha = f"{dia}/{mes}/{año}"
 
             # Actualizar los conteos correspondientes en el diccionario
@@ -1565,14 +1592,16 @@ def get_dashboard_desk_usuario(request):
             else:
                 dates[fecha]["en_proceso"] += 1
 
+
     for procedure in procedures:
         for datel in date_range:
-            fecha = item["created_at"].split("T")[0].replace("-", "/")
+            fecha = procedure["created_at"].split("T")[0].replace("-", "/")
             dia, mes, año = fecha.split("/")
             fecha = f"{dia}/{mes}/{año}"
             if fecha == datel:
                 dates[datel]['iniciados'] += 1
     i = 0
+
     for l in range(len(dates)):
         try:
             a = dates[i]["iniciados"] + dates[i]["en_proceso"] + dates[i]["finalizados"] +dates[i]["archivados"]
@@ -1601,8 +1630,36 @@ def get_dashboard_desk_usuario(request):
         elif procedure["state"] == "En proceso":
             estados["en_proceso"] += 1
 
+    weekGroups = {}
+
+    for key in dates.keys():
+        try:
+            fecha = datetime.strptime(key, "%Y/%m/%d")
+        except ValueError:
+            fecha = datetime.strptime(key, "%d/%m/%Y")
+
+        week_start = fecha - timedelta(days=fecha.weekday())
+
+        week_start = date.strftime(week_start, "%d/%m/%Y")
+
+        if week_start in weekGroups:
+            weekGroups[week_start]['iniciados'] += dates[key]["iniciados"]
+            weekGroups[week_start]['en_proceso'] += dates[key]["en_proceso"]
+            weekGroups[week_start]['archivados'] += dates[key]["archivados"]
+            weekGroups[week_start]['finalizados'] += dates[key]["finalizados"]
+        else:
+            weekGroups[week_start] = {"iniciados" : dates[key]["iniciados"],
+                                      "en_proceso" : dates[key]["en_proceso"],
+                                      "archivados": dates[key]["archivados"],
+                                      "finalizados": dates[key]["finalizados"]}
             
-    return Response({"dates": dates,
+    weekGroupsf = {}
+    lista = [week for week in weekGroups.keys()]
+    for i in range(len(weekGroups)):
+        weekGroupsf[f"Semana{i+1}"] = weekGroups[lista[i]]
+
+            
+    return Response({"dates": weekGroupsf,
                      "state_procedure" : estados,
                      "state_date" : plazos,
                      "started_procedures" : percentage_aproved})
