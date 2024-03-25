@@ -1297,12 +1297,7 @@ def save_procedure_externo_register(request):
             status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
         )
 
-
-@api_view(["GET"])
-def get_dashboard_desk_area(request):
-    """Get count of procedures"""
-    user_id = request.GET.get("user_id")
-    time_filter = request.GET.get("time_filter")
+def get_dashboard_desk_area(user_id, time_filter):
 
     if time_filter == None:
         return Response(
@@ -1357,6 +1352,8 @@ def get_dashboard_desk_area(request):
         tracings_for_user = ProcedureTracing.objects.filter(
             from_area__id=area["id"]).order_by("-created_at")
 
+        nombreArea = area["nombre"]
+
         procedures = []
 
         for tracing in tracings_for_user:
@@ -1366,21 +1363,6 @@ def get_dashboard_desk_area(request):
 
                 procedures.append(procedure)
         i = 0
-
-        ###-------se saca el porcentaje de tramites aprobados-----------####
-
-        filtred_trackins = ProcedureTracing.objects.filter(
-                to_area_id=area["id"], is_approved=False, assigned_user_id=None
-            ).order_by("-created_at")
-        proceduretracing = ProcedureTracingSerializer(filtred_trackins, many=True)
-
-        procedures_not_aproved = Procedure.objects.filter(
-                id__in=[procedure["procedure"] for procedure in proceduretracing.data]
-            )
-        
-        percentage_aproved = (len(procedures) - len(procedures_not_aproved))/len(procedures)
-
-        ###------------------------------------------------###
 
         for procedure in procedures:
             procedure["created_at"] = procedure["created_at"].split(" ")[0]  #tomamos solo la fecha, la hora no nos importa
@@ -1399,45 +1381,7 @@ def get_dashboard_desk_area(request):
             "en_proceso": 0, 
             "archivados": 0, 
             "concluidos": 0}
-        
-        dates = defaultdict(lambda: {"finalizados": 0, "archivados": 0, "en_proceso": 0, "iniciados": 0})
-        
-        trakins = ProcedureTracingSerializer(ProcedureTracing.objects.filter(procedure_id__in =[procedure["id"] for procedure in procedures]).order_by("-created_at"), many = True).data
 
-    # Procesar trakins y procedures juntos
-        for data in [trakins, procedures]:
-            for item in data:
-                fecha = item["created_at"].split("T")[0].replace("-", "/")
-                año, mes, dia = fecha.split("/")
-                fecha = f"{dia}/{mes}/{año}"
-
-                # Actualizar los conteos correspondientes en el diccionario
-                if item.get("is_finished"):
-                    dates[fecha]["finalizados"] += 1
-                elif item.get("is_archived"):
-                    dates[fecha]["archivados"] += 1
-                else:
-                    dates[fecha]["en_proceso"] += 1
-
-        for procedure in procedures:
-            for datel in date_range:
-                fecha = procedure["created_at"].split("T")[0].replace("-", "/")
-                dia, mes, año = fecha.split("/")
-                fecha = f"{dia}/{mes}/{año}"
-                if fecha == datel:
-                    dates[datel]['iniciados'] += 1
-
-
-        i = 0
-        for l in range(len(dates)):
-            try:
-                a = dates[i]["iniciados"] + dates[i]["en_proceso"] + dates[i]["finalizados"] +dates[i]["archivados"]
-                if a == 0:
-                    dates.pop(i)
-                else:
-                    i += 1
-            except IndexError:
-                break
 
         for procedure in procedures:
             if procedure["state"] != "Archivado" and procedure["state"] != "Concluido":
@@ -1456,45 +1400,16 @@ def get_dashboard_desk_area(request):
                 estados["concluidos"] += 1
             elif procedure["state"] == "En proceso":
                 estados["en_proceso"] += 1
-        weekGroups = {}
-
-        for key in dates.keys():
-            try:
-                fecha = datetime.strptime(key, "%Y/%m/%d")
-            except ValueError:
-                fecha = datetime.strptime(key, "%d/%m/%Y")
-
-            week_start = fecha - timedelta(days=fecha.weekday())
-
-            week_start = date.strftime(week_start, "%d/%m/%Y")
-
-            if week_start in weekGroups:
-                weekGroups[week_start]['iniciados'] += dates[key]["iniciados"]
-                weekGroups[week_start]['en_proceso'] += dates[key]["en_proceso"]
-                weekGroups[week_start]['archivados'] += dates[key]["archivados"]
-                weekGroups[week_start]['finalizados'] += dates[key]["finalizados"]
-            else:
-                weekGroups[week_start] = {"iniciados" : dates[key]["iniciados"],
-                                        "en_proceso" : dates[key]["en_proceso"],
-                                        "archivados": dates[key]["archivados"],
-                                        "finalizados": dates[key]["finalizados"]}
                 
-        weekGroupsf = {}
-        lista = [week for week in weekGroups.keys()]
-        for i in range(len(weekGroups)):
-            weekGroupsf[f"Semana{i+1}"] = weekGroups[lista[i]]
-
-                
-        returnList.append({"dates": weekGroupsf,
+        returnList.append({"area": nombreArea,
                         "state_procedure" : estados,
-                        "state_date" : plazos,
-                        "started_procedures" : percentage_aproved})
+                        "state_date" : plazos,})
 
-    return Response(returnList)
+    return returnList
 
 
 @api_view(["GET"])
-def get_dashboard_desk_usuario(request):
+def get_dashboard_desk(request):
     """Get count of procedures"""
     usuario_id = request.GET.get("user_id")
     time_filter = request.GET.get("time_filter")
@@ -1658,9 +1573,11 @@ def get_dashboard_desk_usuario(request):
     for i in range(len(weekGroups)):
         weekGroupsf[f"Semana{i+1}"] = weekGroups[lista[i]]
 
+    listaAreas = get_dashboard_desk_area(usuario_id, time_filter)
+
             
     return Response({"dates": weekGroupsf,
                      "state_procedure" : estados,
                      "state_date" : plazos,
-                     "started_procedures" : percentage_aproved})
+                     "area_procedures": listaAreas})
 
