@@ -360,7 +360,10 @@ def get_charge_procedure(data) -> str:
         folder_name = "pdf/hoja_de_cargo/"
 
         # Crea la carpeta en el bucket si no existe
-        #s3_client.put_object(Bucket=bucket_name, Key=folder_name)
+        try:
+            s3_client.head_object(Bucket=bucket_name, Key=folder_name)
+        except:
+            s3_client.put_object(Bucket=bucket_name, Key=folder_name)
 
         # pdf_folder = os.path.join(media_root, "pdf", "hoja_de_cargo")
         # if not os.path.exists(pdf_folder):
@@ -561,8 +564,15 @@ def get_charge_procedure(data) -> str:
         c.setTitle("hoja_de_cargo-{}-{}".format(area, milisecond))
         c.save()
         #
+        # Subir el archivo PDF al bucket de S3
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=folder_name + pdf_file_name,
+            Body=open(pdf_file_name, "rb"),
+        )
+
         path_return = settings.MEDIA_URL + pdf_file_key
-        #path_return = path_return.replace("\\", "/")
+        # path_return = path_return.replace("\\", "/")
         return path_return
     except Exception as e:
         print(e)
