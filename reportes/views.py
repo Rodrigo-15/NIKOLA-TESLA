@@ -2194,6 +2194,7 @@ def get_charge_procedure_pdf(request):
         "procedure_count": len(obj_procedure),
         "charge_number": text_charge_number,
     }
+    print(final_data)
     path = get_charge_procedure(final_data)
     path = path.replace("/media", "media")
     return Response({"path": path}, status=status.HTTP_200_OK)
@@ -2370,8 +2371,5 @@ def get_tramites_area_excel(request):
     }
 
     path = get_procedure_data_xlsx(data)
-
-    url = URL_LOCAL if DEBUG else URL_PROD
     path = path.replace("/media", "media")
-    path = url + path
     return Response({"path": path}, status=status.HTTP_200_OK)

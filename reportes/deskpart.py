@@ -583,7 +583,7 @@ def get_procedure_data_xlsx(data) -> str:
     path_file = os.path.join(
         settings.MEDIA_ROOT,
         "excel",
-        "reportes",
+        "deskpart",
         f"{data['name']}-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
     )
 
@@ -707,7 +707,7 @@ def get_procedure_data_xlsx(data) -> str:
     path_return = os.path.join(
         settings.MEDIA_URL,
         "excel",
-        "reportes",
+        "deskpart",
         f"{data['name']}-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
     )
 
