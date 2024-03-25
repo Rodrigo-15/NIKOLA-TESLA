@@ -1326,6 +1326,7 @@ def get_dashboard_desk_area(request):
         dia, mes, año = today.strftime("%d/%m/%Y").split("/")
         fecha_inicio = f"01/01/{año}"
         fecha_inicio = datetime.strptime(fecha_inicio, "%d/%m/%Y")
+        fecha_inicio = fecha_inicio.date()
 
     date_range = [fecha_inicio + timedelta(days=x) for x in range((today - fecha_inicio).days + 1)]
     date_range = [d.strftime("%d/%m/%Y") for d in date_range]
@@ -1419,8 +1420,13 @@ def get_dashboard_desk_area(request):
                 else:
                     dates[fecha]["en_proceso"] += 1
 
-            if "is_finished" not in item and "is_archived" not in item:
-                dates[fecha]["iniciados"] += 1
+        for procedure in procedures:
+            for datel in date_range:
+                fecha = item["created_at"].split("T")[0].replace("-", "/")
+                dia, mes, año = fecha.split("/")
+                fecha = f"{dia}/{mes}/{año}"
+                if fecha == datel:
+                    dates[datel]['iniciados'] += 1
 
 
         i = 0
@@ -1433,19 +1439,6 @@ def get_dashboard_desk_area(request):
                     i += 1
             except IndexError:
                 break
-
-
-
-        i = 0
-        
-    # for l in range(len(fechas_contadas)):
-        #    try:
-        #       if fechas_contadas[i][1] == 0:
-        #          fechas_contadas.pop(i)      #quitamos las fechas que tengan 0 creados
-        #     else:
-            #        i += 1 
-            #except IndexError:
-            #   break
 
         for procedure in procedures:
             if procedure["state"] != "Archivado" and procedure["state"] != "Concluido":
@@ -1500,6 +1493,7 @@ def get_dashboard_desk_usuario(request):
         dia, mes, año = today.strftime("%d/%m/%Y").split("/")
         fecha_inicio = f"01/01/{año}"
         fecha_inicio = datetime.strptime(fecha_inicio, "%d/%m/%Y")
+        fecha_inicio = fecha_inicio.date()
 
     date_range = [fecha_inicio + timedelta(days=x) for x in range((today - fecha_inicio).days + 1)]
     date_range = [d.strftime("%d/%m/%Y") for d in date_range]
@@ -1571,10 +1565,13 @@ def get_dashboard_desk_usuario(request):
             else:
                 dates[fecha]["en_proceso"] += 1
 
-        if "is_finished" not in item and "is_archived" not in item:
-            dates[fecha]["iniciados"] += 1
-
-
+    for procedure in procedures:
+        for datel in date_range:
+            fecha = item["created_at"].split("T")[0].replace("-", "/")
+            dia, mes, año = fecha.split("/")
+            fecha = f"{dia}/{mes}/{año}"
+            if fecha == datel:
+                dates[datel]['iniciados'] += 1
     i = 0
     for l in range(len(dates)):
         try:
@@ -1585,19 +1582,6 @@ def get_dashboard_desk_usuario(request):
                 i += 1
         except IndexError:
             break
-
-
-
-    i = 0
-    
-# for l in range(len(fechas_contadas)):
-    #    try:
-    #       if fechas_contadas[i][1] == 0:
-    #          fechas_contadas.pop(i)      #quitamos las fechas que tengan 0 creados
-    #     else:
-        #        i += 1 
-        #except IndexError:
-        #   break
 
     for procedure in procedures:
         if procedure["state"] != "Archivado" and procedure["state"] != "Concluido":
@@ -1622,3 +1606,4 @@ def get_dashboard_desk_usuario(request):
                      "state_procedure" : estados,
                      "state_date" : plazos,
                      "started_procedures" : percentage_aproved})
+
