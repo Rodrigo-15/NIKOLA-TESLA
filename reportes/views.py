@@ -2298,7 +2298,8 @@ def get_tramites_area_excel(request):
     for l in range(len(procedures)):
         try:
             if state == None and state_date != None:
-                if procedures[i]["state_date"] != state_date:
+                a = str(procedures[i]["state_date"])
+                if a != state_date:
                     procedures.pop(i)
                 else:
                     i += 1
@@ -2308,15 +2309,18 @@ def get_tramites_area_excel(request):
                 else:
                     i += 1
             elif state != None and state_date != None:
+                a = str(procedures[i]["state_date"])
                 if (
                     procedures[i]["state"] != state
-                    or procedures[i]["state_date"] != state_date
+                    or a != state_date
                 ):
                     procedures.pop(i)
                 else:
                     i += 1
         except IndexError:
             break
+
+    print(procedures)
 
     if fecha_fin == None and fecha_inicio == None and year == None:
         pass
