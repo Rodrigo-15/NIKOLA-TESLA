@@ -573,7 +573,7 @@ def get_charge_procedure(data) -> str:
         )
 
         c.setFont(psfontname="Arial-Bold", size=fontzise + 3)
-        c.drawCentredString(A4[0] / 2, currentY - 20, "RECIBIDO CONFORME")
+        c.drawCentredString(A4[0] / 2, currentY - 50, "RECIBIDO CONFORME")
 
         # ---------guardar archivo-------------#
         c.setTitle("hoja_de_cargo-{}-{}".format(area, milisecond))
