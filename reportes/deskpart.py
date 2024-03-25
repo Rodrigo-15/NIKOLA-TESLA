@@ -98,7 +98,6 @@ def tabla_dinamica(
 
             tabla.wrapOn(c, maxWidht, 250)
             tabla.drawOn(c, lLeft, currenty - tabla._height)
-            currenty = lTop
 
             setF(8)
             c.drawCentredString(A4[0] / 2, lBot, str(pageCounter))
@@ -550,7 +549,7 @@ def get_charge_procedure(data) -> str:
         )
 
         c.setFont(psfontname="Arial-Bold", size=fontzise + 3)
-        c.drawCentredString(A4[0] / 2, currentY, "RECIBIDO CONFORME")
+        c.drawCentredString(A4[0] / 2, currentY - 20, "RECIBIDO CONFORME")
 
         # ---------guardar archivo-------------#
         c.setTitle("hoja_de_cargo-{}-{}".format(area, milisecond))
