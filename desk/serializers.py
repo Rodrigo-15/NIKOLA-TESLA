@@ -72,6 +72,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
     anexed_code_number = serializers.SerializerMethodField(
         source="get_anexed_code_number"
     )
+    number_of_sheets = serializers.IntegerField()
 
     def get_user_name(self, obj):
         person = Persona.objects.filter(user_id=obj.user_id).first()

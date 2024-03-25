@@ -183,8 +183,17 @@ def get_process_tracking_sheet(data) -> str:
         fechaHora = data["procedure"]["created_at"]
         tipoTramite = data["procedure"]["procedure_type_description"]
         asunto = data["procedure"]["subject"]
-
+        usuario = data["procedure"]["user_name"]
+        folios = str(data["procedure"]["number_of_sheets"])
         observacion = data["procedure"]["description"]
+        date_state = data["procedure"]["state_date"]
+
+        if date_state == 1:
+            date_state = "EN PLAZO"
+        elif date_state == 2:
+            date_state == "POR VENCER"
+        else:
+            date_state == "VENCIDO"
 
         for i in range(len(datosTabla)):
             if i > 0:
@@ -224,21 +233,32 @@ def get_process_tracking_sheet(data) -> str:
 
         fontname = "Arial"
         c.setFont(psfontname=fontname, size=fontzise)
-
+        c.drawString(lLeft, currenty, "CREADO POR:")
+        currenty -= 30
         c.drawString(lLeft, currenty, "TIPO TRAMITE:")
         currenty -= 30
         c.drawString(lLeft, currenty, "ASUNTO:")
         currenty -= 30
         c.drawString(lLeft, currenty, "FECHA:")
         currenty -= 30
+        c.drawString(lLeft, currenty, "ESTADO FECHA:")
+        currenty -= 30
+        c.drawString(lLeft, currenty, "N° DE FOLIOS:")
+        currenty -= 30
         c.drawString(lLeft, currenty, "OBSERVACION:")
         currenty = lTop - 100
 
+        c.drawString(lLeft + 100, currenty, usuario)
+        currenty -= 30
         c.drawString(lLeft + 100, currenty, tipoTramite)
         currenty -= 30
         c.drawString(lLeft + 100, currenty, asunto)
         currenty -= 30
         c.drawString(lLeft + 100, currenty, fechaHora)
+        currenty -= 30
+        c.drawString(lLeft + 100, currenty, date_state)
+        currenty -= 30
+        c.drawString(lLeft + 100, currenty, folios)
         currenty -= 30
 
         observacionPara = Paragraph(observacion, style)
