@@ -2195,7 +2195,6 @@ def get_charge_procedure_pdf(request):
         "charge_number": text_charge_number,
     }
     path = get_charge_procedure(final_data)
-    path = path.replace("/media", "media")
     return Response({"path": path}, status=status.HTTP_200_OK)
 
 
@@ -2309,10 +2308,7 @@ def get_tramites_area_excel(request):
                     i += 1
             elif state != None and state_date != None:
                 a = str(procedures[i]["state_date"])
-                if (
-                    procedures[i]["state"] != state
-                    or a != state_date
-                ):
+                if procedures[i]["state"] != state or a != state_date:
                     procedures.pop(i)
                 else:
                     i += 1

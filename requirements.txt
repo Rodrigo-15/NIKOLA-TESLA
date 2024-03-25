@@ -35,3 +35,5 @@ channels
 channels-redis
 shortuuid
 daphne
+django-storages
+boto3

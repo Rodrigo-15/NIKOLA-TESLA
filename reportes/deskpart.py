@@ -355,19 +355,25 @@ def get_process_tracking_sheet(data) -> str:
 def get_charge_procedure(data) -> str:
     try:
         #
-        media_root = settings.MEDIA_ROOT
-        pdf_folder = os.path.join(media_root, "pdf", "hoja_de_cargo")
-        if not os.path.exists(pdf_folder):
-            os.makedirs(pdf_folder)
+        s3_client = settings.CREATE_STORAGE
+        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+        folder_name = "pdf/hoja_de_cargo/"
+
+        # Crea la carpeta en el bucket si no existe
+        #s3_client.put_object(Bucket=bucket_name, Key=folder_name)
+
+        # pdf_folder = os.path.join(media_root, "pdf", "hoja_de_cargo")
+        # if not os.path.exists(pdf_folder):
+        # os.makedirs(pdf_folder)
         area = data["area"]["nombre"].replace(" ", "_")
         charge_number = data["charge_number"]
         milisecond = str(int(round(time.time() * 1000)))
-        pdf_file_name = os.path.join(
-            pdf_folder,
-            "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond),
-        )
-        if os.path.exists(pdf_file_name):
-            os.remove(pdf_file_name)
+
+        # Nombre del archivo PDF que deseas crear
+        pdf_file_name = "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond)
+
+        # Ruta completa del archivo PDF en el bucket
+        pdf_file_key = folder_name + pdf_file_name
 
         # -----generar pdf-----#
         c = canvas.Canvas(pdf_file_name, A4)
@@ -555,14 +561,8 @@ def get_charge_procedure(data) -> str:
         c.setTitle("hoja_de_cargo-{}-{}".format(area, milisecond))
         c.save()
         #
-        path_return = os.path.join(
-            settings.MEDIA_URL,
-            "pdf",
-            "hoja_de_cargo",
-            "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond),
-        )
-        print(path_return)
-        path_return = path_return.replace("\\", "/")
+        path_return = settings.MEDIA_URL + pdf_file_key
+        #path_return = path_return.replace("\\", "/")
         return path_return
     except Exception as e:
         print(e)
