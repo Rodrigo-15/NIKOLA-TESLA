@@ -13,10 +13,10 @@ from rest_framework.pagination import PageNumberPagination
 class CustomPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
-    max_page_size = 100
+    max_page_size = 10
 
 class YourView(APIView):
-    pagination_class = CustomPagination
+   # pagination_class = CustomPagination
 
     def get(self, request):
         usuario_id = request.GET.get("user_id")
