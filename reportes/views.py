@@ -2195,7 +2195,6 @@ def get_charge_procedure_pdf(request):
         "charge_number": text_charge_number,
     }
     path = get_charge_procedure(final_data)
-    path = path.replace("/media", "media")
     return Response({"path": path}, status=status.HTTP_200_OK)
 
 
@@ -2214,7 +2213,6 @@ def get_process_tracking_sheet_pdf(request):
             {"error": "No se encontro el procedimiento"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    
 
     trackins = ProcedureTracing.objects.filter(procedure_id=procedure_id)
     final_data = {
@@ -2222,12 +2220,7 @@ def get_process_tracking_sheet_pdf(request):
         "trackins": ProcedureTracingsList(trackins, many=True).data,
     }
 
-    print(final_data["procedure"])
     path = get_process_tracking_sheet(final_data)
-
-    url = URL_LOCAL if DEBUG else URL_PROD
-    path = path.replace("/media", "media")
-    path = url + path
     return Response({"path": path}, status=status.HTTP_200_OK)
 
 
@@ -2254,7 +2247,6 @@ def get_constancia_registro(request):
     data = [persona, dni, procedureType, fecha]
 
     path = generate_constancia_de_registro(data)
-    path = path.replace("/media", "media")
     return Response({"path": path}, status=status.HTTP_200_OK)
 
 
@@ -2312,17 +2304,12 @@ def get_tramites_area_excel(request):
                     i += 1
             elif state != None and state_date != None:
                 a = str(procedures[i]["state_date"])
-                if (
-                    procedures[i]["state"] != state
-                    or a != state_date
-                ):
+                if procedures[i]["state"] != state or a != state_date:
                     procedures.pop(i)
                 else:
                     i += 1
         except IndexError:
             break
-
-    print(procedures)
 
     if fecha_fin == None and fecha_inicio == None and year == None:
         pass
@@ -2377,8 +2364,5 @@ def get_tramites_area_excel(request):
     }
 
     path = get_procedure_data_xlsx(data)
-
-    url = URL_LOCAL if DEBUG else URL_PROD
     path = path.replace("/media", "media")
-    path = url + path
     return Response({"path": path}, status=status.HTTP_200_OK)

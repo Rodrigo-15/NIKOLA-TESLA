@@ -138,22 +138,23 @@ def get_process_tracking_sheet(data) -> str:
             thing = dict(thing)
             a = dict(thing)
             trackins.append(a)
-
-        media_root = settings.MEDIA_ROOT
-        pdf_folder = os.path.join(media_root, "pdf", "hoja_seguimiento")
-        if not os.path.exists(pdf_folder):
-            os.makedirs(pdf_folder)
-        code_number = data["procedure"]["code_number"]
         #
-        # html_string = render_to_string("reports/hoja_seguimiento.html", data)
+        s3_client = settings.CREATE_STORAGE
+        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+        folder_name = "pdf/hoja_seguimiento/"
+
+        # Crea la carpeta en el bucket si no existe
+        try:
+            s3_client.head_object(Bucket=bucket_name, Key=folder_name)
+        except:
+            s3_client.put_object(Bucket=bucket_name, Key=folder_name)
+        code_number = data["procedure"]["code_number"]
         milisecond = str(int(round(time.time() * 1000)))
-        # html = HTML(string=html_string)
-        pdf_file_name = os.path.join(
-            pdf_folder, "hoja-seguimiento-{}-{}.pdf".format(code_number, milisecond)
-        )
-        if os.path.exists(pdf_file_name):
-            os.remove(pdf_file_name)
-        # html.write_pdf(pdf_file_name)
+        # Nombre del archivo PDF que deseas crear
+        pdf_file_name = "hoja-seguimiento-{}-{}.pdf".format(code_number, milisecond)
+
+        # Ruta completa del archivo PDF en el bucket
+        pdf_file_key = folder_name + pdf_file_name
 
         pdfmetrics.registerFont(TTFont("Arial", "arial.ttf"))
         pdfmetrics.registerFont(TTFont("Arial-Bold", "arialbd.ttf"))
@@ -363,13 +364,13 @@ def get_process_tracking_sheet(data) -> str:
         tabla_dinamica(datosTabla, currenty, pageCounter)
 
         c.save()
-        path_return = os.path.join(
-            settings.MEDIA_URL,
-            "pdf",
-            "hoja_seguimiento",
-            f"hoja-seguimiento-{code_number}-{milisecond}.pdf",
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=folder_name + pdf_file_name,
+            Body=open(pdf_file_name, "rb"),
         )
-        path_return = path_return.replace("\\", "/")
+
+        path_return = settings.MEDIA_URL + pdf_file_key
         return path_return
     except Exception as e:
         print(e)
@@ -379,19 +380,25 @@ def get_process_tracking_sheet(data) -> str:
 def get_charge_procedure(data) -> str:
     try:
         #
-        media_root = settings.MEDIA_ROOT
-        pdf_folder = os.path.join(media_root, "pdf", "hoja_de_cargo")
-        if not os.path.exists(pdf_folder):
-            os.makedirs(pdf_folder)
+        s3_client = settings.CREATE_STORAGE
+        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+        folder_name = "pdf/hoja_de_cargo/"
+
+        # Crea la carpeta en el bucket si no existe
+        try:
+            s3_client.head_object(Bucket=bucket_name, Key=folder_name)
+        except:
+            s3_client.put_object(Bucket=bucket_name, Key=folder_name)
+
         area = data["area"]["nombre"].replace(" ", "_")
         charge_number = data["charge_number"]
         milisecond = str(int(round(time.time() * 1000)))
-        pdf_file_name = os.path.join(
-            pdf_folder,
-            "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond),
-        )
-        if os.path.exists(pdf_file_name):
-            os.remove(pdf_file_name)
+
+        # Nombre del archivo PDF que deseas crear
+        pdf_file_name = "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond)
+
+        # Ruta completa del archivo PDF en el bucket
+        pdf_file_key = folder_name + pdf_file_name
 
         # -----generar pdf-----#
         c = canvas.Canvas(pdf_file_name, A4)
@@ -579,13 +586,14 @@ def get_charge_procedure(data) -> str:
         c.setTitle("hoja_de_cargo-{}-{}".format(area, milisecond))
         c.save()
         #
-        path_return = os.path.join(
-            settings.MEDIA_URL,
-            "pdf",
-            "hoja_de_cargo",
-            "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond),
+        # Subir el archivo PDF al bucket de S3
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=folder_name + pdf_file_name,
+            Body=open(pdf_file_name, "rb"),
         )
-        path_return = path_return.replace("\\", "/")
+
+        path_return = settings.MEDIA_URL + pdf_file_key
         return path_return
     except Exception as e:
         print(e)
@@ -593,25 +601,27 @@ def get_charge_procedure(data) -> str:
 
 
 def get_procedure_data_xlsx(data) -> str:
-    media_root = settings.MEDIA_ROOT
-    pdf_folder = os.path.join(media_root, "excel", "deskpart")
-    if not os.path.exists(pdf_folder):
-        os.makedirs(pdf_folder)
+    s3_client = settings.CREATE_STORAGE
+    bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+    folder_name = "excel/deskpart/"
 
+    # Crea la carpeta en el bucket si no existe
+    try:
+        s3_client.head_object(Bucket=bucket_name, Key=folder_name)
+    except:
+        s3_client.put_object(Bucket=bucket_name, Key=folder_name)
     # milisecond
     milisecond = str(int(round(time.time() * 1000)))
 
     area_usuaria = data["area_usuaria"]
 
-    path_file = os.path.join(
-        settings.MEDIA_ROOT,
-        "excel",
-        "reportes",
-        f"{data['name']}-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
+    # Nombre del archivo PDF que deseas crear
+    excel_file_name = (
+        f"{data['name']}-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx"
     )
 
-    if os.path.exists(path_file):
-        os.remove(path_file)
+    # Ruta completa del archivo PDF en el bucket
+    pdf_file_key = folder_name + excel_file_name
 
     procedures = data["procedures"]
 
@@ -629,7 +639,7 @@ def get_procedure_data_xlsx(data) -> str:
             ]
         )
 
-    file = Workbook(path_file)
+    file = Workbook(excel_file_name)
     ws = file.add_worksheet()
     ws2 = file.add_worksheet()
 
@@ -638,9 +648,6 @@ def get_procedure_data_xlsx(data) -> str:
     # ---------------tabla------------------#
     headers = datostabla[0:1][0]
     rows = datostabla[1:]
-
-    print(headers)
-
     ws.add_table(
         f"A4:D{len(rows) + 4}",
         {
@@ -726,15 +733,13 @@ def get_procedure_data_xlsx(data) -> str:
     ws2.insert_chart("E3", chart)
 
     file.close()
-
-    path_return = os.path.join(
-        settings.MEDIA_URL,
-        "excel",
-        "reportes",
-        f"{data['name']}-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx",
+    s3_client.put_object(
+        Bucket=bucket_name,
+        Key=folder_name + excel_file_name,
+        Body=open(excel_file_name, "rb"),
     )
 
-    path_return = path_return.replace("\\", "/")
+    path_return = settings.MEDIA_URL + pdf_file_key
     return path_return
 
 

@@ -83,14 +83,14 @@ urlpatterns = [
         get_charge_procedure_pdf,
         name="get_charge_procedure_pdf",
     ),
-        path(
+    path(
         "get_constancia_registro/",
-         get_constancia_registro,
-         name = "get_constancia_registro"
+        get_constancia_registro,
+        name="get_constancia_registro",
     ),
-        path(
+    path(
         "get_tramites_area_excel/",
-         get_tramites_area_excel,
-         name = "get_tramites_area_excel"
+        get_tramites_area_excel,
+        name="get_tramites_area_excel",
     ),
 ]

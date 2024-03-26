@@ -59,8 +59,7 @@ urls_dict = {
             "get_process_tracking_sheet_pdf": url
             + "reportes/get_process_tracking_sheet_pdf/?procedure_id=",
             "get_charge_procedure_pdf": url + "reportes/get_charge_procedure_pdf/",
-            "get_tramites_pendientes_excel": url
-            + "reportes/get_tramites_pendientes_excel/?user_id=",
+            "get_tramites_area_excel": url + "reportes/get_tramites_area_excel/",
         },
         "external": {
             "save_procedure_externo": f"{url}desk/save_procedure_externo",
