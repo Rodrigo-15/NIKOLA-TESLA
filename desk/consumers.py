@@ -18,23 +18,15 @@ class DeskSocket(WebsocketConsumer):
         pass
 
     def receive(self, text_data):
-        print("Received", text_data)
+        print("Received")
         pass
 
     def desk_area_notification(self, event):
         message = event["message"]
-        username = event["username"]
-        datetime = event["datetime"]
-        sender_id = event["sender_id"]
-        print("Sender ID: ", sender_id)
-        current_user_id = self.user_id
-        if sender_id != current_user_id:
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "message": message,
-                        "username": username,
-                        "datetime": datetime,
-                    }
-                )
-            )
+        self.send(text_data=json.dumps(message))
+        pass
+
+    def desk_user_notification(self, event):
+        message = event["message"]
+        self.send(text_data=json.dumps(message))
+        pass

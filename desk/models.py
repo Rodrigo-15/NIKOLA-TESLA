@@ -611,7 +611,7 @@ class ProcedureTracing(models.Model):
 
         email = resend.Emails.send(params)
         pass
-
+    
     def __str__(self):
         return self.action_log if self.action_log else self.action
 
