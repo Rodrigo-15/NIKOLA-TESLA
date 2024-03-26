@@ -369,7 +369,8 @@ def get_process_tracking_sheet(data) -> str:
             Key=folder_name + pdf_file_name,
             Body=open(pdf_file_name, "rb"),
         )
-
+        # eliminar el archivo local
+        os.remove(pdf_file_name)
         path_return = settings.MEDIA_URL + pdf_file_key
         return path_return
     except Exception as e:
@@ -592,7 +593,8 @@ def get_charge_procedure(data) -> str:
             Key=folder_name + pdf_file_name,
             Body=open(pdf_file_name, "rb"),
         )
-
+        # eliminar el archivo local
+        os.remove(pdf_file_name)
         path_return = settings.MEDIA_URL + pdf_file_key
         return path_return
     except Exception as e:
@@ -738,7 +740,8 @@ def get_procedure_data_xlsx(data) -> str:
         Key=folder_name + excel_file_name,
         Body=open(excel_file_name, "rb"),
     )
-
+    # eliminar el archivo local
+    os.remove(excel_file_name)
     path_return = settings.MEDIA_URL + pdf_file_key
     return path_return
 

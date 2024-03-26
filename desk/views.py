@@ -1299,6 +1299,7 @@ def save_procedure_externo_register(request):
             status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
         )
 
+
 @api_view(["GET"])
 def get_dashboard_desk(request):
     """Get count of procedures"""
@@ -1308,32 +1309,35 @@ def get_dashboard_desk(request):
     if time_filter == None:
         return Response(
             {"error": "no a dado un filtro de tiempo"},
-            status= status.HTTP_400_BAD_REQUEST,
+            status=status.HTTP_400_BAD_REQUEST,
         )
-    
-    #-----elegimos nuestro rango de fechas----------#
-    
+
+    # -----elegimos nuestro rango de fechas----------#
+
     today = date.today()
 
     fecha_inicio = ""
-    
+
     if time_filter == "1":
-        fecha_inicio = today - timedelta(days= 90)
+        fecha_inicio = today - timedelta(days=90)
     elif time_filter == "2":
-        fecha_inicio = today - timedelta(days= 180)
+        fecha_inicio = today - timedelta(days=180)
     elif time_filter == "3":
-        fecha_inicio = today - timedelta(days= 365)
+        fecha_inicio = today - timedelta(days=365)
     elif time_filter == "4":
         dia, mes, año = today.strftime("%d/%m/%Y").split("/")
         fecha_inicio = f"01/01/{año}"
         fecha_inicio = datetime.strptime(fecha_inicio, "%d/%m/%Y")
         fecha_inicio = fecha_inicio.date()
 
-    date_range = [fecha_inicio + timedelta(days=x) for x in range((today - fecha_inicio).days + 1)]
+    date_range = [
+        fecha_inicio + timedelta(days=x) for x in range((today - fecha_inicio).days + 1)
+    ]
     date_range = [d.strftime("%d/%m/%Y") for d in date_range]
 
-    tracings_for_user = ProcedureTracing.objects.filter(
-        user_id= usuario_id).order_by("-created_at")
+    tracings_for_user = ProcedureTracing.objects.filter(user_id=usuario_id).order_by(
+        "-created_at"
+    )
 
     procedures = []
 
@@ -1349,41 +1353,52 @@ def get_dashboard_desk(request):
     ###-------se saca el porcentaje de tramites aprobados-----------####
 
     filtred_trackins = ProcedureTracing.objects.filter(
-         procedure_id__in=[procedure["id"] for procedure in procedures], is_approved=False, assigned_user_id=None
-        ).order_by("-created_at")
+        procedure_id__in=[procedure["id"] for procedure in procedures],
+        is_approved=False,
+        assigned_user_id=None,
+    ).order_by("-created_at")
     proceduretracing = ProcedureTracingSerializer(filtred_trackins, many=True)
 
     procedures_not_aproved = Procedure.objects.filter(
-            id__in=[procedure["procedure"] for procedure in proceduretracing.data]
-        )
-    
-    percentage_aproved = (len(procedures) - len(procedures_not_aproved))/len(procedures)
+        id__in=[procedure["procedure"] for procedure in proceduretracing.data]
+    )
+
+    percentage_aproved = (len(procedures) - len(procedures_not_aproved)) / len(
+        procedures
+    )
 
     ###------------------------------------------------###
 
     for procedure in procedures:
-        procedure["created_at"] = procedure["created_at"].split(" ")[0]  #tomamos solo la fecha, la hora no nos importa
+        procedure["created_at"] = procedure["created_at"].split(" ")[
+            0
+        ]  # tomamos solo la fecha, la hora no nos importa
 
     for l in range(len(procedures)):
-            if procedures[l]['created_at'] not in date_range:   #tomamos solo los tramites que fueron creados en nuestro rango de tiempo
-                procedures[l] = 0
+        if (
+            procedures[l]["created_at"] not in date_range
+        ):  # tomamos solo los tramites que fueron creados en nuestro rango de tiempo
+            procedures[l] = 0
 
     thing = [procedure for procedure in procedures if procedure != 0]
 
     procedures = thing
-    
-    plazos = {"en_plazo": 0, "por_vencer": 0, "vencidos" : 0}
-    estados = {
-        "iniciados": 0,
-        "en_proceso": 0, 
-        "archivados": 0, 
-        "concluidos": 0}
-    
-    dates = defaultdict(lambda: {"finalizados": 0, "archivados": 0, "en_proceso": 0, "iniciados": 0})
-    
-    trakins = ProcedureTracingSerializer(ProcedureTracing.objects.filter(procedure_id__in =[procedure["id"] for procedure in procedures]).order_by("-created_at"), many = True).data
 
-# Procesar trakins y procedures juntos
+    plazos = {"en_plazo": 0, "por_vencer": 0, "vencidos": 0}
+    estados = {"iniciados": 0, "en_proceso": 0, "archivados": 0, "concluidos": 0}
+
+    dates = defaultdict(
+        lambda: {"finalizados": 0, "archivados": 0, "en_proceso": 0, "iniciados": 0}
+    )
+
+    trakins = ProcedureTracingSerializer(
+        ProcedureTracing.objects.filter(
+            procedure_id__in=[procedure["id"] for procedure in procedures]
+        ).order_by("-created_at"),
+        many=True,
+    ).data
+
+    # Procesar trakins y procedures juntos
     for data in [trakins, procedures]:
         for item in data:
             fecha = item["created_at"].split("T")[0].replace("-", "/")
@@ -1398,19 +1413,23 @@ def get_dashboard_desk(request):
             else:
                 dates[fecha]["en_proceso"] += 1
 
-
     for procedure in procedures:
         for datel in date_range:
             fecha = procedure["created_at"].split("T")[0].replace("-", "/")
             dia, mes, año = fecha.split("/")
             fecha = f"{dia}/{mes}/{año}"
             if fecha == datel:
-                dates[datel]['iniciados'] += 1
+                dates[datel]["iniciados"] += 1
     i = 0
 
     for l in range(len(dates)):
         try:
-            a = dates[i]["iniciados"] + dates[i]["en_proceso"] + dates[i]["finalizados"] +dates[i]["archivados"]
+            a = (
+                dates[i]["iniciados"]
+                + dates[i]["en_proceso"]
+                + dates[i]["finalizados"]
+                + dates[i]["archivados"]
+            )
             if a == 0:
                 dates.pop(i)
             else:
@@ -1449,16 +1468,18 @@ def get_dashboard_desk(request):
         week_start = date.strftime(week_start, "%d/%m/%Y")
 
         if week_start in weekGroups:
-            weekGroups[week_start]['iniciados'] += dates[key]["iniciados"]
-            weekGroups[week_start]['en_proceso'] += dates[key]["en_proceso"]
-            weekGroups[week_start]['archivados'] += dates[key]["archivados"]
-            weekGroups[week_start]['finalizados'] += dates[key]["finalizados"]
+            weekGroups[week_start]["iniciados"] += dates[key]["iniciados"]
+            weekGroups[week_start]["en_proceso"] += dates[key]["en_proceso"]
+            weekGroups[week_start]["archivados"] += dates[key]["archivados"]
+            weekGroups[week_start]["finalizados"] += dates[key]["finalizados"]
         else:
-            weekGroups[week_start] = {"iniciados" : dates[key]["iniciados"],
-                                      "en_proceso" : dates[key]["en_proceso"],
-                                      "archivados": dates[key]["archivados"],
-                                      "finalizados": dates[key]["finalizados"]}
-            
+            weekGroups[week_start] = {
+                "iniciados": dates[key]["iniciados"],
+                "en_proceso": dates[key]["en_proceso"],
+                "archivados": dates[key]["archivados"],
+                "finalizados": dates[key]["finalizados"],
+            }
+
     weekGroupsf = {}
     lista = [week for week in weekGroups.keys()]
     for i in range(len(weekGroups)):
@@ -1466,9 +1487,11 @@ def get_dashboard_desk(request):
 
     listaAreas = get_dashboard_desk_area(usuario_id, time_filter)
 
-            
-    return Response({"dates": weekGroupsf,
-                     "state_procedure" : estados,
-                     "state_date" : plazos,
-                     "area_procedures": listaAreas})
-
+    return Response(
+        {
+            "dates": weekGroupsf,
+            "state_procedure": estados,
+            "state_date": plazos,
+            "area_procedures": listaAreas,
+        }
+    )
