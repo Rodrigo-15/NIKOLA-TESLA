@@ -46,7 +46,7 @@ from desk.serializers import (
 from core.pagination import CustomPagination
 from django.db.models.functions import TruncDate
 
-from getdata import *
+from .getdata import *
 
 
 @api_view(["GET"])
