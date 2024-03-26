@@ -9,7 +9,7 @@ pip install virtualenv
 virtualenv .venv
 ```
 ### activar el virtual env
-```
+``
 source .venv/Scripts/activate
 ```
 ### Instalar los requerimientos del Proyecto
