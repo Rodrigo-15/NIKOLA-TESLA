@@ -1302,11 +1302,10 @@ def save_procedure_externo_register(request):
             status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
         )
 
+
 @api_view(["GET"])
 def get_dashboard_desk(request):
     dashboardData = YourView()
-    
-
     data = dashboardData.get(request)
 
     return data
