@@ -128,15 +128,13 @@ class YourView(APIView):
             state = procedure["state"]
             state_date = procedure["state_date"]
 
-            print(state)
-            
             if state != "Archivado" and state != "Concluido":
+
                 plazos[
                     "vencidos" if state_date == 1 else
                     "por_vencer" if state_date == 2 else
                     "en_plazo"
                 ] += 1
-
 
             if state != "Iniciado":
 
@@ -199,54 +197,36 @@ class YourView(APIView):
 
 
         for area in areas:
-            #----------obtenemos todos los tramites del area--------#
+            # Fetching all tracings for the current area
+            tracings_for_user = ProcedureTracing.objects.select_related('procedure').filter(user_id=usuario_id, from_area_id=area["id"]).order_by("-created_at")
 
-            tracings_for_user = ProcedureTracing.objects.filter(
-                from_area__id=area["id"]).order_by("-created_at")
+            procedure_ids = [tracing.procedure_id for tracing in tracings_for_user]
+            procedures = Procedure.objects.filter(id__in=procedure_ids)
 
-            procedures = []
+            serialized_procedures = ProcedureSerializer(procedures, many=True).data
 
-            tracings_for_user = ProcedureTracing.objects.select_related('procedure').filter(user_id=usuario_id).order_by("-created_at")
-            i = 0
+            # Filtering procedures based on date range
+            filtered_procedures = [procedure for procedure in serialized_procedures if procedure['created_at'].split(" ")[0] in date_range]
 
-            procedures = [
-                {**procedure, "created_at": procedure["created_at"].split(" ")[0]}
-                for procedure in procedures
-            ] #tomamos solo la fecha, la hora no nos importa
+            plazosareas = {"en_plazo": 0, "por_vencer": 0, "vencidos": 0}
+            estadosareas = {"iniciados": 0, "en_proceso": 0, "archivado": 0, "concluido": 0}
 
-            procedures = [procedure if procedure['created_at'] in date_range else 0 for procedure in procedures]
-
-
-            thing = [procedure for procedure in procedures if procedure != 0]
-
-            procedures = thing
-            
-            plazos = {"en_plazo": 0, "por_vencer": 0, "vencidos" : 0}
-            estados = {
-                "iniciados": 0,
-                "en_proceso": 0, 
-                "archivado": 0, 
-                "concluido": 0}
-
-
-            for procedure in procedures:            
+            for procedure in filtered_procedures:
                 state = procedure["state"]
                 state_date = procedure["state_date"]
-                
+
                 if state != "Archivado" and state != "Concluido":
-                    plazos[
+                    plazosareas[
                         "vencidos" if state_date == 1 else
                         "por_vencer" if state_date == 2 else
                         "en_plazo"
                     ] += 1
+
                 if state != "Iniciado":
-                    estados[
-                        state.lower() if state != "En proceso" else "en_proceso"
-                    ] += 1
-                    
-            returnList.append({"area": area["nombre"],
-                            "state_procedure" : estados,
-                            "state_date" : plazos,})
+                    estadosareas[state.lower() if state != "En proceso" else "en_proceso"] += 1
+
+            returnList.append({"area": area["nombre"], "state_procedure": estadosareas, "state_date": plazosareas})
+
         
         listaAreas = returnList
 
