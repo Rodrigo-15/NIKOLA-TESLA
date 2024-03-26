@@ -36,7 +36,7 @@ def tabla_dinamica(
     porcentaje_sacado = False
     while lol:
         if datosTabla[0] != columns and pageCounter != 1:
-            datosTabla.insert(0, columns)
+            pass
         if thing == 0:
             datosTabla.insert(0, columns)
             tabla = Table(datosTabla[0:], colWidths)
