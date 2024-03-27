@@ -408,7 +408,9 @@ def get_finished_procedures():
 def get_all_procedures():
     """Get all Procedures"""
 
-    procedure_tracings = ProcedureTracing.objects.all()
+    procedure_tracings = ProcedureTracing.objects.all().order_by(
+        "-procedure__code_number"
+    )
     serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
 
     return serializer.data
