@@ -92,9 +92,10 @@ def get_procedures(request):
         else:
             procedures = get_all_procedures()
 
-        procedures = Procedure.objects.filter(
-            id__in=[procedure["procedure"] for procedure in procedures]
-        )
+        if state != "all":
+            procedures = Procedure.objects.filter(
+                id__in=[procedure["procedure"] for procedure in procedures]
+            )
 
         procedures = get_filter_procedures_by_area(procedures, area)
 
@@ -107,7 +108,7 @@ def get_procedures(request):
         if persona:
             procedures = procedures.filter(Q(file__person__full_name__contains=persona))
 
-        procedures = procedures.order_by("-created_at")[:20]
+        procedures = procedures.order_by("-code_number")[:20]
 
         serializer = ProcedureListSerializer(procedures, many=True)
 
@@ -408,12 +409,8 @@ def get_finished_procedures():
 def get_all_procedures():
     """Get all Procedures"""
 
-    procedure_tracings = ProcedureTracing.objects.all().order_by(
-        "-procedure__code_number"
-    )
-    serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
-
-    return serializer.data
+    procedures = Procedure.objects.all()
+    return procedures
 
 
 @api_view(["GET"])
