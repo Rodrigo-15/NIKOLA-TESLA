@@ -2252,28 +2252,22 @@ def get_constancia_registro(request):
 
 @api_view(["GET"])
 def get_tramites_area_excel(request):
-    user_id = request.GET.get("user_id")
+    area_id = request.GET.get("area_id")
     fecha_inicio = request.GET.get("fecha_inicio")
     fecha_fin = request.GET.get("fecha_fin")
     year = request.GET.get("year")
     state = request.GET.get("state")
     state_date = request.GET.get("state_date")
 
-    if user_id == None:
+    if area_id == None:
         return Response(
-            {"error": "No se encontro el usuario"},
+            {"error": "No se encontro el area"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+    
+    area = AreaSerializer(Area(id = area_id)).data
 
-    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
-
-    if not cargo_area:
-        return Response(
-            status=status.HTTP_400_BAD_REQUEST,
-            data={"message": "El usuario no tiene un area asignada"},
-        )
-
-    area = (AreaSerializer(cargo_area.area, many=True).data)[0]
+    print(area)
 
     tracings_for_user = ProcedureTracing.objects.filter(from_area=area["id"]).order_by(
         "-created_at"

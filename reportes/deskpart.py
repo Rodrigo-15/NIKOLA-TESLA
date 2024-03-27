@@ -695,9 +695,6 @@ def get_procedure_data_xlsx(data) -> str:
                     row[6] = "Vencido"
         rowCounter += 1
 
-    for row in rows:
-        print(row)
-
     ws.set_column("A:A", 12.5)
     ws.set_column("B:B", 22)
 
