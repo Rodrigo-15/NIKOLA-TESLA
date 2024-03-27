@@ -798,16 +798,23 @@ def generate_constancia_de_registro(data) -> str:
     lTop = A4[0] - 2 * cm
     lBot = cm
 
-    media_root = settings.MEDIA_ROOT
-    pdf_folder = os.path.join(media_root, "pdf", "constanciaRegistro")
-    if not os.path.exists(pdf_folder):
-        os.makedirs(pdf_folder)
+    s3_client = settings.CREATE_STORAGE
+    bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+    folder_name = "media/pdf/constanciaRegistro"
 
+    try:
+        s3_client.head_object(Bucket=bucket_name, Key=folder_name)
+    except:
+        s3_client.put_object(Bucket=bucket_name, Key=folder_name)
+    # milisecond
     milisecond = str(int(round(time.time() * 1000)))
-    pdf_file_name = os.path.join(
-        pdf_folder,
-        "constanciaDeRegistro-{}-{}.pdf".format(data[1], milisecond),
+
+    pdf_file_name = (
+        f"{folder_name}-{data[1]}-{milisecond}.pdf"
     )
+
+    pdf_file_key = pdf_file_name
+
     if os.path.exists(pdf_file_name):
         os.remove(pdf_file_name)
 
@@ -823,8 +830,9 @@ def generate_constancia_de_registro(data) -> str:
         style.fontName = fontname
         style.leading = size
 
-    logoUnap = "media/config/logo_UNAP.jpg"
+    logoUnap = "media/config/logo_UNAP.png"
     logoPostgrado = "media/config/postgrado.png"
+    fondo = "media/config/constanciabg.jpg"
 
     fontzise = 10
     fontname = "Arial"
@@ -840,6 +848,8 @@ def generate_constancia_de_registro(data) -> str:
     tipoTramite = data[2]
 
     c = canvas.Canvas(pdf_file_name, A4[::-1])
+
+    c.drawImage(fondo, 0, 0, A4[1], A4[0])
 
     c.drawImage(logoUnap, lLeft + 100, lTop - 75, 150, 75)
     c.drawImage(logoPostgrado, lRigth - 200, lTop - 75, 75, 75)
@@ -874,11 +884,5 @@ def generate_constancia_de_registro(data) -> str:
 
     c.save()
 
-    path_return = os.path.join(
-        settings.MEDIA_URL,
-        "pdf",
-        "constanciaRegistro",
-        "constanciaDeRegistro-{}-{}.pdf".format(data[1], milisecond),
-    )
-    path_return = path_return.replace("\\", "/")
+    path_return = settings.MEDIA_URL +pdf_file_key
     return path_return
