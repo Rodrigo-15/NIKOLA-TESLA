@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 from zonas.models import Pais
 
@@ -41,7 +43,7 @@ class Persona(BaseModel):
         ("M", "Masculino"),
         ("F", "Femenino"),
     )
-    sexo = models.CharField(max_length=1, choices=SEXOS)
+    sexo = models.CharField(max_length=1, choices=SEXOS, null=True, blank=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     correo = models.EmailField(max_length=254, null=True, blank=True)
     is_active = models.BooleanField(default=True)
@@ -73,6 +75,14 @@ class Persona(BaseModel):
         if self.full_name is None or self.full_name == "":
             self.full_name = self.get_full_name()
         super(Persona, self).save(*args, **kwargs)
+
+
+@receiver(post_save, sender=Persona)
+def create_desk_file_person(sender, instance, created, **kwargs):
+    if created:
+        from desk.models import File
+
+        File.objects.create(person_id=instance.id)
 
 
 class Periodo(models.Model):
@@ -137,11 +147,19 @@ class Area(models.Model):
     nombre = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
     key_name = models.CharField(max_length=100, null=True, blank=True)
-    charge_number = models.IntegerField(default=0)
     is_external = models.BooleanField(default=False)
+    correo = models.EmailField(max_length=254, null=True, blank=True)
 
     def __str__(self):
         return f"{self.nombre}"
+
+
+@receiver(post_save, sender=Area)
+def create_desk_file_area(sender, instance, created, **kwargs):
+    if created:
+        from desk.models import File
+
+        File.objects.create(area_id=instance.id)
 
 
 class Cargo(models.Model):
@@ -178,7 +196,7 @@ class CargoArea(models.Model):
     grado_academico = models.CharField(
         max_length=50, null=True, blank=True, choices=GRADOS
     )
-    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    area = models.ManyToManyField(Area)
     cargo = models.ForeignKey(Cargo, on_delete=models.CASCADE)
     headquarter = models.ForeignKey(
         Headquarter, on_delete=models.CASCADE, null=True, blank=True
@@ -186,7 +204,7 @@ class CargoArea(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.persona.nombres} {self.persona.apellido_paterno} {self.persona.apellido_materno} - {self.area.nombre} - {self.cargo.nombre}"
+        return f"{self.persona.nombres} {self.persona.apellido_paterno} {self.persona.apellido_materno} - {self.cargo.nombre}"
 
 
 class Apps(models.Model):
@@ -214,3 +232,36 @@ class Menu(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.url} - {self.is_active}"
+
+
+class PersonaJuridica(BaseModel):
+    tipo_documento = models.ForeignKey(
+        TipoDocumento, on_delete=models.CASCADE, null=True, blank=True
+    )
+    numero_documento = models.CharField(
+        max_length=20, null=True, blank=True, unique=True
+    )
+    razon_social = models.CharField(max_length=50)
+    correo = models.EmailField(max_length=254, null=True, blank=True)
+    celular = models.CharField(max_length=20, null=True, blank=True)
+    persona_contacto = models.CharField(max_length=50, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.numero_documento} {self.razon_social} ({self.correo})"
+
+    @staticmethod
+    def get_persona_juridica_by_numero_id(numero_documento):
+        return PersonaJuridica.objects.filter(numero_documento=numero_documento)
+
+    @staticmethod
+    def get_persona_juridica_by_razaon_social(razon_social):
+        return PersonaJuridica.objects.filter(razon_social=razon_social)
+
+
+@receiver(post_save, sender=PersonaJuridica)
+def create_desk_file_legalperson(sender, instance, created, **kwargs):
+    if created:
+        from desk.models import File
+
+        File.objects.create(legalperson_id=instance.id)

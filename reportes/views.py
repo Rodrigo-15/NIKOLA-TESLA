@@ -3,7 +3,10 @@ from desk.serializers import (
     ProcedureTracingSerializer,
     ProcedureTracingsList,
 )
-from .deskpart import get_process_tracking_sheet, get_charge_procedure
+from datetime import timedelta, date
+from datetime import datetime
+from backend.settings import DEBUG, URL_LOCAL, URL_PROD
+from .deskpart import *
 from weasyprint import HTML
 from django.template.loader import render_to_string
 from csv import excel
@@ -14,14 +17,15 @@ from django.conf import settings
 from django.http import HttpResponse
 from academicos.models import CursoGrupo, Cursos, Aplazado
 import datetime
-from desk.models import Procedure, ProcedureTracing
+from desk.models import Procedure, ProcedureTracing, ProcedureCharge
 from xlsxwriter.workbook import Workbook
 from io import BytesIO
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.template.defaulttags import register
 from django.shortcuts import render
-from academicos.models import Matricula, Programa
+from academicos.models import Matricula, Programa, PlanEstudio
+from academicos.serializers import CursosSerializer, MatriculaSerializer
 from admision.models import Expediente
 from admision.serializers.expediente import (
     ExpedienteReportSerializer,
@@ -34,11 +38,7 @@ from django.db.models import Sum, Max, Min
 from rest_framework import status
 from django.db.models import Q
 from decimal import Decimal, ROUND_HALF_UP
-from reportes.academicos import (
-    diploma_egresado,
-    diploma_diplomado,
-    reporte_excel_programas_by_promocion_xlsx,
-)
+from reportes.academicos import diploma_egresado, diploma_diplomado
 
 
 def DefaultTemplate(request):
@@ -71,7 +71,7 @@ def reporte_economico_alumno(request):
         return Response(
             {
                 "error": "No se encontró el expediente para el alumno con número de documento {}".format(
-                    numero_documento
+                    73134712
                 )
             },
             status=status.HTTP_404_NOT_FOUND,
@@ -501,11 +501,12 @@ def get_reporte_ingresos_api(request):
     return response
 
 
-@api_view(["POST"])
+@api_view(["GET"])
 def get_reporte_matricula_pdf(request):
-    expediente_id = request.data.get("expediente")
-    periodo_id = request.data.get("periodo")
+    expediente_id = request.GET.get("expediente")
+    periodo_id = request.GET.get("periodo")
     expediente = reporte_matricula_alumno_function(expediente_id, periodo_id)
+    print(expediente)
     #
     media_root = settings.MEDIA_ROOT
     pdf_folder = os.path.join(media_root, "pdf")
@@ -1412,98 +1413,6 @@ def roman_number(number):
 
 
 @api_view(["GET"])
-def get_process_tracking_sheet_pdf(request):
-    procedure_id = request.GET.get("procedure_id")
-    if procedure_id == None:
-        return Response(
-            {"error": "No se encontro el procedimiento"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    procedure = Procedure.objects.filter(id=procedure_id).first()
-    if procedure == None:
-        return Response(
-            {"error": "No se encontro el procedimiento"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    trackins = ProcedureTracing.objects.filter(procedure_id=procedure_id)
-    final_data = {
-        "procedure": ProcedureSerializer(procedure).data,
-        "trackins": ProcedureTracingsList(trackins, many=True).data,
-    }
-    path = get_process_tracking_sheet(final_data)
-    from backend.settings import DEBUG, URL_LOCAL, URL_PROD
-
-    url = URL_LOCAL if DEBUG else URL_PROD
-    path = path.replace("/media", "media")
-    path = url + path
-    return Response({"path": path}, status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
-def get_charge_procedure_pdf(request):
-    area_id = request.GET.get("area_id")
-    user_id = request.GET.get("user_id")
-
-    if area_id == None or user_id == None:
-        return Response(
-            {"error": "No se encontro el area o el usuario"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    area = Area.objects.filter(id=area_id).first()
-    fecha = datetime.datetime.now().strftime("%d/%m/%Y")
-    hora = datetime.datetime.now().strftime("%H:%M %p")
-    anio = datetime.datetime.now().year
-    usuario = Persona.objects.filter(user_id=user_id).first()
-
-    trackins = ProcedureTracing.objects.filter(
-        user_id=user_id,
-        from_area_id=area_id,
-        to_area_id__isnull=False,
-        is_approved=False,
-    )
-
-    if trackins.count() == 0:
-        return Response(
-            {"error": "No se encontro el procedimiento"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    obj_procedure = []
-    for trackin in trackins:
-        procedure = Procedure.objects.filter(id=trackin.procedure_id).first()
-        serialized_procedure = ProcedureSerializer(procedure).data
-        to_area = Area.objects.filter(id=trackin.to_area_id).first()
-        serialized_procedure["to_area"] = AreaSerializer(to_area).data
-        obj_procedure.append(serialized_procedure)
-
-    charge_number = area.charge_number + 1
-    area.charge_number = charge_number
-    area.save()
-    text_charge_number = str(charge_number).zfill(6)
-
-    final_data = {
-        "area": AreaSerializer(area).data,
-        "fecha": fecha,
-        "hora": hora,
-        "anio": anio,
-        "usuario": PersonaSerializerFilter(usuario).data,
-        "procedure": obj_procedure,
-        "procedure_count": len(obj_procedure),
-        "charge_number": text_charge_number,
-    }
-
-    path = get_charge_procedure(final_data)
-    from backend.settings import DEBUG, URL_LOCAL, URL_PROD
-
-    url = URL_LOCAL if DEBUG else URL_PROD
-    path = path.replace("/media", "media")
-    path = url + path
-    return Response({"path": path}, status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
 def reporte_economico_expediente_api(request):
     if request.method == "GET":
         expediente_id = request.GET.get("expediente")
@@ -2156,7 +2065,7 @@ def generate_txt_bach(request):
     return Response({"path": path_return})
 
 
-# new
+# new code
 @api_view(["GET"])
 def generate_diploma_pdf(request):
     if request.method == "GET":
@@ -2184,7 +2093,6 @@ def generate_diploma_pdf(request):
         )
         programa = expediente.programa.nombre
         programa_id = expediente.programa
-        facultad_id = expediente.programa.facultad.id
 
         data_matricula = Matricula.objects.filter(expediente=expediente_id)
 
@@ -2223,105 +2131,238 @@ def generate_diploma_pdf(request):
                 "apellidos": apellidos,
                 "programa": programa,
                 "programa_id": programa_id,
-                "facultad_id": facultad_id,
             }
             path_return = diploma_egresado(data)
         return Response({"path": path_return})
 
 
 @api_view(["GET"])
-def reporte_alumnos_programas_by_promocion(request):
-    promocion = request.GET.get("promocion")
-    programa_id = request.GET.get("programa_id")
-    if promocion == None:
+def get_charge_procedure_pdf(request):
+    user_id = request.GET.get("user_id")
+    procedure_charge_id = request.GET.get("procedure_charge_id")
+
+    if user_id == None:
         return Response(
-            {"error": "No se encontro la promocion"},
+            {"error": "No se encontro  el usuario"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    programa = Programa.objects.filter(id=programa_id).first()
-    cursos = Cursos.objects.filter(
-        plan_estudio__programa_id=programa_id,
-    ).order_by("codigo")
-    data_cursos = []
-    for curso in cursos:
-        data_cursos.append(
-            {
-                "id": curso.id,
-                "nombre": curso.nombre,
-                "creditos": curso.creditos,
-                "codigo": curso.codigo,
-            }
+    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+    if not cargo_area:
+        return Response(
+            status=status.HTTP_400_BAD_REQUEST,
+            data={"message": "El usuario no tiene un area asignada"},
+        )
+    data_area = cargo_area.area.all()
+    areas = AreaSerializer(data_area, many=True).data
+    fecha = datetime.datetime.now().strftime("%d/%m/%Y")
+    hora = datetime.datetime.now().strftime("%H:%M %p")
+    anio = datetime.datetime.now().year
+    usuario = Persona.objects.filter(user_id=user_id).first()
+
+    trackins = ProcedureTracing.objects.filter(
+        user_id=user_id,
+        to_area_id__isnull=False,
+        procedure_charge_id=procedure_charge_id,
+        is_finished=False,
+    )
+
+    if trackins.count() == 0:
+        return Response(
+            {"error": "No se encontro el procedimiento"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    obj_procedure = []
+    for trackin in trackins:
+        procedure = Procedure.objects.filter(id=trackin.procedure_id).first()
+        serialized_procedure = ProcedureSerializer(procedure).data
+        to_area = Area.objects.filter(id=trackin.to_area_id).first()
+        serialized_procedure["to_area"] = AreaSerializer(to_area).data
+        serialized_procedure["action"] = trackin.action
+        obj_procedure.append(serialized_procedure)
+
+    procedure_charge = ProcedureCharge.objects.filter(id=procedure_charge_id).first()
+
+    text_charge_number = procedure_charge.correlative
+
+    final_data = {
+        "area": dict(areas[0]),
+        "fecha": fecha,
+        "hora": hora,
+        "anio": anio,
+        "usuario": PersonaSerializerFilter(usuario).data,
+        "procedure": obj_procedure,
+        "procedure_count": len(obj_procedure),
+        "charge_number": text_charge_number,
+    }
+    path = get_charge_procedure(final_data)
+    return Response({"path": path}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_process_tracking_sheet_pdf(request):
+    procedure_id = request.GET.get("procedure_id")
+    if procedure_id == None:
+        return Response(
+            {"error": "No se encontro el procedimiento"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
-    expedientes = Expediente.objects.filter(
-        promocion=promocion, programa_id=programa_id
-    ).order_by("persona__apellido_paterno", "persona__apellido_materno")
-    data_expediente = []
-    for expediente in expedientes:
-        matricula = Matricula.objects.filter(expediente_id=expediente.id).order_by(
-            "curso_grupo__curso__codigo"
+    procedure = Procedure.objects.filter(id=procedure_id).first()
+    if procedure == None:
+        return Response(
+            {"error": "No se encontro el procedimiento"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
-        data_matricula = []
-        creditos_aprobados = 0
-        ppc = 0
-        creditos = 0
-        notas_total = 0
-        creditos_total = 0
-        for mat in matricula:
-            data_matricula.append(
-                {
-                    "curso_id": mat.curso_grupo.curso.id,
-                    "promedio_final": mat.promedio_final,
-                }
-            )
-            if mat.is_aplazado == True:
-                if mat.promedio_final_aplazado == None:
-                    promedio_final = mat.promedio_final
+    trackins = ProcedureTracing.objects.filter(procedure_id=procedure_id)
+    final_data = {
+        "procedure": ProcedureSerializer(procedure).data,
+        "trackins": ProcedureTracingsList(trackins, many=True).data,
+    }
+
+    path = get_process_tracking_sheet(final_data)
+    return Response({"path": path}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_constancia_registro(request):
+    procedure_id = request.GET.get("procedure_id")
+
+    if procedure_id == None:
+        return Response(
+            {"error": "No se encontro  el procedure"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    procedure: Procedure = Procedure.objects.filter(id=procedure_id).first()
+
+    procedureType = procedure.procedure_type.concepto
+
+    fecha, hora = str(procedure.created_at).split(" ")
+
+    persona = f"{procedure.file.person.nombres} {procedure.file.person.apellido_paterno} {procedure.file.person.apellido_materno}"
+
+    dni = procedure.file.person.numero_documento
+
+    data = [persona, dni, procedureType, fecha]
+
+    path = generate_constancia_de_registro(data)
+    return Response({"path": path}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_tramites_area_excel(request):
+    user_id = request.GET.get("user_id")
+    fecha_inicio = request.GET.get("fecha_inicio")
+    fecha_fin = request.GET.get("fecha_fin")
+    year = request.GET.get("year")
+    state = request.GET.get("state")
+    state_date = request.GET.get("state_date")
+
+    if user_id == None:
+        return Response(
+            {"error": "No se encontro el usuario"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+
+    if not cargo_area:
+        return Response(
+            status=status.HTTP_400_BAD_REQUEST,
+            data={"message": "El usuario no tiene un area asignada"},
+        )
+
+    area = (AreaSerializer(cargo_area.area, many=True).data)[0]
+
+    tracings_for_user = ProcedureTracing.objects.filter(from_area=area["id"]).order_by(
+        "-created_at"
+    )
+
+    procedures = []
+
+    for tracing in tracings_for_user:
+        procedure = ProcedureSerializer(tracing.procedure).data
+
+        if procedure not in procedures:
+
+            procedures.append(procedure)
+    i = 0
+
+    for l in range(len(procedures)):
+        try:
+            if state == None and state_date != None:
+                a = str(procedures[i]["state_date"])
+                if a != state_date:
+                    procedures.pop(i)
                 else:
-                    promedio_final = mat.promedio_final_aplazado
-            else:
-                promedio_final = mat.promedio_final
+                    i += 1
+            elif state != None and state_date == None:
+                if procedures[i]["state"] != state:
+                    procedures.pop(i)
+                else:
+                    i += 1
+            elif state != None and state_date != None:
+                a = str(procedures[i]["state_date"])
+                if procedures[i]["state"] != state or a != state_date:
+                    procedures.pop(i)
+                else:
+                    i += 1
+        except IndexError:
+            break
 
-            ppc += promedio_final * mat.curso_grupo.curso.creditos
-            creditos += mat.curso_grupo.curso.creditos
+    if fecha_fin == None and fecha_inicio == None and year == None:
+        pass
+    elif fecha_fin == None and fecha_inicio == None and year != None:
+        fecha_inicio = f"{year}-01-01"
+        fecha_fin = f"{year}-12-31"
+        fecha_inicio = date(*map(int, fecha_inicio.split("-")))
+        fecha_fin = date(*map(int, fecha_fin.split("-")))
 
-            if (
-                promedio_final >= 14
-                and mat.curso_grupo.curso.plan_estudio.programa.tipo_id in [1, 3]
-            ):
-                creditos_aprobados += mat.curso_grupo.curso.creditos
-            if (
-                promedio_final >= 15
-                and mat.curso_grupo.curso.plan_estudio.programa.tipo_id == 2
-            ):
-                creditos_aprobados += mat.curso_grupo.curso.creditos
-        notas_total += ppc
-        creditos_total += creditos
-        if len(matricula) > 0:
-            promedio_graduado = round((notas_total / creditos_total), 4)
+        date_range = [
+            fecha_inicio + timedelta(days=x)
+            for x in range((fecha_fin - fecha_inicio).days + 1)
+        ]
 
-        data_expediente.append(
-            {
-                "id": expediente.id,
-                "numero_documento": expediente.persona.numero_documento,
-                "nombres": expediente.persona.nombres,
-                "apellido_paterno": expediente.persona.apellido_paterno,
-                "apellido_materno": expediente.persona.apellido_materno,
-                "programa": expediente.programa.nombre,
-                "promocion": expediente.promocion,
-                "matriculas": data_matricula,
-                "creditos_aprobados": creditos_aprobados,
-                "ppg": promedio_graduado,
-            }
-        )
+        date_range = [date.strftime(fecha, "%d/%m/%Y") for fecha in date_range]
+
+        i = 0
+
+        for l in range(len(procedures)):
+            try:
+                if procedures[i]["created_at"].split(" ")[0] not in date_range:
+                    procedures.pop(i)
+                else:
+                    i += 1
+            except IndexError:
+                break
+
+    elif fecha_fin != None and fecha_inicio != None and year == None:
+        fecha_inicio = date(*map(int, fecha_inicio.split("-")))
+        fecha_fin = date(*map(int, fecha_fin.split("-")))
+
+        date_range = [
+            fecha_inicio + timedelta(days=x)
+            for x in range((fecha_fin - fecha_inicio).days + 1)
+        ]
+
+        date_range = [date.strftime(fecha, "%d/%m/%Y") for fecha in date_range]
+
+        for l in range(len(procedures)):
+            try:
+                if procedures[i]["created_at"].split(" ")[0] not in date_range:
+                    procedures.pop(i)
+                else:
+                    i += 1
+            except IndexError:
+                break
 
     data = {
-        "programa": programa.nombre,
-        "promocion": promocion,
-        "cursos": data_cursos,
-        "expedientes": data_expediente,
+        "area_usuaria": area["nombre"],
+        "procedures": procedures,
+        "name": "tramites",
     }
-    # path_return = reporte_excel_programas_by_promocion_xlsx(data)
-    return Response(data)
-    # return Response({"path": path_return})
+
+    path = get_procedure_data_xlsx(data)
+    path = path.replace("/media", "media")
+    return Response({"path": path}, status=status.HTTP_200_OK)

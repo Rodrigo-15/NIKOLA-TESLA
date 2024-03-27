@@ -9,7 +9,7 @@ pip install virtualenv
 virtualenv .venv
 ```
 ### activar el virtual env
-```
+``
 source .venv/Scripts/activate
 ```
 ### Instalar los requerimientos del Proyecto
@@ -28,9 +28,10 @@ User:
 Email: 
 Password:
 ```
-### Correr el Servidor
+### Correr el Servidoras
 ```
-python manage.py runserver
+python manage.py runserver 192.168.16.184:8000
+daphne -b 192.168.16.184 -p 8000 backend.asgi:application
 ```
 
 ## Rutas
