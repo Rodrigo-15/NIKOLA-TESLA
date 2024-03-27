@@ -632,16 +632,20 @@ def get_procedure_data_xlsx(data) -> str:
     procedures = data["procedures"]
 
     datostabla = [
-        ["Codigo", "Asunto", "Tipo", "Solicitante"],
+        ["Codigo", "Fecha de Creacion","Asunto", "Tipo de Tramite", "Solicitante", "Estado", "Estado de Fecha", "Fecha Vencimiento"],
     ]
 
     for procedure in procedures:
         datostabla.append(
             [
                 procedure["code_number"],
+                procedure["created_at"],
                 procedure["subject"],
                 procedure["procedure_type_description"],
                 procedure["person_full_name"],
+                procedure["state"],
+                procedure["state_date"],
+                procedure["due_date"],
             ]
         )
 
@@ -655,7 +659,7 @@ def get_procedure_data_xlsx(data) -> str:
     headers = datostabla[0:1][0]
     rows = datostabla[1:]
     ws.add_table(
-        f"A4:D{len(rows) + 4}",
+        f"A4:H{len(rows) + 4}",
         {
             "data": rows,
             "columns": [
@@ -663,6 +667,10 @@ def get_procedure_data_xlsx(data) -> str:
                 {"header": headers[1]},
                 {"header": headers[2]},
                 {"header": headers[3]},
+                {"header": headers[4]},
+                {"header": headers[5]},
+                {"header": headers[6]},
+                {"header": headers[7]},
             ],
         },
     )
@@ -672,18 +680,34 @@ def get_procedure_data_xlsx(data) -> str:
     )  # 1 is for a thin border. You can use other values for different border styles.
 
     rowCounter = 3
-    largestAsunto = 0
+    largestName = 0
     for row in datostabla:
         for i in range(len(row)):
-            if i == 2:
-                if len(row[i]) > largestAsunto:
-                    largestAsunto = len(row[i])
+            if i == 4:
+                if len(row[i]) > largestName:
+                    largestName = len(row[i])
+            if i == 6:
+                if row[6] == 3:
+                    row[6] = "En Plazo"
+                elif row[6] == 2:
+                    row[6] = "Por Vencer"
+                elif row[6] == 1:
+                    row[6] = "Vencido"
         rowCounter += 1
 
+    for row in rows:
+        print(row)
+
     ws.set_column("A:A", 12.5)
-    ws.set_column("B:B", largestAsunto * 2.4)
+    ws.set_column("B:B", 22)
 
     ws.set_column("C:D", 50)
+
+    ws.set_column("E:E", largestName)
+
+    ws.set_column("F:F", 10)
+
+    ws.set_column("G:H", 20)
 
     chart = file.add_chart({"type": "pie"})
 
@@ -692,7 +716,7 @@ def get_procedure_data_xlsx(data) -> str:
     listaSumaDeTipos = []
 
     for procedure in procedures:
-        listaDeTipos.append(procedure["procedure_type_description"])
+        listaDeTipos.append(procedure["state_date"])
 
     # ----------grafico-------------------#
 
@@ -708,12 +732,20 @@ def get_procedure_data_xlsx(data) -> str:
     for i in range(len(listaSumaDeTipos)):
         listaSumaDeTipos[i] = listaSumaDeTipos[i][::-1]
 
+    for value in listaSumaDeTipos:
+        if value[0] == 1:
+            value[0] = "Vencido"
+        elif value[0] == 2:
+            value[0] = "Por Vencer"
+        elif value[0] == 3:
+            value[0] = "En Plazo"
+
     ws2.add_table(
         f"B2:C{len(listaSumaDeTipos) + 1}",
         {
             "data": listaSumaDeTipos,
             "columns": [
-                {"header": "Tipo Tramite"},
+                {"header": "Estado de Fecha"},
                 {"header": "Cantidad"},
             ],
         },
