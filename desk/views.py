@@ -11,7 +11,7 @@ from rest_framework.decorators import api_view
 from desk.NAMES import APP_NAME
 from desk.models import File, Procedure
 from django.contrib.auth.models import User
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Subquery, OuterRef
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
@@ -56,13 +56,13 @@ def get_procedures(request):
                 "CargoArea not found",
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
-        area=[area1.area_id for area1 in cargo_area]
+
+        area = [area1.area_id for area1 in cargo_area]
         # area=cargo_area.area
         user_id = user.id
         #
         data = request.query_params
-        STATES = ["started", "in_progress", "finished"]
+        STATES = ["started", "in_progress", "finished", "all"]
         params = ["date", "code_number", "state"]
         if not all(param in data for param in params):
             return Response(
@@ -72,14 +72,14 @@ def get_procedures(request):
 
         date = data["date"]
         code_number = data["code_number"]
-        persona =data["persona"]
+        persona = data["persona"]
         state = data["state"]
         if state not in STATES:
             return Response(
                 "Invalid state: " + str(STATES),
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        counters = get_counters_procedure(date, code_number,persona, area, user_id)
+        counters = get_counters_procedure(date, code_number, persona, area, user_id)
 
         procedures = []
 
@@ -87,13 +87,15 @@ def get_procedures(request):
             procedures = get_started_procedures()
         elif state == "in_progress":
             procedures = get_in_progress_procedures(user_id)
-        else:
+        elif state == "finished":
             procedures = get_finished_procedures()
+        else:
+            procedures = get_all_procedures()
 
         procedures = Procedure.objects.filter(
             id__in=[procedure["procedure"] for procedure in procedures]
         )
-        
+
         procedures = get_filter_procedures_by_area(procedures, area)
 
         if date:
@@ -105,7 +107,6 @@ def get_procedures(request):
         if persona:
             procedures = procedures.filter(Q(file__person__full_name__contains=persona))
 
-
         procedures = procedures.order_by("-created_at")[:20]
 
         serializer = ProcedureListSerializer(procedures, many=True)
@@ -113,7 +114,9 @@ def get_procedures(request):
         return Response({"procedures": serializer.data, "counters": counters})
 
 
-def get_counters_procedure(date=None, code_number=None,persona=None, area=None,user_id=None):
+def get_counters_procedure(
+    date=None, code_number=None, persona=None, area=None, user_id=None
+):
     counters = {
         "started": {
             "label": "",
@@ -130,19 +133,24 @@ def get_counters_procedure(date=None, code_number=None,persona=None, area=None,u
             "total": 0,
             "count": 0,
         },
+        "all": {
+            "label": "",
+            "total": 0,
+            "count": 0,
+        },
     }
 
     procedures_started = []
     procedures_in_progress = []
     procedures_finished = []
-
+    # started
     procedures_started = get_started_procedures()
     procedures_started = Procedure.objects.filter(
         id__in=[procedure["procedure"] for procedure in procedures_started]
     )
     procedures_started = get_filter_procedures_by_area(procedures_started, area)
     counters["started"]["total"] = len(procedures_started)
-
+    # progress
     procedures_in_progress = get_in_progress_procedures(user_id)
     procedures_in_progress = Procedure.objects.filter(
         id__in=[procedure["procedure"] for procedure in procedures_in_progress]
@@ -150,19 +158,23 @@ def get_counters_procedure(date=None, code_number=None,persona=None, area=None,u
     procedures_in_progress = get_filter_procedures_by_area(procedures_in_progress, area)
     counters["in_progress"]["total"] = len(procedures_in_progress)
 
+    # finished
     procedures_finished = get_finished_procedures()
     procedures_finished = Procedure.objects.filter(
         id__in=[procedure["procedure"] for procedure in procedures_finished]
     )
     procedures_finished = get_filter_procedures_by_area(procedures_finished, area)
     counters["finished"]["total"] = len(procedures_finished)
-
+    # all
+    procedure_all = Procedure.objects.all()
+    counters["all"]["total"] = len(procedure_all)
     if date:
         procedures_started = procedures_started.filter(created_at__icontains=date)
         procedures_in_progress = procedures_in_progress.filter(
             created_at__icontains=date
         )
         procedures_finished = procedures_finished.filter(created_at__icontains=date)
+        procedure_all = procedure_all.filter(created_at__icontains=date)
 
     if code_number:
         procedures_started = procedures_started.filter(
@@ -174,21 +186,30 @@ def get_counters_procedure(date=None, code_number=None,persona=None, area=None,u
         procedures_finished = procedures_finished.filter(
             code_number__icontains=code_number
         )
-    
-    
-    if persona:
-        procedures_started = procedures_started.filter(Q(file__person__full_name__contains=persona))
-        procedures_in_progress = procedures_in_progress.filter(Q(file__person__full_name__contains=persona))
-        procedures_finished = procedures_finished.filter(Q(file__person__full_name__contains=persona))
+        procedure_all = procedure_all.filter(code_number__icontains=code_number)
 
-    
+    if persona:
+        procedures_started = procedures_started.filter(
+            Q(file__person__full_name__contains=persona)
+        )
+        procedures_in_progress = procedures_in_progress.filter(
+            Q(file__person__full_name__contains=persona)
+        )
+        procedures_finished = procedures_finished.filter(
+            Q(file__person__full_name__contains=persona)
+        )
+        procedure_all = procedure_all.filter(
+            Q(file__person__full_name__contains=persona)
+        )
+
     serializer_started = ProcedureListSerializer(procedures_started, many=True)
     serializer_in_progress = ProcedureListSerializer(procedures_in_progress, many=True)
     serializer_finished = ProcedureListSerializer(procedures_finished, many=True)
+    serializer_all = ProcedureListSerializer(procedure_all, many=True)
     counters["started"]["count"] = len(serializer_started.data)
     counters["in_progress"]["count"] = len(serializer_in_progress.data)
     counters["finished"]["count"] = len(serializer_finished.data)
-
+    counters["all"]["count"] = len(serializer_all.data)
     if date:
         counters["started"][
             "label"
@@ -199,6 +220,9 @@ def get_counters_procedure(date=None, code_number=None,persona=None, area=None,u
         counters["finished"][
             "label"
         ] = f"{counters['finished']['count']}/{counters['finished']['total']}"
+        counters["all"][
+            "label"
+        ] = f"{counters['all']['count']}/{counters['all']['total']}"
     elif code_number and len(code_number) > 5:
         counters["started"][
             "label"
@@ -209,6 +233,9 @@ def get_counters_procedure(date=None, code_number=None,persona=None, area=None,u
         counters["finished"][
             "label"
         ] = f"{counters['finished']['count']}/{counters['finished']['total']}"
+        counters["all"][
+            "label"
+        ] = f"{counters['all']['count']}/{counters['all']['total']}"
     elif persona:
         counters["started"][
             "label"
@@ -219,10 +246,14 @@ def get_counters_procedure(date=None, code_number=None,persona=None, area=None,u
         counters["finished"][
             "label"
         ] = f"{counters['finished']['count']}/{counters['finished']['total']}"
+        counters["all"][
+            "label"
+        ] = f"{counters['all']['count']}/{counters['all']['total']}"
     else:
         counters["started"]["label"] = f"{counters['started']['total']}"
         counters["in_progress"]["label"] = f"{counters['in_progress']['total']}"
         counters["finished"]["label"] = f"{counters['finished']['total']}"
+        counters["all"]["label"] = f"{counters['all']['total']}"
 
     return counters
 
@@ -306,9 +337,7 @@ def get_filter_procedures_by_area(procedures, area):
             Q(from_area=area) | Q(to_area=area)
         )
     else:
-        procedures_trackings = ProcedureTracing.objects.filter(
-            from_area_id__in=area
-        )
+        procedures_trackings = ProcedureTracing.objects.filter(from_area_id__in=area)
     procedure_ids_in_trackings = procedures_trackings.values_list(
         "procedure", flat=True
     )
@@ -334,16 +363,34 @@ def get_started_procedures():
 def get_in_progress_procedures(user_id=None):
     """Get Procedures that have more than one TracingProcedure and it is not finished"""
     area_id = CargoArea.objects.filter(persona__user_id=user_id)
-    area_id =[area.area_id for area in area_id]
-    procedure_tracings = ProcedureTracing.objects.filter(
-        is_finished=False,
-        from_area_id__in=area_id,
-        to_area_id__isnull=True,
-        user_id=user_id,
-    ).exclude(
-        procedure_id__in=ProcedureTracing.objects.filter(is_finished=True).values(
-            "procedure_id"
-        ),
+    area_id = [area.area_id for area in area_id]
+    procedure_tracings = (
+        ProcedureTracing.objects.filter(
+            is_finished=False,
+            from_area_id__in=area_id,
+            to_area_id__isnull=True,
+            user_id=user_id,
+        )
+        .exclude(
+            procedure_id__in=ProcedureTracing.objects.filter(is_finished=True).values(
+                "procedure_id"
+            )
+        )
+        .exclude(
+            procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+            .annotate(count=Count("procedure_id"))
+            .filter(count=1)
+            .values("procedure_id"),
+        )
+        .exclude(
+            id__lt=Subquery(
+                ProcedureTracing.objects.filter(
+                    user_id=user_id, procedure_id=OuterRef("procedure_id")
+                )
+                .order_by("-id")
+                .values("id")[:1]
+            )
+        )
     )
     serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
     return serializer.data
@@ -353,6 +400,15 @@ def get_finished_procedures():
     """Get Procedures with TracingProcedure finished"""
 
     procedure_tracings = ProcedureTracing.objects.filter(is_finished=True)
+    serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
+
+    return serializer.data
+
+
+def get_all_procedures():
+    """Get all Procedures"""
+
+    procedure_tracings = ProcedureTracing.objects.all()
     serializer = ProcedureTracingSerializer(procedure_tracings, many=True)
 
     return serializer.data
@@ -384,7 +440,7 @@ def get_tracings_procedures(request, status):
         if status == 0:
             procedures = {"started": get_started_procedures()}
         if status == 1:
-            procedures = {"in_process": get_in_process_procedures()}
+            procedures = {"in_process": get_in_progress_procedures()}
         if status == 2:
             procedures = {"finished": get_finished_procedures()}
 
@@ -394,8 +450,7 @@ def get_tracings_procedures(request, status):
 @api_view(["POST"])
 def save_procedure(request):
     if request.method == "POST":
-        
-        
+
         person_id = request.data["person_id"]
         subject = request.data["subject"]
         description = (
@@ -426,11 +481,10 @@ def save_procedure(request):
 
         area_user = CargoArea.objects.filter(persona__user_id=user_id).first()
         if person_id == "0":
-            file = File.objects.filter(area_id = area_user.area_id).first()
+            file = File.objects.filter(area_id=area_user.area_id).first()
         else:
             file = File.objects.filter(person_id=person_id).first()
 
-        
         if not file and person_id == "0":
             file = File.objects.create(area_id=area_user.area_id)
         elif not file and person_id != "0":
@@ -551,7 +605,11 @@ def save_derive_procedure(request):
         # from_area_id = (
         #     CargoArea.objects.filter(persona__user_id=user_id).first().area_id
         # )
-        from_area_id = ( ProcedureTracing.objects.filter(procedure_id=procedure_id).last().from_area_id)
+        from_area_id = (
+            ProcedureTracing.objects.filter(procedure_id=procedure_id)
+            .last()
+            .from_area_id
+        )
         to_area_id = request.data["to_area_id"]
         action = request.data["action"]
         ref_procedure_tracking_id = (
@@ -617,12 +675,12 @@ def get_tracings_to_approved(request):
                 status=status.HTTP_400_BAD_REQUEST,
                 data={"message": "El usuario no tiene un area asignada"},
             )
-        area_id =[area.area_id for area in area_id]
+        area_id = [area.area_id for area in area_id]
         tracings_for_area = ProcedureTracing.objects.filter(
-            to_area_id__in = area_id, is_approved=False, assigned_user_id=None
+            to_area_id__in=area_id, is_approved=False, assigned_user_id=None
         ).order_by("-created_at")
         tracings_for_user = ProcedureTracing.objects.filter(
-            to_area_id__in = area_id, assigned_user_id=user_id, is_approved=False
+            to_area_id__in=area_id, assigned_user_id=user_id, is_approved=False
         ).order_by("-created_at")
         serializer_tracings_for_area = ProcedureTracingsList(
             tracings_for_area, many=True
@@ -649,7 +707,7 @@ def approve_tracing(request):
         )
 
         ProcedureTracing.objects.filter(id=tracing_id).update(is_approved=True)
-        from_area_id = ( ProcedureTracing.objects.filter(id=tracing_id).first().to_area_id)
+        from_area_id = ProcedureTracing.objects.filter(id=tracing_id).first().to_area_id
         # from_area_id = (
         #     CargoArea.objects.filter(persona__user_id=user_id).first().area_id
         # )

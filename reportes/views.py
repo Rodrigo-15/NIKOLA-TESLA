@@ -34,7 +34,11 @@ from django.db.models import Sum, Max, Min
 from rest_framework import status
 from django.db.models import Q
 from decimal import Decimal, ROUND_HALF_UP
-from reportes.academicos import diploma_egresado, diploma_diplomado
+from reportes.academicos import (
+    diploma_egresado,
+    diploma_diplomado,
+    reporte_excel_programas_by_promocion_xlsx,
+)
 
 
 def DefaultTemplate(request):
@@ -2152,127 +2156,6 @@ def generate_txt_bach(request):
     return Response({"path": path_return})
 
 
-# @api_view(["GET"])
-# def generate_diploma_pdf(request):
-#     from reportlab.lib import colors
-#     from reportlab.lib.pagesizes import landscape, A4
-#     from reportlab.lib import utils
-#     from reportlab.pdfgen import canvas
-#     from reportlab.pdfbase import pdfmetrics
-#     from reportlab.lib.colors import HexColor
-#     from reportlab.pdfbase.ttfonts import TTFont
-#     import qrcode
-#     from PIL import Image
-
-#     if request.method == "GET":
-#         expediente_id = request.GET.get("expediente_id")
-#         if expediente_id == None:
-#             return Response(
-#                 {"error": "No se encontro el expediente"},
-#                 status=status.HTTP_400_BAD_REQUEST,
-#             )
-
-#         expediente = Expediente.objects.filter(id=expediente_id).first()
-
-#         num_doc = expediente.persona.numero_documento
-#         persona = (
-#             expediente.persona.nombres
-#             + " "
-#             + expediente.persona.apellido_paterno
-#             + " "
-#             + expediente.persona.apellido_materno
-#         )
-#         nombres = expediente.persona.nombres
-#         apellidos = (
-#             expediente.persona.apellido_paterno
-#             + " "
-#             + expediente.persona.apellido_materno
-#         )
-#         programa = expediente.programa.nombre
-#         programa_id = expediente.programa.id
-
-#         # fecha
-#         fecha = datetime.datetime.now().strftime("%d/%m/%Y")
-#         dia = datetime.datetime.now().day
-#         mes_id = datetime.datetime.now().strftime("%m")
-#         anio = datetime.datetime.now().year
-#         mes_array = [
-#             {"nombre": "Enero"},
-#             {"nombre": "Febrero"},
-#             {"nombre": "Marzo"},
-#             {"nombre": "Abril"},
-#             {"nombre": "Mayo"},
-#             {"nombre": "Junio"},
-#             {"nombre": "Julio"},
-#             {"nombre": "Agosto"},
-#             {"nombre": "Septiembre"},
-#             {"nombre": "Octubre"},
-#             {"nombre": "Noviembre"},
-#             {"nombre": "Diciembre"},
-#         ]
-#         mes_name = mes_array[int(mes_id) - 1].get("nombre")
-
-#         fecha = f"Iquitos, {dia} de {mes_name} de {anio}"
-
-#         # Guardar el PDF en la carpeta media
-#         media_root = settings.MEDIA_ROOT
-#         pdf_folder = os.path.join(media_root)
-#         if not os.path.exists(pdf_folder):
-#             os.makedirs(pdf_folder)
-
-#         # Registrar la fuente .otf que no tienes instalada
-#         font_path = os.path.join(settings.MEDIA_ROOT, "config", "times.ttf")
-#         font_path1 = os.path.join(settings.MEDIA_ROOT, "config", "timesbd.ttf")
-#         # Ajusta la ruta
-#         pdfmetrics.registerFont(TTFont("times", font_path))
-#         pdfmetrics.registerFont(TTFont("timesbd", font_path1))
-#         # milisecond
-#         milisecond = str(int(round(time.time() * 1000)))
-#         # Crear un objeto PDF con orientación horizontal y tamaño de página A4
-#         archivoPdf = canvas.Canvas(
-#             os.path.join(
-#                 settings.MEDIA_ROOT,
-#                 "diplomas",
-#                 f"diploma_egregasado-{persona}-{num_doc}-{programa}-{milisecond}.pdf",
-#             ),
-#             landscape(A4),
-#         )
-
-#         image_path = os.path.join(
-#             settings.MEDIA_ROOT, "config", f"diploma{programa_id}.jpg"
-#         )
-#         pdf_width, pdf_height = landscape(A4)
-#         archivoPdf.drawImage(image_path, 0, 0, width=pdf_width, height=pdf_height)
-
-#         if len(persona) <= 32:
-#             archivoPdf.setFillColor(HexColor("#02273E"))
-#             archivoPdf.setFont("timesbd", 32)
-#             archivoPdf.drawCentredString(430, 290, f"{persona}".upper())
-#         else:
-#             archivoPdf.setFillColor(HexColor("#02273E"))
-#             archivoPdf.setFont("timesbd", 32)
-#             archivoPdf.drawCentredString(430, 300, f"{nombres}".upper())
-#             archivoPdf.drawCentredString(430, 270, f"{apellidos}".upper())
-
-#         archivoPdf.setFillColor(HexColor("#000000"))
-#         archivoPdf.setFont("times", 21)
-#         archivoPdf.drawString(72, 218, f"{programa}.".title())
-
-#         archivoPdf.setFillColor(HexColor("#000000"))
-#         archivoPdf.setFont("times", 21)
-#         archivoPdf.drawString(500, 185, f"{fecha}.".capitalize())
-
-#         archivoPdf.save()
-#         # retornar la ruta del archivo PDF
-#         path_return = os.path.join(
-#             settings.MEDIA_URL,
-#             "diplomas",
-#             f"diploma_egregasado-{persona}-{num_doc}-{programa}-{milisecond}.pdf",
-#         )
-#         path_return = path_return.replace("\\", "/")
-#         return Response({"path": path_return})
-
-
 # new
 @api_view(["GET"])
 def generate_diploma_pdf(request):
@@ -2344,3 +2227,101 @@ def generate_diploma_pdf(request):
             }
             path_return = diploma_egresado(data)
         return Response({"path": path_return})
+
+
+@api_view(["GET"])
+def reporte_alumnos_programas_by_promocion(request):
+    promocion = request.GET.get("promocion")
+    programa_id = request.GET.get("programa_id")
+    if promocion == None:
+        return Response(
+            {"error": "No se encontro la promocion"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    programa = Programa.objects.filter(id=programa_id).first()
+    cursos = Cursos.objects.filter(
+        plan_estudio__programa_id=programa_id,
+    ).order_by("codigo")
+    data_cursos = []
+    for curso in cursos:
+        data_cursos.append(
+            {
+                "id": curso.id,
+                "nombre": curso.nombre,
+                "creditos": curso.creditos,
+                "codigo": curso.codigo,
+            }
+        )
+
+    expedientes = Expediente.objects.filter(
+        promocion=promocion, programa_id=programa_id
+    ).order_by("persona__apellido_paterno", "persona__apellido_materno")
+    data_expediente = []
+    for expediente in expedientes:
+        matricula = Matricula.objects.filter(expediente_id=expediente.id).order_by(
+            "curso_grupo__curso__codigo"
+        )
+
+        data_matricula = []
+        creditos_aprobados = 0
+        ppc = 0
+        creditos = 0
+        notas_total = 0
+        creditos_total = 0
+        for mat in matricula:
+            data_matricula.append(
+                {
+                    "curso_id": mat.curso_grupo.curso.id,
+                    "promedio_final": mat.promedio_final,
+                }
+            )
+            if mat.is_aplazado == True:
+                if mat.promedio_final_aplazado == None:
+                    promedio_final = mat.promedio_final
+                else:
+                    promedio_final = mat.promedio_final_aplazado
+            else:
+                promedio_final = mat.promedio_final
+
+            ppc += promedio_final * mat.curso_grupo.curso.creditos
+            creditos += mat.curso_grupo.curso.creditos
+
+            if (
+                promedio_final >= 14
+                and mat.curso_grupo.curso.plan_estudio.programa.tipo_id in [1, 3]
+            ):
+                creditos_aprobados += mat.curso_grupo.curso.creditos
+            if (
+                promedio_final >= 15
+                and mat.curso_grupo.curso.plan_estudio.programa.tipo_id == 2
+            ):
+                creditos_aprobados += mat.curso_grupo.curso.creditos
+        notas_total += ppc
+        creditos_total += creditos
+        if len(matricula) > 0:
+            promedio_graduado = round((notas_total / creditos_total), 4)
+
+        data_expediente.append(
+            {
+                "id": expediente.id,
+                "numero_documento": expediente.persona.numero_documento,
+                "nombres": expediente.persona.nombres,
+                "apellido_paterno": expediente.persona.apellido_paterno,
+                "apellido_materno": expediente.persona.apellido_materno,
+                "programa": expediente.programa.nombre,
+                "promocion": expediente.promocion,
+                "matriculas": data_matricula,
+                "creditos_aprobados": creditos_aprobados,
+                "ppg": promedio_graduado,
+            }
+        )
+
+    data = {
+        "programa": programa.nombre,
+        "promocion": promocion,
+        "cursos": data_cursos,
+        "expedientes": data_expediente,
+    }
+    # path_return = reporte_excel_programas_by_promocion_xlsx(data)
+    return Response(data)
+    # return Response({"path": path_return})

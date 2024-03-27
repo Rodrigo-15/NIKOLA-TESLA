@@ -83,4 +83,7 @@ urlpatterns = [
         get_charge_procedure_pdf,
         name="get_charge_procedure_pdf",
     ),
+    path(
+        "reporte_alumnos_programas_by_promocion", reporte_alumnos_programas_by_promocion
+    ),
 ]
