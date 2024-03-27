@@ -2252,6 +2252,7 @@ def get_constancia_registro(request):
 
 @api_view(["GET"])
 def get_tramites_area_excel(request):
+    usuario_id = request.GET.get("user_id")
     area_id = request.GET.get("area_id")
     fecha_inicio = request.GET.get("fecha_inicio")
     fecha_fin = request.GET.get("fecha_fin")
@@ -2265,13 +2266,25 @@ def get_tramites_area_excel(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
     
-    area = AreaSerializer(Area(id = area_id)).data
+    if usuario_id == None:
+        return Response(
+            {"errror": "No se encontro el usuario"},
+            status = status.HTTP_400_BAD_REQUEST,
+        )
+    
+    cargo_area = CargoArea.objects.filter(persona__user_id=usuario_id).first()
 
-    print(area)
+    persona = PersonaSerializerFilter(cargo_area.persona).data
 
-    tracings_for_user = ProcedureTracing.objects.filter(from_area=area["id"]).order_by(
+    nombreUsuario = f'{persona["nombres"]} {persona["apellido_paterno"]} {persona["apellido_materno"]}'
+
+    area = Area(id = area_id)
+
+    tracings_for_user = ProcedureTracing.objects.filter(from_area=area.id).order_by(
         "-created_at"
     )
+
+    creacion = date.today()
 
     procedures = []
 
@@ -2281,6 +2294,7 @@ def get_tramites_area_excel(request):
         if procedure not in procedures:
 
             procedures.append(procedure)
+
     i = 0
 
     for l in range(len(procedures)):
@@ -2352,7 +2366,9 @@ def get_tramites_area_excel(request):
                 break
 
     data = {
-        "area_usuaria": area["nombre"],
+        "usuario": nombreUsuario,
+        "area_usuaria": area.nombre,
+        "creacion" : creacion,
         "procedures": procedures,
         "name": "tramites",
     }

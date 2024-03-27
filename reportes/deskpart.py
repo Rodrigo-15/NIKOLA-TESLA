@@ -653,13 +653,44 @@ def get_procedure_data_xlsx(data) -> str:
     ws = file.add_worksheet()
     ws2 = file.add_worksheet()
 
-    ws.write_string(1, 1, f"Area Usuaria: {area_usuaria}")
+    formato_cuadro = file.add_format({
+    'border': 3,
+    'align': 'center',
+    'valign': 'vcenter',
+})
+    formato_cuadro.set_bg_color("yellow")
+    format_with_font = file.add_format({'font_size': 15})
+
+# Aplicar el formato al rango de celdas especificado (columnas B a D, filas 2 a 3)
+    ws.conditional_format('B2:D3', {'type': 'no_blanks', 'format': formato_cuadro})
+
+    ws.write_string(1, 1, f"Area Usuaria: {area_usuaria}", format_with_font)
+    ws.write_string(1,2, f"Usuario: {data['usuario']}", format_with_font)
+    ws.write_string(1,3, f"Fecha de creacion: {data['creacion']}", format_with_font)
 
     # ---------------tabla------------------#
     headers = datostabla[0:1][0]
     rows = datostabla[1:]
+
+    rowCounter = 3
+    largestName = 0
+
+    for row in datostabla:
+        for i in range(len(row)):
+            if i == 4:
+                if len(row[i]) > largestName:
+                    largestName = len(row[i])
+            if i == 6:
+                if row[6] == 3:
+                    row[6] = "En Plazo"
+                elif row[6] == 2:
+                    row[6] = "Por Vencer"
+                elif row[6] == 1:
+                    row[6] = "Vencido"
+        rowCounter += 1
+
     ws.add_table(
-        f"A4:H{len(rows) + 4}",
+        f"A6:H{len(rows) + 6}",
         {
             "data": rows,
             "columns": [
@@ -679,22 +710,6 @@ def get_procedure_data_xlsx(data) -> str:
         {"border": 1}
     )  # 1 is for a thin border. You can use other values for different border styles.
 
-    rowCounter = 3
-    largestName = 0
-    for row in datostabla:
-        for i in range(len(row)):
-            if i == 4:
-                if len(row[i]) > largestName:
-                    largestName = len(row[i])
-            if i == 6:
-                if row[6] == 3:
-                    row[6] = "En Plazo"
-                elif row[6] == 2:
-                    row[6] = "Por Vencer"
-                elif row[6] == 1:
-                    row[6] = "Vencido"
-        rowCounter += 1
-
     ws.set_column("A:A", 12.5)
     ws.set_column("B:B", 22)
 
@@ -706,6 +721,7 @@ def get_procedure_data_xlsx(data) -> str:
 
     ws.set_column("G:H", 20)
 
+    # ----------grafico-------------------#
     chart = file.add_chart({"type": "pie"})
 
     listaDeTipos = []
@@ -714,8 +730,6 @@ def get_procedure_data_xlsx(data) -> str:
 
     for procedure in procedures:
         listaDeTipos.append(procedure["state_date"])
-
-    # ----------grafico-------------------#
 
     for value in listaDeTipos:
         new = True
