@@ -1,18 +1,14 @@
 import os
 from backend import settings
-from django.template.loader import render_to_string
-from weasyprint import HTML
 import time
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import Paragraph, Table, TableStyle
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.lib import colors
-from reportlab.graphics.charts.piecharts import Pie
-from reportlab.graphics.shapes import Drawing, String
 from xlsxwriter import Workbook
 
 
@@ -581,6 +577,16 @@ def get_charge_procedure(data) -> str:
 
         c.setFont(psfontname="Arial-Bold", size=fontzise + 3)
         c.drawCentredString(A4[0] / 2, currentY - 50, "RECIBIDO CONFORME")
+
+        setF(8)
+
+        c.drawString(limiteIzquierda, limiteAbajo, "Universidad Nacional de la Amazonia Peruana")
+
+        lbString = "Escuela de Postgrado"
+
+        a = c.stringWidth(lbString, fontname, fontzise)
+
+        c.drawString(limiteDerecha - a, limiteAbajo, lbString)
 
         # ---------guardar archivo-------------#
         c.setTitle("hoja_de_cargo-{}-{}".format(area, milisecond))
