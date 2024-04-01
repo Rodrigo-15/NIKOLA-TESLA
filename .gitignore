@@ -140,3 +140,10 @@ GitHub.sublime-settings
 #ignorar migrations
 */migrations/*
 
+docker-compose.yml
+docker-compose.override.yml
+```
+Dockerfile
+```
+nginx.conf
+```

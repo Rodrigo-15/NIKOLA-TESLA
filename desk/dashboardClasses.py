@@ -227,16 +227,16 @@ class YourView(APIView):
 
             returnList.append({"area": area["nombre"], "state_procedure": estadosareas, "state_date": plazosareas})
 
-        
-        listaAreas = returnList
-
-
-
-        your_data = {"dates": weekGroupsf,
-                     "state_procedure" : estados,
-                     "state_date" : plazos,
-                     "area_procedures": listaAreas}
             
-        # Guardar en caché los datos obtenidos
-        cache.set(cache_key, your_data, timeout=3600)  # 1 hora de tiempo de vida de la caché
+            listaAreas = returnList
+
+
+
+            your_data = {"dates": weekGroupsf,
+                        "state_procedure" : estados,
+                        "state_date" : plazos,
+                        "area_procedures": listaAreas}
+                
+            # Guardar en caché los datos obtenidos
+            cache.set(cache_key, your_data, timeout=3600)  # 1 hora de tiempo de vida de la caché
         return Response(your_data)

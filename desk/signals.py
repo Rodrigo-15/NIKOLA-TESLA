@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import ProcedureTracing
+from .models import ProcedureTracing, Procedure
 from core.models import CargoArea
 from core.serializers import AreaSerializer
 from asgiref.sync import async_to_sync
