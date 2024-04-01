@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  django:
+    build: .
+    container_name: django-sigae-epg
+    volumes:
+      - .:/app
+      - media_volume:/app/media
+    environment:
+      - DATABASE_NAME=bd_sigae_epg
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=PostgradoBD#
+      - DATABASE_HOST=sigae-epg-bd
+      - DATABASE_PORT=5432
+    networks:
+      - postgradounap
+
+  redis:
+    image: redis:alpine
+    container_name: redis-for-django
+    networks:
+      - postgradounap
+
+  nginx-epg:
+    image: nginx:alpine
+    container_name: nginx-epg
+    ports:
+      - "80:80"  # Exponer Nginx en el puerto 80 del host    
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - media_volume:/app/media  # Para servir archivos media directamente desde Nginx
+    depends_on:
+      - django
+    networks:
+      - postgradounap
+
+volumes:
+  media_volume:  # Define un volumen para almacenar los archivos media persistentemente
+
+networks:
+  postgradounap:
+    external: true
