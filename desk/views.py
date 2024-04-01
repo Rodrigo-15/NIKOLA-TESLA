@@ -621,6 +621,7 @@ def save_derive_procedure(request):
 
         procedure = Procedure.objects.filter(id=procedure_id).first()
         procedure.number_of_sheets = number_of_sheets
+        #update
         procedure.save()
 
         if assigned_user_id != None:
