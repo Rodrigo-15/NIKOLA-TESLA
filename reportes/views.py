@@ -2252,32 +2252,39 @@ def get_constancia_registro(request):
 
 @api_view(["GET"])
 def get_tramites_area_excel(request):
-    user_id = request.GET.get("user_id")
+    usuario_id = request.GET.get("user_id")
+    area_id = request.GET.get("area_id")
     fecha_inicio = request.GET.get("fecha_inicio")
     fecha_fin = request.GET.get("fecha_fin")
     year = request.GET.get("year")
     state = request.GET.get("state")
     state_date = request.GET.get("state_date")
 
-    if user_id == None:
+    if area_id == None:
         return Response(
-            {"error": "No se encontro el usuario"},
+            {"error": "No se encontro el area"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-
-    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
-
-    if not cargo_area:
+    
+    if usuario_id == None:
         return Response(
-            status=status.HTTP_400_BAD_REQUEST,
-            data={"message": "El usuario no tiene un area asignada"},
+            {"errror": "No se encontro el usuario"},
+            status = status.HTTP_400_BAD_REQUEST,
         )
+    
+    cargo_area = CargoArea.objects.filter(persona__user_id=usuario_id).first()
 
-    area = (AreaSerializer(cargo_area.area, many=True).data)[0]
+    persona = PersonaSerializerFilter(cargo_area.persona).data
 
-    tracings_for_user = ProcedureTracing.objects.filter(from_area=area["id"]).order_by(
+    nombreUsuario = f'{persona["nombres"]} {persona["apellido_paterno"]} {persona["apellido_materno"]}'
+
+    area = Area(id = area_id)
+
+    tracings_for_user = ProcedureTracing.objects.filter(from_area=area.id).order_by(
         "-created_at"
     )
+
+    creacion = date.today()
 
     procedures = []
 
@@ -2287,6 +2294,7 @@ def get_tramites_area_excel(request):
         if procedure not in procedures:
 
             procedures.append(procedure)
+
     i = 0
 
     for l in range(len(procedures)):
@@ -2358,7 +2366,9 @@ def get_tramites_area_excel(request):
                 break
 
     data = {
-        "area_usuaria": area["nombre"],
+        "usuario": nombreUsuario,
+        "area_usuaria": area.nombre,
+        "creacion" : creacion,
         "procedures": procedures,
         "name": "tramites",
     }

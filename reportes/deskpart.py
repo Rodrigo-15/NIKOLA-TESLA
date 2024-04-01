@@ -1,18 +1,14 @@
 import os
 from backend import settings
-from django.template.loader import render_to_string
-from weasyprint import HTML
 import time
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import Paragraph, Table, TableStyle
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.lib import colors
-from reportlab.graphics.charts.piecharts import Pie
-from reportlab.graphics.shapes import Drawing, String
 from xlsxwriter import Workbook
 
 
@@ -583,6 +579,16 @@ def get_charge_procedure(data) -> str:
         c.setFont(psfontname="Arial-Bold", size=fontzise + 3)
         c.drawCentredString(A4[0] / 2, currentY - 50, "RECIBIDO CONFORME")
 
+        setF(8)
+
+        c.drawString(limiteIzquierda, limiteAbajo, "Universidad Nacional de la Amazonia Peruana")
+
+        lbString = "Escuela de Postgrado"
+
+        a = c.stringWidth(lbString, fontname, fontzise)
+
+        c.drawString(limiteDerecha - a, limiteAbajo, lbString)
+
         # ---------guardar archivo-------------#
         c.setTitle("hoja_de_cargo-{}-{}".format(area, milisecond))
         c.save()
@@ -628,16 +634,20 @@ def get_procedure_data_xlsx(data) -> str:
     procedures = data["procedures"]
 
     datostabla = [
-        ["Codigo", "Asunto", "Tipo", "Solicitante"],
+        ["Codigo", "Fecha de Creacion","Asunto", "Tipo de Tramite", "Solicitante", "Estado", "Estado de Fecha", "Fecha Vencimiento"],
     ]
 
     for procedure in procedures:
         datostabla.append(
             [
                 procedure["code_number"],
+                procedure["created_at"],
                 procedure["subject"],
                 procedure["procedure_type_description"],
                 procedure["person_full_name"],
+                procedure["state"],
+                procedure["state_date"],
+                procedure["due_date"],
             ]
         )
 
@@ -645,13 +655,44 @@ def get_procedure_data_xlsx(data) -> str:
     ws = file.add_worksheet()
     ws2 = file.add_worksheet()
 
-    ws.write_string(1, 1, f"Area Usuaria: {area_usuaria}")
+    formato_cuadro = file.add_format({
+    'border': 3,
+    'align': 'center',
+    'valign': 'vcenter',
+})
+    formato_cuadro.set_bg_color("yellow")
+    format_with_font = file.add_format({'font_size': 15})
+
+# Aplicar el formato al rango de celdas especificado (columnas B a D, filas 2 a 3)
+    ws.conditional_format('B2:D3', {'type': 'no_blanks', 'format': formato_cuadro})
+
+    ws.write_string(1, 1, f"Area Usuaria: {area_usuaria}", format_with_font)
+    ws.write_string(1,2, f"Usuario: {data['usuario']}", format_with_font)
+    ws.write_string(1,3, f"Fecha de creacion: {data['creacion']}", format_with_font)
 
     # ---------------tabla------------------#
     headers = datostabla[0:1][0]
     rows = datostabla[1:]
+
+    rowCounter = 3
+    largestName = 0
+
+    for row in datostabla:
+        for i in range(len(row)):
+            if i == 4:
+                if len(row[i]) > largestName:
+                    largestName = len(row[i])
+            if i == 6:
+                if row[6] == 3:
+                    row[6] = "En Plazo"
+                elif row[6] == 2:
+                    row[6] = "Por Vencer"
+                elif row[6] == 1:
+                    row[6] = "Vencido"
+        rowCounter += 1
+
     ws.add_table(
-        f"A4:D{len(rows) + 4}",
+        f"A6:H{len(rows) + 6}",
         {
             "data": rows,
             "columns": [
@@ -659,6 +700,10 @@ def get_procedure_data_xlsx(data) -> str:
                 {"header": headers[1]},
                 {"header": headers[2]},
                 {"header": headers[3]},
+                {"header": headers[4]},
+                {"header": headers[5]},
+                {"header": headers[6]},
+                {"header": headers[7]},
             ],
         },
     )
@@ -667,20 +712,18 @@ def get_procedure_data_xlsx(data) -> str:
         {"border": 1}
     )  # 1 is for a thin border. You can use other values for different border styles.
 
-    rowCounter = 3
-    largestAsunto = 0
-    for row in datostabla:
-        for i in range(len(row)):
-            if i == 2:
-                if len(row[i]) > largestAsunto:
-                    largestAsunto = len(row[i])
-        rowCounter += 1
-
     ws.set_column("A:A", 12.5)
-    ws.set_column("B:B", largestAsunto * 2.4)
+    ws.set_column("B:B", 22)
 
     ws.set_column("C:D", 50)
 
+    ws.set_column("E:E", largestName)
+
+    ws.set_column("F:F", 10)
+
+    ws.set_column("G:H", 20)
+
+    # ----------grafico-------------------#
     chart = file.add_chart({"type": "pie"})
 
     listaDeTipos = []
@@ -688,9 +731,7 @@ def get_procedure_data_xlsx(data) -> str:
     listaSumaDeTipos = []
 
     for procedure in procedures:
-        listaDeTipos.append(procedure["procedure_type_description"])
-
-    # ----------grafico-------------------#
+        listaDeTipos.append(procedure["state_date"])
 
     for value in listaDeTipos:
         new = True
@@ -704,12 +745,20 @@ def get_procedure_data_xlsx(data) -> str:
     for i in range(len(listaSumaDeTipos)):
         listaSumaDeTipos[i] = listaSumaDeTipos[i][::-1]
 
+    for value in listaSumaDeTipos:
+        if value[0] == 1:
+            value[0] = "Vencido"
+        elif value[0] == 2:
+            value[0] = "Por Vencer"
+        elif value[0] == 3:
+            value[0] = "En Plazo"
+
     ws2.add_table(
         f"B2:C{len(listaSumaDeTipos) + 1}",
         {
             "data": listaSumaDeTipos,
             "columns": [
-                {"header": "Tipo Tramite"},
+                {"header": "Estado de Fecha"},
                 {"header": "Cantidad"},
             ],
         },
@@ -752,16 +801,23 @@ def generate_constancia_de_registro(data) -> str:
     lTop = A4[0] - 2 * cm
     lBot = cm
 
-    media_root = settings.MEDIA_ROOT
-    pdf_folder = os.path.join(media_root, "pdf", "constanciaRegistro")
-    if not os.path.exists(pdf_folder):
-        os.makedirs(pdf_folder)
+    s3_client = settings.CREATE_STORAGE
+    bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+    folder_name = "media/pdf/constanciaRegistro"
 
+    try:
+        s3_client.head_object(Bucket=bucket_name, Key=folder_name)
+    except:
+        s3_client.put_object(Bucket=bucket_name, Key=folder_name)
+    # milisecond
     milisecond = str(int(round(time.time() * 1000)))
-    pdf_file_name = os.path.join(
-        pdf_folder,
-        "constanciaDeRegistro-{}-{}.pdf".format(data[1], milisecond),
+
+    pdf_file_name = (
+        f"{folder_name}-{data[1]}-{milisecond}.pdf"
     )
+
+    pdf_file_key = pdf_file_name
+
     if os.path.exists(pdf_file_name):
         os.remove(pdf_file_name)
 
@@ -777,8 +833,9 @@ def generate_constancia_de_registro(data) -> str:
         style.fontName = fontname
         style.leading = size
 
-    logoUnap = "media/config/logo_UNAP.jpg"
+    logoUnap = "media/config/logo_UNAP.png"
     logoPostgrado = "media/config/postgrado.png"
+    fondo = "media/config/constanciabg.jpg"
 
     fontzise = 10
     fontname = "Arial"
@@ -794,6 +851,8 @@ def generate_constancia_de_registro(data) -> str:
     tipoTramite = data[2]
 
     c = canvas.Canvas(pdf_file_name, A4[::-1])
+
+    c.drawImage(fondo, 0, 0, A4[1], A4[0])
 
     c.drawImage(logoUnap, lLeft + 100, lTop - 75, 150, 75)
     c.drawImage(logoPostgrado, lRigth - 200, lTop - 75, 75, 75)
@@ -828,11 +887,5 @@ def generate_constancia_de_registro(data) -> str:
 
     c.save()
 
-    path_return = os.path.join(
-        settings.MEDIA_URL,
-        "pdf",
-        "constanciaRegistro",
-        "constanciaDeRegistro-{}-{}.pdf".format(data[1], milisecond),
-    )
-    path_return = path_return.replace("\\", "/")
+    path_return = settings.MEDIA_URL +pdf_file_key
     return path_return
