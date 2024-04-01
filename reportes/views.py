@@ -2152,10 +2152,21 @@ def get_charge_procedure_pdf(request):
             status=status.HTTP_400_BAD_REQUEST,
             data={"message": "El usuario no tiene un area asignada"},
         )
+    
+    procedure1 = ProcedureSerializer(Procedure.objects.filter(id = procedure_charge_id).first()).data
+
+    year, hora= procedure1["created_at"].split(" ", 1)
+
+    hora = hora.replace("P", "")
+    hora = hora.replace("M", "")
+    hora = hora.replace("A", "")
+
+    idUsuarioOriginal = procedure1["user"]
+    usuarioOriginal = PersonaSerializerFilter(Persona.objects.filter(user_id = idUsuarioOriginal).first()).data
+
     data_area = cargo_area.area.all()
     areas = AreaSerializer(data_area, many=True).data
     fecha = datetime.datetime.now().strftime("%d/%m/%Y")
-    hora = datetime.datetime.now().strftime("%H:%M %p")
     anio = datetime.datetime.now().year
     usuario = Persona.objects.filter(user_id=user_id).first()
 
@@ -2186,13 +2197,14 @@ def get_charge_procedure_pdf(request):
 
     final_data = {
         "area": dict(areas[0]),
-        "fecha": fecha,
+        "fecha": year,
         "hora": hora,
         "anio": anio,
         "usuario": PersonaSerializerFilter(usuario).data,
         "procedure": obj_procedure,
         "procedure_count": len(obj_procedure),
         "charge_number": text_charge_number,
+        "original_user": usuarioOriginal
     }
     path = get_charge_procedure(final_data)
     return Response({"path": path}, status=status.HTTP_200_OK)

@@ -6,10 +6,14 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import Paragraph, Table, TableStyle
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.utils import ImageReader
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.lib import colors
 from xlsxwriter import Workbook
+from PIL import Image
+from io import BytesIO
+import qrcode
 
 
 def tabla_dinamica(
@@ -23,9 +27,14 @@ def tabla_dinamica(
     lLeft,
     lTop,
     lBot,
+    lRigh,
     columns,
     colWidths,
 ):
+    addres = "Los Rosales s/n, San Juan Bautista"
+    email = "postgrado@unapiquitos.edu.pe"
+    phonenumber = "Telefono: (5165) 261101"
+    pageDirection = "https://admision.postgradounap.edu.pe/"
     setF(12, "Arial-Bold")
     lol = True
     thing = 0
@@ -44,7 +53,7 @@ def tabla_dinamica(
             if not porcentaje_sacado:
                 a = currenty - lBot - fontzise - 5
                 b = a / tabla._height
-                thing = round(len(datosTabla) * b) + 5
+                thing = round(len(datosTabla) * b) + 1
                 currenty - lBot - fontzise - 5
                 porcentaje_sacado = True
                 continue
@@ -96,8 +105,19 @@ def tabla_dinamica(
             tabla.drawOn(c, lLeft, currenty - tabla._height)
 
             setF(8)
-            c.drawCentredString(A4[0] / 2, lBot, str(pageCounter))
+            c.drawCentredString(A4[0] / 2, lBot- fontzise, str(pageCounter))
             pageCounter += 1
+
+            c.drawString(lLeft, lBot, addres)
+            c.drawString(lLeft, lBot + fontzise, phonenumber)
+
+            lengt1 = c.stringWidth(email, "Arial", fontzise)
+            lengt2 = c.stringWidth(pageDirection, "Arial", fontzise)
+
+            c.drawString(lRigh - lengt1, lBot, email)
+            c.drawString(lRigh - lengt2, lBot + fontzise, pageDirection)
+
+
 
             if len(datosRestantes) != 0:
                 c.showPage()
@@ -367,6 +387,26 @@ def get_process_tracking_sheet(data) -> str:
         )
 
         path_return = settings.MEDIA_URL + pdf_file_key
+
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(codigo)
+        qr.make(fit=True)
+
+        # Create an image from the QR code instance
+        QRImage = qr.make_image(fill_color="black", back_color="white")
+
+        img_buffer = BytesIO()
+        QRImage.save(img_buffer)
+        img_buffer.seek(0)
+
+        img_buffer = ImageReader(img_buffer)
+
+
         return path_return
     except Exception as e:
         print(e)
@@ -428,7 +468,7 @@ def get_charge_procedure(data) -> str:
         logoPostgrado = "media/config/postgrado.png"
 
         areaUsuaria = data["area"]["nombre"].upper()
-        usuario = f"{data['usuario']['nombres']}  {data['usuario']['apellido_paterno']}  {data['usuario']['apellido_materno']}".upper()
+        usuario = f"{data['original_user']['nombres']}  {data['original_user']['apellido_paterno']}  {data['original_user']['apellido_materno']}".upper()
         fecha = data["fecha"]
         hora = data["hora"]
         consolidado = data["procedure_count"]
@@ -564,6 +604,7 @@ def get_charge_procedure(data) -> str:
             limiteIzquierda,
             limiteArriba,
             limiteAbajo,
+            limiteDerecha,
             columnasTabla,
             [
                 maxWidht * 0.15,
@@ -579,19 +620,33 @@ def get_charge_procedure(data) -> str:
         c.drawCentredString(A4[0] / 2, currentY - 50, "RECIBIDO CONFORME")
 
         setF(8)
-
-        c.drawString(limiteIzquierda, limiteAbajo, "Universidad Nacional de la Amazonia Peruana")
-
-        lbString = "Escuela de Postgrado"
-
-        a = c.stringWidth(lbString, fontname, fontzise)
-
-        c.drawString(limiteDerecha - a, limiteAbajo, lbString)
-
         # ---------guardar archivo-------------#
         c.setTitle("hoja_de_cargo-{}-{}".format(area, milisecond))
-        c.save()
         #
+
+        path_return = settings.MEDIA_URL + pdf_file_key
+
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(path_return)
+        qr.make(fit=True)
+
+        # Create an image from the QR code instance
+        QRImage = qr.make_image(fill_color="black", back_color="white")
+
+        img_buffer = BytesIO()
+        QRImage.save(img_buffer)
+        img_buffer.seek(0)
+
+        img_buffer = ImageReader(img_buffer)
+
+        c.drawImage(img_buffer, A4[0]/2 -35, limiteAbajo + fontzise * 3, 70,70)
+        c.save()
+
         # Subir el archivo PDF al bucket de S3
         s3_client.put_object(
             Bucket=bucket_name,
@@ -881,6 +936,7 @@ def generate_constancia_de_registro(data) -> str:
     parrafo02 = Paragraph(f"Ha registrado con fecha {data[3]} su {tipoTramite}.", style)
     parrafo02.wrapOn(c, maxWidth, 1000)
     parrafo02.drawOn(c, lLeft, lTop - 300)
+
 
     c.save()
 
