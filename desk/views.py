@@ -6,7 +6,7 @@ from core.serializers import (
     AreaSerializer,
     CargoAreaPersonSerializer,
 )
-from .dashboardClasses import  *
+from .dashboardClasses import *
 from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
