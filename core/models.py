@@ -144,7 +144,7 @@ class Etapa(models.Model):
 
 
 class Area(models.Model):
-    nombre = models.CharField(max_length=100)
+    nombre = models.CharField(max_length=1000)
     is_active = models.BooleanField(default=True)
     key_name = models.CharField(max_length=100, null=True, blank=True)
     is_external = models.BooleanField(default=False)
