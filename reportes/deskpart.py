@@ -145,6 +145,33 @@ def tabla_dinamica(
     return lol, tabla._height, currenty
 
 
+def upload_file_to_s3(file_name, folder_name):
+    # Subir el archivo al bucket de S3 si debug es False de lo contrario se sube a la carpeta media
+    print(settings.DEBUG)
+    # Subir el archivo al bucket de S3 si debug es False de lo contrario se sube a la carpeta media
+    if not settings.DEBUG:
+        s3_client = settings.CREATE_STORAGE
+        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+        try:
+            s3_client.head_object(Bucket=bucket_name, Key=folder_name)
+        except:
+            s3_client.put_object(Bucket=bucket_name, Key=folder_name)
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=folder_name + file_name,
+            Body=open(file_name, "rb"),
+        )
+        os.remove(file_name)
+        return settings.MEDIA_URL + folder_name + file_name
+    else:
+
+        path_return = os.path.join(settings.MEDIA_LOCAL_URL, folder_name, file_name)
+        print("path_return", settings.MEDIA_LOCAL_URL)
+        path_return = path_return.replace("\\", "")
+        path_return = path_return.replace("/media/", "media/")
+        return settings.URL_LOCAL + path_return
+
+
 def get_process_tracking_sheet(data) -> str:
     try:
         #
@@ -155,22 +182,20 @@ def get_process_tracking_sheet(data) -> str:
             a = dict(thing)
             trackins.append(a)
         #
-        s3_client = settings.CREATE_STORAGE
-        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-        folder_name = "pdf/hoja_seguimiento/"
-
-        # Crea la carpeta en el bucket si no existe
-        try:
-            s3_client.head_object(Bucket=bucket_name, Key=folder_name)
-        except:
-            s3_client.put_object(Bucket=bucket_name, Key=folder_name)
         code_number = data["procedure"]["code_number"]
         milisecond = str(int(round(time.time() * 1000)))
         # Nombre del archivo PDF que deseas crear
+
+        folder_name = "pdf/hoja_seguimiento/"
         pdf_file_name = "hoja-seguimiento-{}-{}.pdf".format(code_number, milisecond)
 
-        # Ruta completa del archivo PDF en el bucket
-        pdf_file_key = folder_name + pdf_file_name
+        # -----generar pdf-----#
+        if settings.DEBUG:
+            c = canvas.Canvas(
+                os.path.join(settings.MEDIA_ROOT, folder_name, f"{pdf_file_name}"), A4
+            )
+        else:
+            c = canvas.Canvas(pdf_file_name, A4)
 
         pdfmetrics.registerFont(TTFont("Arial", "arial.ttf"))
         pdfmetrics.registerFont(TTFont("Arial-Bold", "arialbd.ttf"))
@@ -191,8 +216,6 @@ def get_process_tracking_sheet(data) -> str:
         for thing in trackins:
             a = thing
             datosTabla.append([f'{a["date"]} {a["hour"]}', a["action"], a["area_name"]])
-
-        c = canvas.Canvas(pdf_file_name)
 
         logoUnap = "media\config\logo_UNAP.png"
         logoPostgrado = "media\config\postgrado.png"
@@ -345,44 +368,34 @@ def get_process_tracking_sheet(data) -> str:
             c.drawImage(img_buffer, (A4[0]/2) - 35, lBot + fontzise *2, 70, 70)
 
         c.save()
-        s3_client.put_object(
-            Bucket=bucket_name,
-            Key=folder_name + pdf_file_name,
-            Body=open(pdf_file_name, "rb"),
-        )
-        # eliminar el archivo local
-        os.remove(pdf_file_name)
+ 
+        path_return = upload_file_to_s3(pdf_file_name, folder_name)
         return path_return
     except Exception as e:
-        print(e)
+        print("error", e)
         return None
 
 
 def get_charge_procedure(data) -> str:
     try:
-        #
-        s3_client = settings.CREATE_STORAGE
-        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-        folder_name = "pdf/hoja_de_cargo/"
-
-        # Crea la carpeta en el bucket si no existe
-        try:
-            s3_client.head_object(Bucket=bucket_name, Key=folder_name)
-        except:
-            s3_client.put_object(Bucket=bucket_name, Key=folder_name)
 
         area = data["area"]["nombre"].replace(" ", "_")
         charge_number = data["charge_number"]
         milisecond = str(int(round(time.time() * 1000)))
 
         # Nombre del archivo PDF que deseas crear
+
+        folder_name = "pdf/hoja_de_cargo/"
+
         pdf_file_name = "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond)
-
-        # Ruta completa del archivo PDF en el bucket
-        pdf_file_key = folder_name + pdf_file_name
-
         # -----generar pdf-----#
-        c = canvas.Canvas(pdf_file_name, A4)
+        if settings.DEBUG:
+            c = canvas.Canvas(
+                os.path.join(settings.MEDIA_ROOT, folder_name, f"{pdf_file_name}"), A4
+            )
+        else:
+            c = canvas.Canvas(pdf_file_name, A4)
+
         # ----variables autogeneradas---------#
 
         pdfmetrics.registerFont(TTFont("Arial", "arial.ttf"))
@@ -579,7 +592,10 @@ def get_charge_procedure(data) -> str:
         c.setTitle("hoja_de_cargo-{}-{}".format(area, milisecond))
         #
 
+
         path_return = settings.MEDIA_URL + pdf_file_key
+        c.drawString(
+            limiteIzquierda, limiteAbajo, "Universidad Nacional de la Amazonia Peruana")
 
         qr = qrcode.QRCode(
             version=1,
@@ -605,15 +621,7 @@ def get_charge_procedure(data) -> str:
 
         c.save()
 
-        # Subir el archivo PDF al bucket de S3
-        s3_client.put_object(
-            Bucket=bucket_name,
-            Key=folder_name + pdf_file_name,
-            Body=open(pdf_file_name, "rb"),
-        )
-        # eliminar el archivo local
-        os.remove(pdf_file_name)
-        path_return = settings.MEDIA_URL + pdf_file_key
+        path_return = upload_file_to_s3(pdf_file_name, folder_name)
         return path_return
     except Exception as e:
         print(e)
@@ -646,7 +654,16 @@ def get_procedure_data_xlsx(data) -> str:
     procedures = data["procedures"]
 
     datostabla = [
-        ["Codigo", "Fecha de Creacion","Asunto", "Tipo de Tramite", "Solicitante", "Estado", "Estado de Fecha", "Fecha Vencimiento"],
+        [
+            "Codigo",
+            "Fecha de Creacion",
+            "Asunto",
+            "Tipo de Tramite",
+            "Solicitante",
+            "Estado",
+            "Estado de Fecha",
+            "Fecha Vencimiento",
+        ],
     ]
 
     for procedure in procedures:
@@ -667,20 +684,22 @@ def get_procedure_data_xlsx(data) -> str:
     ws = file.add_worksheet()
     ws2 = file.add_worksheet()
 
-    formato_cuadro = file.add_format({
-    'border': 3,
-    'align': 'center',
-    'valign': 'vcenter',
-})
+    formato_cuadro = file.add_format(
+        {
+            "border": 3,
+            "align": "center",
+            "valign": "vcenter",
+        }
+    )
     formato_cuadro.set_bg_color("yellow")
-    format_with_font = file.add_format({'font_size': 15})
+    format_with_font = file.add_format({"font_size": 15})
 
-# Aplicar el formato al rango de celdas especificado (columnas B a D, filas 2 a 3)
-    ws.conditional_format('B2:D3', {'type': 'no_blanks', 'format': formato_cuadro})
+    # Aplicar el formato al rango de celdas especificado (columnas B a D, filas 2 a 3)
+    ws.conditional_format("B2:D3", {"type": "no_blanks", "format": formato_cuadro})
 
     ws.write_string(1, 1, f"Area Usuaria: {area_usuaria}", format_with_font)
-    ws.write_string(1,2, f"Usuario: {data['usuario']}", format_with_font)
-    ws.write_string(1,3, f"Fecha de creacion: {data['creacion']}", format_with_font)
+    ws.write_string(1, 2, f"Usuario: {data['usuario']}", format_with_font)
+    ws.write_string(1, 3, f"Fecha de creacion: {data['creacion']}", format_with_font)
 
     # ---------------tabla------------------#
     headers = datostabla[0:1][0]
@@ -824,9 +843,7 @@ def generate_constancia_de_registro(data) -> str:
     # milisecond
     milisecond = str(int(round(time.time() * 1000)))
 
-    pdf_file_name = (
-        f"{folder_name}-{data[1]}-{milisecond}.pdf"
-    )
+    pdf_file_name = f"{folder_name}-{data[1]}-{milisecond}.pdf"
 
     pdf_file_key = pdf_file_name
 
@@ -975,6 +992,5 @@ def generate_constancia_de_registro(data) -> str:
     c.drawImage(img_buffer, A4[0] / 2 - 35, lBot + fontzise * 3, 70, 70)
 
     c.save()
-
 
     return path_return
