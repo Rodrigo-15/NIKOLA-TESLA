@@ -579,6 +579,17 @@ def get_charge_procedure(data) -> str:
 
         currentY -= 20
 
+        setF(10, "Arial-Bold")
+
+        c.drawString(limiteIzquierda, currentY, "CORREO USUARIO")
+        c.drawString(limiteIzquierda + 100, currentY, ":")
+
+        setF(10)
+
+        c.drawString(areaParrafoizquierda, currentY, data["original_user"]["correo"])
+
+        currentY -= 20
+
         c.line(limiteIzquierda, currentY, limiteDerecha, currentY)
 
         # -------------tabla-----------------#
@@ -645,6 +656,9 @@ def get_charge_procedure(data) -> str:
         img_buffer = ImageReader(img_buffer)
 
         c.drawImage(img_buffer, A4[0]/2 -35, limiteAbajo + fontzise * 3, 70,70)
+
+        c.drawString(limiteIzquierda, limiteAbajo + fontzise*2, f'{data["usuario"]["nombres"]} {data["usuario"]["apellido_paterno"]} {data["usuario"]["apellido_materno"]}')
+
         c.save()
 
         # Subir el archivo PDF al bucket de S3
