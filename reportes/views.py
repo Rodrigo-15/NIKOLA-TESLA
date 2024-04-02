@@ -2246,19 +2246,17 @@ def get_constancia_registro(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    procedure: Procedure = Procedure.objects.filter(id=procedure_id).first()
+    procedure = ProcedureSerializer(Procedure.objects.filter(id=procedure_id).first()).data
 
-    procedureType = procedure.procedure_type.concepto
+    area = procedure["area_id"]
 
-    fecha, hora = str(procedure.created_at).split(" ")
+    if area:
+        area = AreaSerializer(Area.objects.filter(id = area)).data
+        area = area["nombre"]
+    else:
+        area = "undefined"
 
-    persona = f"{procedure.file.person.nombres} {procedure.file.person.apellido_paterno} {procedure.file.person.apellido_materno}"
-
-    dni = procedure.file.person.numero_documento
-
-    data = [persona, dni, procedureType, fecha]
-
-    path = generate_constancia_de_registro(data)
+    path = generate_constancia_de_registro([procedure, area])
     return Response({"path": path}, status=status.HTTP_200_OK)
 
 

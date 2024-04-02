@@ -40,16 +40,15 @@ def tabla_dinamica(
     thing = 0
     porcentaje_sacado = False
     while lol:
-        if datosTabla[0] != columns and pageCounter != 1:
-            pass
-        if thing == 0:
+        if datosTabla[0] != columns:
             datosTabla.insert(0, columns)
+        if thing == 0:
             tabla = Table(datosTabla[0:], colWidths)
         else:
             tabla = Table(datosTabla[0:thing], colWidths)
         tabla.wrap(maxWidht, 250)
 
-        if tabla._height > currenty - lBot - fontzise - 5:
+        if (tabla._height) > currenty - lBot - fontzise - 5:
             if not porcentaje_sacado:
                 a = currenty - lBot - fontzise - 5
                 b = a / tabla._height
@@ -133,6 +132,7 @@ def tabla_dinamica(
                     lLeft,
                     lTop,
                     lBot,
+                    lRigh,
                     columns,
                     colWidths,
                 )
@@ -303,99 +303,30 @@ def get_process_tracking_sheet(data) -> str:
 
         pageCounter = 1
 
-        def tabla_dinamica(datosTabla: list, currenty, pageCounter):
-            setF(12, "Arial-Bold")
-            lol = True
-            thing = 0
-            while lol:
-                if datosTabla[0] == ["Fecha", "Accion", "Oficina"]:
-                    pass
-                else:
-                    datosTabla.insert(0, ["Fecha", "Accion", "Oficina"])
-                if thing == 0:
-                    tabla = Table(datosTabla[0:], colWidths=[80, 300, 80])
-                else:
-                    tabla = Table(datosTabla[0:thing], colWidths=[80, 300, 80])
-                tabla.wrap(maxWidht, 1000)
+        lol, altura, currenty = tabla_dinamica(datosTabla=datosTabla, 
+                       currenty=currenty, 
+                       pageCounter=pageCounter, 
+                       setF=setF, 
+                       c=c,
+                       fontzise=fontzise, 
+                       maxWidht=maxWidht, 
+                       lLeft=lLeft, 
+                       lTop=lTop, 
+                       lBot=lBot, 
+                       lRigh=lRight,
+                       columns=["Fecha", "Accion", "Oficina"],
+                       colWidths=[0.3*maxWidht,0.4*maxWidht,0.3*maxWidht])
+        
+        ###---------creacion del qr--------------##
 
-                if tabla._height > currenty - lBot - fontzise - 5:
-                    thing -= 1
-                    continue
-                else:
-                    if thing == 0:
-                        datosRestantes = []
-                    else:
-
-                        datosRestantes = datosTabla[thing:]
-
-                    tabla.setStyle(
-                        TableStyle(
-                            [
-                                ("BACKGROUND", (0, 0), (-1, 0), colors.gray),
-                                ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                                (
-                                    "VALIGN",
-                                    (0, 0),
-                                    (-1, -1),
-                                    "MIDDLE",
-                                ),  # Align all cells' content to the top
-                                (
-                                    "LINEABOVE",
-                                    (0, 0),
-                                    (-1, 0),
-                                    1,
-                                    (0, 0, 0),
-                                ),  # Add a line above the header row
-                                (
-                                    "LINEBELOW",
-                                    (0, 0),
-                                    (-1, 0),
-                                    1,
-                                    (0, 0, 0),
-                                ),  # Add a line below the header row}
-                                (
-                                    "WORDWRAP",
-                                    (0, 0),
-                                    (-1, -1),
-                                ),  # Enable word wrap for all cells
-                            ]
-                        )
-                    )
-
-                    tabla.wrapOn(c, maxWidht, 1000)
-                    tabla.drawOn(c, lLeft, currenty - tabla._height)
-                    currenty = lTop
-
-                    setF(8)
-                    c.drawCentredString(A4[0] / 2, lBot, str(pageCounter))
-                    pageCounter += 1
-                    c.showPage()
-
-                    if len(datosRestantes) != 0:
-                        lol = tabla_dinamica(datosRestantes, currenty, pageCounter)
-                    elif len(datosRestantes) == 0:
-                        lol = False
-            return lol
-
-        tabla_dinamica(datosTabla, currenty, pageCounter)
-
-        c.save()
-        s3_client.put_object(
-            Bucket=bucket_name,
-            Key=folder_name + pdf_file_name,
-            Body=open(pdf_file_name, "rb"),
-        )
-        # eliminar el archivo local
-        os.remove(pdf_file_name)
         path_return = settings.MEDIA_URL + pdf_file_key
-
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
             box_size=10,
             border=4,
         )
-        qr.add_data(codigo)
+        qr.add_data(path_return)
         qr.make(fit=True)
 
         # Create an image from the QR code instance
@@ -407,7 +338,20 @@ def get_process_tracking_sheet(data) -> str:
 
         img_buffer = ImageReader(img_buffer)
 
+        if currenty > 150:
+            c.drawImage(img_buffer, (A4[0]/2) - 35, lBot + fontzise *2, 70, 70) 
+        else:
+            c.showPage()
+            c.drawImage(img_buffer, (A4[0]/2) - 35, lBot + fontzise *2, 70, 70)
 
+        c.save()
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=folder_name + pdf_file_name,
+            Body=open(pdf_file_name, "rb"),
+        )
+        # eliminar el archivo local
+        os.remove(pdf_file_name)
         return path_return
     except Exception as e:
         print(e)
@@ -494,7 +438,6 @@ def get_charge_procedure(data) -> str:
         # -----cabezal-----#
         c.drawImage(logoUnap, limiteIzquierda, limiteArriba - 37.5, 75, 37.5)
         c.drawImage(logoPostgrado, limiteDerecha - 40, limiteArriba - 40, 40, 40)
-        # c.line(limiteDerecha, limiteArriba, limiteDerecha, limiteAbajo)
 
         c.setFont(psfontname=fontname, size=fontzise)
 
@@ -578,7 +521,7 @@ def get_charge_procedure(data) -> str:
 
         c.drawString(areaParrafoizquierda, currentY, str(consolidado))
 
-        currentY -= 20
+        currentY -= 22
 
         setF(10, "Arial-Bold")
 
@@ -866,8 +809,8 @@ def get_procedure_data_xlsx(data) -> str:
 
 def generate_constancia_de_registro(data) -> str:
     lLeft = 2 * cm
-    lRigth = A4[1] - 2 * cm
-    lTop = A4[0] - 2 * cm
+    lRigth = A4[0] - 2 * cm
+    lTop = A4[1] - 2 * cm
     lBot = cm
 
     s3_client = settings.CREATE_STORAGE
@@ -904,7 +847,6 @@ def generate_constancia_de_registro(data) -> str:
 
     logoUnap = "media/config/logo_UNAP.png"
     logoPostgrado = "media/config/postgrado.png"
-    fondo = "media/config/constanciabg.jpg"
 
     fontzise = 10
     fontname = "Arial"
@@ -915,47 +857,124 @@ def generate_constancia_de_registro(data) -> str:
     pdfmetrics.registerFont(TTFont("Arial", "arial.ttf"))
     pdfmetrics.registerFont(TTFont("Arial-Bold", "arialbd.ttf"))
 
-    estudiante = [data[0], data[1]]
+    estudiante = data[0]["person_full_name"]
 
-    tipoTramite = data[2]
+    tipoTramite = data[0]["procedure_type_description"]
 
-    c = canvas.Canvas(pdf_file_name, A4[::-1])
+    fecha, hora = data[0]["created_at"].split(" ", 1)
 
-    c.drawImage(fondo, 0, 0, A4[1], A4[0])
+    addres = "Los Rosales s/n, San Juan Bautista"
+    email = "postgrado@unapiquitos.edu.pe"
+    phonenumber = "Telefono: (5165) 261101"
+    pageDirection = "https://admision.postgradounap.edu.pe/"
 
-    c.drawImage(logoUnap, lLeft + 100, lTop - 75, 150, 75)
-    c.drawImage(logoPostgrado, lRigth - 200, lTop - 75, 75, 75)
+    c = canvas.Canvas(pdf_file_name, A4)
 
-    setF(18, "Arial-Bold")
+    c.drawImage(logoUnap, lLeft, lTop - 37.5, 75, 37.5)
+    c.drawImage(logoPostgrado, lRigth - 40, lTop - 40, 40, 40)
+
+    c.setFont(psfontname=fontname, size=fontzise)
+
+    c.drawCentredString(
+        (lRigth + lLeft) / 2,
+        lTop - fontzise - 5,
+        "UNIVERSIDAD NACIONAL DE LA AMAZONIA PERUANA",
+    )
+    c.drawCentredString(
+        (lRigth + lLeft) / 2,
+        lTop - fontzise * 3,
+        "ESCUELA DE POSTGRADO",
+    )
+
+    fontname = "Arial-Bold"
+    c.setFont(psfontname=fontname, size=fontzise + 3)
+
+    c.drawCentredString(
+        (lRigth + lLeft) / 2,
+        lTop - 60,
+        "CONSTANCIA DE REGISTRO",
+    )
+
+    currenty = lTop - 120
+
+    setF(fontzise, "Arial-Bold")
+
+    c.setFont(psfontname="Arial-Bold", size=fontzise)
+    c.drawString(lLeft +20, currenty, "USUARIO")
+    c.drawString(lLeft+20 + 120, currenty, ":")
+    currenty -= 30
+    c.drawString(lLeft+20, currenty, "PARA EL AREA")
+    c.drawString(lLeft +20+ 120, currenty, ":")
+    currenty -= 30
+    c.drawString(lLeft+20, currenty, "FECHA")
+    c.drawString(lLeft +20+ 120, currenty, ":")
+    currenty -= 30
+    c.drawString(lLeft+20, currenty, "HORA")
+    c.drawString(lLeft +20+ 120, currenty, ":")
+    currenty -= 30
+    c.drawString(lLeft+20, currenty, "TIPO DE DOCUMENTO")
+    c.drawString(lLeft +20+ 120, currenty, ":")
+    currenty -= 20
+
+    currenty = lTop - 120
+
+    setF(fontzise, "Arial")
+
+    c.drawString(lLeft + 160, currenty, data[0]["person_full_name"])
+    currenty -= 30
+    c.drawString(lLeft + 160, currenty, data[1])
+    currenty -= 30
+    c.drawString(lLeft + 160, currenty, fecha)
+    currenty -= 30
+    c.drawString(lLeft + 160, currenty, hora)
+    currenty -= 30
+    c.drawString(lLeft + 160, currenty, data[0]["procedure_type_description"])
+    currenty -= 30
+
+    setF(fontzise, "Arial-Bold")
+
+    finalText = f"MEDIANTE EL PRESENTE SE HACE CONSTAR EL REGISTRO DEL DOCUMENTO CON NUMERO N°{data[0]['code_number']} A NOMBRE DE {estudiante}"
 
     style.alignment = 1
+    finalParagraph = Paragraph(finalText, style)
 
-    c.drawCentredString(A4[1] / 2, lTop - 135, "CONSTANCIA DE REGISTRO")
+    finalParagraph.wrapOn(c, maxWidth, 1000)
+    finalParagraph.drawOn(c, lLeft, currenty - 50)
 
-    setF(18)
+    setF(8)
 
-    parrafo01 = Paragraph(
-        "La escuela de Postgrado, hace constar mediante el presente que:", style
+    c.drawString(lLeft, lBot, addres)
+    c.drawString(lLeft, lBot + fontzise, phonenumber)
+
+    lengt1 = c.stringWidth(email, "Arial", 8)
+    lengt2 = c.stringWidth(pageDirection, "Arial", 8)
+
+    c.drawString(lRigth - lengt1, lBot, email)
+    c.drawString(lRigth - lengt2, lBot + fontzise, pageDirection)
+
+    path_return = settings.MEDIA_URL + pdf_file_key
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
     )
-    parrafo01.wrapOn(canv=c, aW=maxWidth, aH=1000)
-    parrafo01.drawOn(c, lLeft, lTop - 175)
+    qr.add_data(path_return)
+    qr.make(fit=True)
 
-    setF(16)
+    # Create an image from the QR code instance
+    QRImage = qr.make_image(fill_color="black", back_color="white")
 
-    c.drawString(lLeft + 180, lTop - 210, "Nombres y Apellidos: ")
-    c.drawString(lLeft + 180, lTop - 240, "DNI: ")
+    img_buffer = BytesIO()
+    QRImage.save(img_buffer)
+    img_buffer.seek(0)
 
-    setF(16, "Arial-Bold")
+    img_buffer = ImageReader(img_buffer)
 
-    c.drawString(lLeft + 340, lTop - 210, estudiante[0])
-    c.drawString(lLeft + 340, lTop - 240, estudiante[1])
-
-    parrafo02 = Paragraph(f"Ha registrado con fecha {data[3]} su {tipoTramite}.", style)
-    parrafo02.wrapOn(c, maxWidth, 1000)
-    parrafo02.drawOn(c, lLeft, lTop - 300)
-
+    c.drawImage(img_buffer, A4[0] / 2 - 35, lBot + fontzise * 3, 70, 70)
 
     c.save()
 
-    path_return = settings.MEDIA_URL +pdf_file_key
+
     return path_return
