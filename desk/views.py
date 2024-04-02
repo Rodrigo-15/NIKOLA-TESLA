@@ -6,7 +6,7 @@ from core.serializers import (
     AreaSerializer,
     CargoAreaPersonSerializer,
 )
-from .dashboardClasses import  *
+from .dashboardClasses import *
 from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -621,6 +621,7 @@ def save_derive_procedure(request):
 
         procedure = Procedure.objects.filter(id=procedure_id).first()
         procedure.number_of_sheets = number_of_sheets
+        #update
         procedure.save()
 
         if assigned_user_id != None:
@@ -1302,11 +1303,10 @@ def save_procedure_externo_register(request):
             status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
         )
 
+
 @api_view(["GET"])
 def get_dashboard_desk(request):
     dashboardData = YourView()
-    
-
     data = dashboardData.get(request)
 
     return data

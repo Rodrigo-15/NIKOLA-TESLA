@@ -398,13 +398,20 @@ def get_alumnos_curso_grupo_by_id(request):
             obj_expediente = {
                 "expediente_id": matricula.expediente.id,
                 "promedio_final": matricula.promedio_final,
+                "is_cerrado": matricula.is_cerrado,
             }
 
             expedientes.append(obj_expediente)
         alumnos = []
         for expediente in expedientes:
             alumno = Expediente.get_alumno_by_expediente_id(expediente["expediente_id"])
-            promedio_final = expediente["promedio_final"]
+            if expediente["promedio_final"] == None:
+                promedio_final = expediente["promedio_final"]
+            else:
+                if expediente["is_cerrado"]:
+                    promedio_final = "{:.2f}".format(expediente["promedio_final"])
+                else:
+                    promedio_final = expediente["promedio_final"]
             serializer = ExpedienteAlumnoSerializer(alumno)
             alumnos.append({**serializer.data, "promedio_final": promedio_final})
         return Response(alumnos)
@@ -485,7 +492,7 @@ def save_notas(request):
                     for matricula in matricula_obj:
                         matricula.promedio_final = float(alumno["promedio_final"])
                         if matricula.is_cerrado == True:
-                            return Response( status=status.HTTP_400_BAD_REQUEST)
+                            return Response(status=status.HTTP_400_BAD_REQUEST)
                         else:
                             matricula.save()
                 else:
@@ -779,7 +786,7 @@ def get_cursos_aplazado_by_docente(request):
                 periodo_id=periodo_id,
                 is_aplazado=True,
             )
-            .distinct("curso_grupo_id")
+            .distinct("aplazado_id")
             .values(
                 "curso_grupo_id",
                 "curso_grupo__curso__id",
@@ -787,6 +794,7 @@ def get_cursos_aplazado_by_docente(request):
                 "curso_grupo__grupo",
                 "curso_grupo__curso__plan_estudio__programa__nombre",
                 "aplazado_id",
+                "aplazado__resolucion",
             )
         )
         obj_cursos = []
@@ -800,6 +808,7 @@ def get_cursos_aplazado_by_docente(request):
                     "curso_grupo__curso__plan_estudio__programa__nombre"
                 ],
                 "aplazado_id": curso["aplazado_id"],
+                "resolucion": curso["aplazado__resolucion"],
             }
             obj_cursos.append(obj_curso)
         return Response(obj_cursos)
@@ -808,12 +817,12 @@ def get_cursos_aplazado_by_docente(request):
 @api_view(["GET"])
 def get_alumnos_aplazado_curso_grupo_by_id(request):
     if request.method == "GET":
-        curso_grupo_id = request.GET.get("curso_grupo_id")
         persona_id = request.GET.get("persona_id")
+        aplazado_id = request.GET.get("aplazado_id")
         matriculas = Matricula.objects.filter(
-            curso_grupo_id=curso_grupo_id,
             aplazado__docente__persona_id=persona_id,
             is_aplazado=True,
+            aplazado_id=aplazado_id,
         )
         expedientes = []
         for matricula in matriculas:
@@ -826,7 +835,12 @@ def get_alumnos_aplazado_curso_grupo_by_id(request):
         alumnos = []
         for expediente in expedientes:
             alumno = Expediente.get_alumno_by_expediente_id(expediente["expediente_id"])
-            promedio_final_aplazado = expediente["promedio_final_aplazado"]
+            if expediente["promedio_final_aplazado"] == None:
+                promedio_final_aplazado = ""
+            else:
+                promedio_final_aplazado = "{:.2f}".format(
+                    expediente["promedio_final_aplazado"]
+                )
             serializer = ExpedienteAlumnoSerializer(alumno)
             alumnos.append(
                 {**serializer.data, "promedio_final_aplazado": promedio_final_aplazado}
@@ -839,7 +853,7 @@ def save_notas_aplazado(request):
     if request.method == "PUT":
         data = request.data
         periodo_id = data.get("periodo_id")
-        curso_grupo_id = data.get("curso_grupo_id")
+        aplazado_id = data.get("aplazado_id")
         alumnos = data.get("alumnos")
         for alumno in alumnos:
             if alumno["promedio_final_aplazado"] is not None:
@@ -849,7 +863,7 @@ def save_notas_aplazado(request):
                 ):
                     matricula_obj = Matricula.objects.filter(
                         periodo_id=periodo_id,
-                        curso_grupo_id=curso_grupo_id,
+                        aplazado_id=aplazado_id,
                         expediente_id=alumno["id"],
                         is_aplazado=True,
                     )

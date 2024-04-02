@@ -97,10 +97,10 @@ class Procedure(models.Model):
         if not self.id:
             self.code_number = self.generate_code()
             self.code_hash = self.generate_code_hash()
+            super(Procedure, self).save(*args, **kwargs)
+            self.notification_email()
         else:
-            self.code_number = Procedure.objects.get(id=self.id).code_number
-        super(Procedure, self).save(*args, **kwargs)
-        self.notification_email()
+            super(Procedure, self).save(*args, **kwargs)
 
     def generate_code(self):
         return f"{Procedure.get_count_procedures_by_year(date.today().year) + 1:05d}-{date.today().year}"
