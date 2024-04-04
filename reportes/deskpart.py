@@ -592,9 +592,6 @@ def get_charge_procedure(data) -> str:
         #
 
         path_return = settings.MEDIA_URL + pdf_file_key
-        c.drawString(
-            limiteIzquierda, limiteAbajo, "Universidad Nacional de la Amazonia Peruana"
-        )
 
         qr = qrcode.QRCode(
             version=1,
