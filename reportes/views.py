@@ -2077,6 +2077,12 @@ def generate_diploma_pdf(request):
             )
 
         expediente = Expediente.objects.filter(id=expediente_id).first()
+
+        if expediente == None:
+            return Response(
+                {"error": "No se encontro el expediente"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         num_doc = expediente.persona.numero_documento
         persona = (
             expediente.persona.nombres
