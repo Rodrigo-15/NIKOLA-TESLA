@@ -71,7 +71,9 @@ class Procedure(models.Model):
     code_number = models.CharField(max_length=15, null=True, blank=True)
     subject = models.TextField(null=False, blank=False)
     description = models.TextField(null=True, blank=True, default="")
-    attached_files = models.FileField(upload_to="tramites/", null=True, blank=True)
+    attached_files = models.FileField(
+        upload_to="tramites/adjunto/", null=True, blank=True
+    )
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
     reference_doc_number = models.CharField(max_length=250, null=True, blank=True)
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
