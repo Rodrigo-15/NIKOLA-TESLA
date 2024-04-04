@@ -31,40 +31,45 @@ def tabla_dinamica(
     columns,
     colWidths,
 ):
+    #strings que se utilizan como pie de pagina
     addres = "Los Rosales s/n, San Juan Bautista"
     email = "postgrado@unapiquitos.edu.pe"
     phonenumber = "Telefono: (5165) 261101"
     pageDirection = "https://tramites.postgradounap.edu.pe/"
+
+
     setF(12, "Arial-Bold")
-    lol = True
-    thing = 0
+    tableIncomplete = True
+    tableHeight = 0
     porcentaje_sacado = False
-    while lol:
+
+    while tableIncomplete:
         if datosTabla[0] != columns:
-            datosTabla.insert(0, columns)
-        if thing == 0:
+            datosTabla.insert(0, columns)  #nos aseguramos que la primera fila en la hoja siempre sea el nombre de las columnas
+
+        if tableHeight == 0:
             tabla = Table(datosTabla[0:], colWidths)
         else:
-            tabla = Table(datosTabla[0:thing], colWidths)
+            tabla = Table(datosTabla[0:tableHeight], colWidths)
         tabla.wrap(maxWidht, 250)
 
         if (tabla._height) > currenty - lBot - fontzise - 5:
             if not porcentaje_sacado:
-                a = currenty - lBot - fontzise - 5
-                b = a / tabla._height
-                thing = round(len(datosTabla) * b) + 1
-                currenty - lBot - fontzise - 5
+                a = currenty - lBot - fontzise - 5  #espacio disponible en la pagina
+                b = a / tabla._height               #percentaje de la tabla que cabe en la pagina
+                tableHeight = round(len(datosTabla) * b) + 1 #En la primera iteracion, calculamos la altura e base al porcentaje de la tabla que cabe en la pagina 
+                currenty - lBot - fontzise - 5  #esto es para optimizar el tiempo en que se genera la tabla
                 porcentaje_sacado = True
                 continue
             else:
-                thing -= 1
+                tableHeight -= 1 #en iteraciones posteriores vamos quitandole 1 valor por cada iteracion hasta que entre en la pagina
                 continue
         else:
-            if thing == 0:
-                datosRestantes = []
+            if tableHeight == 0:
+                datosRestantes = [] #en caso de que la tabla no entre en 1 hoja, aqui es donde se guardaran los datos que van a la siguiente pagina
             else:
 
-                datosRestantes = datosTabla[thing:]
+                datosRestantes = datosTabla[tableHeight:]
 
             tabla.setStyle(
                 TableStyle(
@@ -101,25 +106,27 @@ def tabla_dinamica(
             )
 
             tabla.wrapOn(c, maxWidht, 250)
-            tabla.drawOn(c, lLeft, currenty - tabla._height)
+            tabla.drawOn(c, lLeft, currenty - tabla._height) #se pone la tabla
 
+            #------------pie de pagina----------------#
             setF(8)
             c.drawCentredString(A4[0] / 2, lBot - fontzise, str(pageCounter))
             pageCounter += 1
 
             c.drawString(lLeft, lBot, addres)
-            c.drawString(lLeft, lBot + fontzise, phonenumber)
+            c.drawString(lLeft, lBot + fontzise, phonenumber)           
 
             lengt1 = c.stringWidth(email, "Arial", fontzise)
             lengt2 = c.stringWidth(pageDirection, "Arial", fontzise)
 
             c.drawString(lRigh - lengt1, lBot, email)
             c.drawString(lRigh - lengt2, lBot + fontzise, pageDirection)
+            #-------------pie de pagina-----------------#
 
             if len(datosRestantes) != 0:
                 c.showPage()
-                currenty = lTop
-                lol, altura, alturay = tabla_dinamica(
+                currenty = lTop     #si hay datos para poner en la siguiente pagina, se crea un nueva pagina y llamamos  a la funcion
+                tableIncomplete, altura, alturay = tabla_dinamica(
                     datosRestantes,
                     currenty,
                     pageCounter,
@@ -138,9 +145,9 @@ def tabla_dinamica(
                 currenty -= altura
 
             elif len(datosRestantes) == 0:
-                lol = False
+                tableIncomplete = False     #en caso de que ya no falten datos se rompe el bucle
                 currenty -= tabla._height
-    return lol, tabla._height, currenty
+    return tableIncomplete, tabla._height, currenty
 
 
 def upload_file_to_s3(file_name, folder_name):
@@ -170,11 +177,11 @@ def upload_file_to_s3(file_name, folder_name):
 def get_process_tracking_sheet(data) -> str:
     try:
         #
-        trackins = []
+        trackins = [] #aqui guardamos todos los datos que iran en nuestra tabla
 
         for thing in data["trackins"]:
             thing = dict(thing)
-            a = dict(thing)
+            a = dict(thing)         #se obtienen los datos de los trakins
             trackins.append(a)
         #
         code_number = data["procedure"]["code_number"]
@@ -192,29 +199,32 @@ def get_process_tracking_sheet(data) -> str:
         else:
             c = canvas.Canvas(pdf_file_name, A4)
 
+
         pdfmetrics.registerFont(TTFont("Arial", "arial.ttf"))
-        pdfmetrics.registerFont(TTFont("Arial-Bold", "arialbd.ttf"))
+        pdfmetrics.registerFont(TTFont("Arial-Bold", "arialbd.ttf")) #fuentes que se utilizan
+        #---margenes---#
         lTop = A4[1] - cm * 1.5
         lBot = cm
         lLeft = cm * 2.5
         lRight = A4[0] - cm * 1.5
         maxWidht = lRight - lLeft
         maxHeight = lTop - lBot
+        #---margenes---#
         fontzise = 10
         fontname = "Arial"
 
-        style = getSampleStyleSheet()
+        style = getSampleStyleSheet() #estilo para el parrafo
         style = style["Normal"]
 
-        datosTabla = [["Fecha", "Accion", "Oficina"]]
+        datosTabla = [["Fecha", "Accion", "Oficina"]] #lista donde se pondran los datos de la tabla
 
         for thing in trackins:
-            a = thing
-            datosTabla.append([f'{a["date"]} {a["hour"]}', a["action"], a["area_name"]])
+            datosTabla.append([f'{thing["date"]} {thing["hour"]}', thing["action"], thing["area_name"]])
 
         logoUnap = "media\config\logo_UNAP.png"
-        logoPostgrado = "media\config\postgrado.png"
+        logoPostgrado = "media\config\postgrado.png" #imagenes de la unap y la escuela de postgrado
 
+        #---datos que iran en el pdf------------#
         fechaHora = data["procedure"]["created_at"]
         tipoTramite = data["procedure"]["procedure_type_description"]
         asunto = data["procedure"]["subject"]
@@ -222,7 +232,7 @@ def get_process_tracking_sheet(data) -> str:
         folios = str(data["procedure"]["number_of_sheets"])
         observacion = data["procedure"]["description"]
         date_state = data["procedure"]["state_date"]
-        print(date_state)
+        #---datos que iran en el pdf------------#
 
         if date_state == 1:
             date_state = "EN PLAZO"
@@ -233,13 +243,13 @@ def get_process_tracking_sheet(data) -> str:
 
         for i in range(len(datosTabla)):
             if i > 0:
-                datosTabla[i][0] = Paragraph(datosTabla[i][0], style)
+                datosTabla[i][0] = Paragraph(datosTabla[i][0], style) #hacemos que los datos sean parrafos para que se centren bien en la tabla
                 datosTabla[i][1] = Paragraph(datosTabla[i][1], style)
                 datosTabla[i][2] = Paragraph(datosTabla[i][2], style)
 
         def setF(size, name="Arial"):
             fontzise = size
-            fontname = name
+            fontname = name             #esta funcion nos permite cambiar el tamaño de la letra y su fuente de forma sencilla
             c.setFont(psfontname=fontname, size=fontzise)
             style.fontzise = fontzise
 
@@ -270,7 +280,7 @@ def get_process_tracking_sheet(data) -> str:
         fontname = "Arial"
 
         setF(fontzise, "Arial-Bold")
-
+        ###------------datos varios-----------------###
         c.setFont(psfontname="Arial-Bold", size=fontzise)
         c.drawString(lLeft, currenty, "CREADO POR:")
         currenty -= 30
@@ -308,6 +318,8 @@ def get_process_tracking_sheet(data) -> str:
             c, lLeft + 100, currenty - observacionPara.height + fontzise
         )
         currenty -= 30
+
+        ###------------datos varios-----------------###
 
         c.line(lLeft, currenty, lRight, currenty)
 

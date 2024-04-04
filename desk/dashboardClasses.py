@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from .models import ProcedureTracing
 from .serializers import ProcedureSerializer, ProcedureTracingSerializer
 from .getdata import *
-from desk.models import File, Procedure
+from desk.models import Procedure
 from rest_framework import status
 
 class YourView(APIView):
@@ -166,8 +166,7 @@ class YourView(APIView):
                             "state_procedure" : estados,
                             "state_date" : plazos,
                             "area_procedures": listaAreas}
-                cache.set(cache_key, [dashboard_data, "data"], timeout=3600)  # 1 hora de tiempo de vida de la caché
-                print(dashboard_data)
+                cache.set(cache_key, [dashboard_data, "data"], timeout=3600)  # 1 hora(3600 segundos) de tiempo de vida de la caché/3600 segundos
                 return Response(dashboard_data)
             else:
                 dates = defaultdict(lambda: {"concluido": 0, "archivado": 0, "en_proceso": 0, "iniciados": 0})
@@ -245,11 +244,10 @@ class YourView(APIView):
                 dashboard_dates = {"dates": weekGroupsf}
 
                 cache.set(cache_key, [dashboard_dates, "dates"], timeout=3600)  # 1 hora de tiempo de vida de la caché
-                print(dashboard_dates)
                 return Response(dashboard_dates)
                     
                 # Guardar en caché los datos obtenidos
             
         except Exception as e:
-            print("Error "+e)
+            print("Error: " + e)
             return None
