@@ -822,9 +822,9 @@ def generate_constancia_de_registro(data) -> str:
     # milisecond
     milisecond = str(int(round(time.time() * 1000)))
     folder_name = "pdf/constancia_de_registro/"
-    pdf_file_name = f"{folder_name}-{data[1]}-{milisecond}.pdf"
+    pdf_file_name = f"constancia_de_registro-{data[1]}-{milisecond}.pdf"
 
-    pdf_file_key = pdf_file_name
+    pdf_file_key = folder_name + pdf_file_name
 
     # -----generar pdf-----#
     if settings.DEBUG:
