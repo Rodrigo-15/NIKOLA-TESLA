@@ -2152,17 +2152,21 @@ def get_charge_procedure_pdf(request):
             status=status.HTTP_400_BAD_REQUEST,
             data={"message": "El usuario no tiene un area asignada"},
         )
-    
-    procedure1 = ProcedureSerializer(Procedure.objects.filter(id = procedure_charge_id).first()).data
 
-    year, hora= procedure1["created_at"].split(" ", 1)
+    procedure1 = ProcedureSerializer(
+        Procedure.objects.filter(id=procedure_charge_id).first()
+    ).data
+
+    year, hora = procedure1["created_at"].split(" ", 1)
 
     hora = hora.replace("P", "")
     hora = hora.replace("M", "")
     hora = hora.replace("A", "")
 
     idUsuarioOriginal = procedure1["user"]
-    usuarioOriginal = PersonaSerializerFilter(Persona.objects.filter(user_id = idUsuarioOriginal).first()).data
+    usuarioOriginal = PersonaSerializerFilter(
+        Persona.objects.filter(user_id=idUsuarioOriginal).first()
+    ).data
 
     data_area = cargo_area.area.all()
     areas = AreaSerializer(data_area, many=True).data
@@ -2204,7 +2208,7 @@ def get_charge_procedure_pdf(request):
         "procedure": obj_procedure,
         "procedure_count": len(obj_procedure),
         "charge_number": text_charge_number,
-        "original_user": usuarioOriginal
+        "original_user": usuarioOriginal,
     }
     path = get_charge_procedure(final_data)
     return Response({"path": path}, status=status.HTTP_200_OK)
@@ -2246,13 +2250,16 @@ def get_constancia_registro(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    procedure = ProcedureSerializer(Procedure.objects.filter(id=procedure_id).first()).data
+    procedure = ProcedureSerializer(
+        Procedure.objects.filter(id=procedure_id).first()
+    ).data
 
     area = procedure["area_id"]
 
     if area:
-        area = AreaSerializer(Area.objects.filter(id = area)).data
-        area = area["nombre"]
+        area = AreaSerializer(Area.objects.filter(id=area)).data
+        print(area)
+        # area = area["nombre"]
     else:
         area = "undefined"
 
@@ -2275,21 +2282,20 @@ def get_tramites_area_excel(request):
             {"error": "No se encontro el area"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    
+
     if usuario_id == None:
         return Response(
             {"errror": "No se encontro el usuario"},
-            status = status.HTTP_400_BAD_REQUEST,
+            status=status.HTTP_400_BAD_REQUEST,
         )
-    
+
     cargo_area = CargoArea.objects.filter(persona__user_id=usuario_id).first()
 
     persona = PersonaSerializerFilter(cargo_area.persona).data
 
     nombreUsuario = f'{persona["nombres"]} {persona["apellido_paterno"]} {persona["apellido_materno"]}'
 
-    area = Area(id = area_id)
-
+    area = Area.objects.filter(id=area_id).first()
     tracings_for_user = ProcedureTracing.objects.filter(from_area=area.id).order_by(
         "-created_at"
     )
@@ -2374,15 +2380,13 @@ def get_tramites_area_excel(request):
                     i += 1
             except IndexError:
                 break
-
     data = {
         "usuario": nombreUsuario,
         "area_usuaria": area.nombre,
-        "creacion" : creacion,
+        "creacion": creacion,
         "procedures": procedures,
         "name": "tramites",
     }
 
     path = get_procedure_data_xlsx(data)
-    path = path.replace("/media", "media")
     return Response({"path": path}, status=status.HTTP_200_OK)

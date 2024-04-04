@@ -34,7 +34,7 @@ def tabla_dinamica(
     addres = "Los Rosales s/n, San Juan Bautista"
     email = "postgrado@unapiquitos.edu.pe"
     phonenumber = "Telefono: (5165) 261101"
-    pageDirection = "https://admision.postgradounap.edu.pe/"
+    pageDirection = "https://tramites.postgradounap.edu.pe/"
     setF(12, "Arial-Bold")
     lol = True
     thing = 0
@@ -104,7 +104,7 @@ def tabla_dinamica(
             tabla.drawOn(c, lLeft, currenty - tabla._height)
 
             setF(8)
-            c.drawCentredString(A4[0] / 2, lBot- fontzise, str(pageCounter))
+            c.drawCentredString(A4[0] / 2, lBot - fontzise, str(pageCounter))
             pageCounter += 1
 
             c.drawString(lLeft, lBot, addres)
@@ -115,8 +115,6 @@ def tabla_dinamica(
 
             c.drawString(lRigh - lengt1, lBot, email)
             c.drawString(lRigh - lengt2, lBot + fontzise, pageDirection)
-
-
 
             if len(datosRestantes) != 0:
                 c.showPage()
@@ -147,8 +145,6 @@ def tabla_dinamica(
 
 def upload_file_to_s3(file_name, folder_name):
     # Subir el archivo al bucket de S3 si debug es False de lo contrario se sube a la carpeta media
-    print(settings.DEBUG)
-    # Subir el archivo al bucket de S3 si debug es False de lo contrario se sube a la carpeta media
     if not settings.DEBUG:
         s3_client = settings.CREATE_STORAGE
         bucket_name = settings.AWS_STORAGE_BUCKET_NAME
@@ -166,7 +162,6 @@ def upload_file_to_s3(file_name, folder_name):
     else:
 
         path_return = os.path.join(settings.MEDIA_LOCAL_URL, folder_name, file_name)
-        print("path_return", settings.MEDIA_LOCAL_URL)
         path_return = path_return.replace("\\", "")
         path_return = path_return.replace("/media/", "media/")
         return settings.URL_LOCAL + path_return
@@ -188,7 +183,7 @@ def get_process_tracking_sheet(data) -> str:
 
         folder_name = "pdf/hoja_seguimiento/"
         pdf_file_name = "hoja-seguimiento-{}-{}.pdf".format(code_number, milisecond)
-
+        pdf_file_key = folder_name + pdf_file_name
         # -----generar pdf-----#
         if settings.DEBUG:
             c = canvas.Canvas(
@@ -227,13 +222,14 @@ def get_process_tracking_sheet(data) -> str:
         folios = str(data["procedure"]["number_of_sheets"])
         observacion = data["procedure"]["description"]
         date_state = data["procedure"]["state_date"]
+        print(date_state)
 
         if date_state == 1:
             date_state = "EN PLAZO"
         elif date_state == 2:
-            date_state == "POR VENCER"
+            date_state = "POR VENCER"
         else:
-            date_state == "VENCIDO"
+            date_state = "VENCIDO"
 
         for i in range(len(datosTabla)):
             if i > 0:
@@ -284,7 +280,7 @@ def get_process_tracking_sheet(data) -> str:
         currenty -= 30
         c.drawString(lLeft, currenty, "FECHA:")
         currenty -= 30
-        c.drawString(lLeft, currenty, "ESTADO FECHA:")
+        c.drawString(lLeft, currenty, "ESTADO:")
         currenty -= 30
         c.drawString(lLeft, currenty, "N° DE FOLIOS:")
         currenty -= 30
@@ -326,20 +322,22 @@ def get_process_tracking_sheet(data) -> str:
 
         pageCounter = 1
 
-        lol, altura, currenty = tabla_dinamica(datosTabla=datosTabla, 
-                       currenty=currenty, 
-                       pageCounter=pageCounter, 
-                       setF=setF, 
-                       c=c,
-                       fontzise=fontzise, 
-                       maxWidht=maxWidht, 
-                       lLeft=lLeft, 
-                       lTop=lTop, 
-                       lBot=lBot, 
-                       lRigh=lRight,
-                       columns=["Fecha", "Accion", "Oficina"],
-                       colWidths=[0.3*maxWidht,0.4*maxWidht,0.3*maxWidht])
-        
+        lol, altura, currenty = tabla_dinamica(
+            datosTabla=datosTabla,
+            currenty=currenty,
+            pageCounter=pageCounter,
+            setF=setF,
+            c=c,
+            fontzise=fontzise,
+            maxWidht=maxWidht,
+            lLeft=lLeft,
+            lTop=lTop,
+            lBot=lBot,
+            lRigh=lRight,
+            columns=["Fecha", "Accion", "Oficina"],
+            colWidths=[0.3 * maxWidht, 0.4 * maxWidht, 0.3 * maxWidht],
+        )
+
         ###---------creacion del qr--------------##
 
         path_return = settings.MEDIA_URL + pdf_file_key
@@ -362,13 +360,13 @@ def get_process_tracking_sheet(data) -> str:
         img_buffer = ImageReader(img_buffer)
 
         if currenty > 150:
-            c.drawImage(img_buffer, (A4[0]/2) - 35, lBot + fontzise *2, 70, 70) 
+            c.drawImage(img_buffer, (A4[0] / 2) - 35, lBot + fontzise * 2, 70, 70)
         else:
             c.showPage()
-            c.drawImage(img_buffer, (A4[0]/2) - 35, lBot + fontzise *2, 70, 70)
+            c.drawImage(img_buffer, (A4[0] / 2) - 35, lBot + fontzise * 2, 70, 70)
 
         c.save()
- 
+
         path_return = upload_file_to_s3(pdf_file_name, folder_name)
         return path_return
     except Exception as e:
@@ -388,6 +386,7 @@ def get_charge_procedure(data) -> str:
         folder_name = "pdf/hoja_de_cargo/"
 
         pdf_file_name = "hoja_de_cargo-{}-{}.pdf".format(charge_number, milisecond)
+        pdf_file_key = folder_name + pdf_file_name
         # -----generar pdf-----#
         if settings.DEBUG:
             c = canvas.Canvas(
@@ -592,10 +591,10 @@ def get_charge_procedure(data) -> str:
         c.setTitle("hoja_de_cargo-{}-{}".format(area, milisecond))
         #
 
-
         path_return = settings.MEDIA_URL + pdf_file_key
         c.drawString(
-            limiteIzquierda, limiteAbajo, "Universidad Nacional de la Amazonia Peruana")
+            limiteIzquierda, limiteAbajo, "Universidad Nacional de la Amazonia Peruana"
+        )
 
         qr = qrcode.QRCode(
             version=1,
@@ -615,9 +614,13 @@ def get_charge_procedure(data) -> str:
 
         img_buffer = ImageReader(img_buffer)
 
-        c.drawImage(img_buffer, A4[0]/2 -35, limiteAbajo + fontzise * 3, 70,70)
+        c.drawImage(img_buffer, A4[0] / 2 - 35, limiteAbajo + fontzise * 3, 70, 70)
 
-        c.drawString(limiteIzquierda, limiteAbajo + fontzise*2, f'{data["usuario"]["nombres"]} {data["usuario"]["apellido_paterno"]} {data["usuario"]["apellido_materno"]}')
+        c.drawString(
+            limiteIzquierda,
+            limiteAbajo + fontzise * 2,
+            f'{data["usuario"]["nombres"]} {data["usuario"]["apellido_paterno"]} {data["usuario"]["apellido_materno"]}',
+        )
 
         c.save()
 
@@ -629,27 +632,22 @@ def get_charge_procedure(data) -> str:
 
 
 def get_procedure_data_xlsx(data) -> str:
-    s3_client = settings.CREATE_STORAGE
-    bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-    folder_name = "excel/deskpart/"
 
-    # Crea la carpeta en el bucket si no existe
-    try:
-        s3_client.head_object(Bucket=bucket_name, Key=folder_name)
-    except:
-        s3_client.put_object(Bucket=bucket_name, Key=folder_name)
     # milisecond
     milisecond = str(int(round(time.time() * 1000)))
 
     area_usuaria = data["area_usuaria"]
-
     # Nombre del archivo PDF que deseas crear
-    excel_file_name = (
-        f"{data['name']}-{area_usuaria.replace(' ', '_')}-{milisecond}.xlsx"
-    )
 
-    # Ruta completa del archivo PDF en el bucket
-    pdf_file_key = folder_name + excel_file_name
+    folder_name = "excel/deskpart/"
+    excel_file_name = f"{data['name']}-{area_usuaria}-{milisecond}.xlsx"
+
+    if settings.DEBUG:
+        file = Workbook(
+            os.path.join(settings.MEDIA_ROOT, folder_name, f"{excel_file_name}")
+        )
+    else:
+        file = Workbook(excel_file_name)
 
     procedures = data["procedures"]
 
@@ -680,7 +678,6 @@ def get_procedure_data_xlsx(data) -> str:
             ]
         )
 
-    file = Workbook(excel_file_name)
     ws = file.add_worksheet()
     ws2 = file.add_worksheet()
 
@@ -815,14 +812,7 @@ def get_procedure_data_xlsx(data) -> str:
     ws2.insert_chart("E3", chart)
 
     file.close()
-    s3_client.put_object(
-        Bucket=bucket_name,
-        Key=folder_name + excel_file_name,
-        Body=open(excel_file_name, "rb"),
-    )
-    # eliminar el archivo local
-    os.remove(excel_file_name)
-    path_return = settings.MEDIA_URL + pdf_file_key
+    path_return = upload_file_to_s3(excel_file_name, folder_name)
     return path_return
 
 
@@ -832,23 +822,20 @@ def generate_constancia_de_registro(data) -> str:
     lTop = A4[1] - 2 * cm
     lBot = cm
 
-    s3_client = settings.CREATE_STORAGE
-    bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-    folder_name = "media/pdf/constanciaRegistro"
-
-    try:
-        s3_client.head_object(Bucket=bucket_name, Key=folder_name)
-    except:
-        s3_client.put_object(Bucket=bucket_name, Key=folder_name)
     # milisecond
     milisecond = str(int(round(time.time() * 1000)))
-
+    folder_name = "pdf/constancia_de_registro/"
     pdf_file_name = f"{folder_name}-{data[1]}-{milisecond}.pdf"
 
     pdf_file_key = pdf_file_name
 
-    if os.path.exists(pdf_file_name):
-        os.remove(pdf_file_name)
+    # -----generar pdf-----#
+    if settings.DEBUG:
+        c = canvas.Canvas(
+            os.path.join(settings.MEDIA_ROOT, folder_name, f"{pdf_file_name}"), A4
+        )
+    else:
+        c = canvas.Canvas(pdf_file_name, A4)
 
     maxWidth = lRigth - lLeft
 
@@ -885,8 +872,6 @@ def generate_constancia_de_registro(data) -> str:
     phonenumber = "Telefono: (5165) 261101"
     pageDirection = "https://admision.postgradounap.edu.pe/"
 
-    c = canvas.Canvas(pdf_file_name, A4)
-
     c.drawImage(logoUnap, lLeft, lTop - 37.5, 75, 37.5)
     c.drawImage(logoPostgrado, lRigth - 40, lTop - 40, 40, 40)
 
@@ -917,20 +902,20 @@ def generate_constancia_de_registro(data) -> str:
     setF(fontzise, "Arial-Bold")
 
     c.setFont(psfontname="Arial-Bold", size=fontzise)
-    c.drawString(lLeft +20, currenty, "USUARIO")
-    c.drawString(lLeft+20 + 120, currenty, ":")
+    c.drawString(lLeft + 20, currenty, "USUARIO")
+    c.drawString(lLeft + 20 + 120, currenty, ":")
     currenty -= 30
-    c.drawString(lLeft+20, currenty, "PARA EL AREA")
-    c.drawString(lLeft +20+ 120, currenty, ":")
+    c.drawString(lLeft + 20, currenty, "PARA EL AREA")
+    c.drawString(lLeft + 20 + 120, currenty, ":")
     currenty -= 30
-    c.drawString(lLeft+20, currenty, "FECHA")
-    c.drawString(lLeft +20+ 120, currenty, ":")
+    c.drawString(lLeft + 20, currenty, "FECHA")
+    c.drawString(lLeft + 20 + 120, currenty, ":")
     currenty -= 30
-    c.drawString(lLeft+20, currenty, "HORA")
-    c.drawString(lLeft +20+ 120, currenty, ":")
+    c.drawString(lLeft + 20, currenty, "HORA")
+    c.drawString(lLeft + 20 + 120, currenty, ":")
     currenty -= 30
-    c.drawString(lLeft+20, currenty, "TIPO DE DOCUMENTO")
-    c.drawString(lLeft +20+ 120, currenty, ":")
+    c.drawString(lLeft + 20, currenty, "TIPO DE DOCUMENTO")
+    c.drawString(lLeft + 20 + 120, currenty, ":")
     currenty -= 20
 
     currenty = lTop - 120
@@ -992,5 +977,7 @@ def generate_constancia_de_registro(data) -> str:
     c.drawImage(img_buffer, A4[0] / 2 - 35, lBot + fontzise * 3, 70, 70)
 
     c.save()
+
+    path_return = upload_file_to_s3(pdf_file_name, folder_name)
 
     return path_return

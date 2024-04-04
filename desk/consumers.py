@@ -21,12 +21,7 @@ class DeskSocket(WebsocketConsumer):
         print("Received")
         pass
 
-    def desk_area_notification(self, event):
-        message = event["message"]
-        self.send(text_data=json.dumps(message))
-        pass
-
-    def desk_user_notification(self, event):
+    def desk_notification(self, event):
         message = event["message"]
         self.send(text_data=json.dumps(message))
         pass

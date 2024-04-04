@@ -35,6 +35,7 @@ from desk.views import (
     save_procedure_externo,
     get_tracings_to_approved_for_external,
     save_procedure_externo_register,
+    desk_notification,
 )
 
 urlpatterns = [
@@ -91,6 +92,7 @@ urlpatterns = [
         "save_procedure_externo_register",
         save_procedure_externo_register,
     ),
+    path("desk_notification", desk_notification),
     # OLD
     path("get_dashboard_desk/", get_dashboard_desk),
     path("years_for_procedures", years_for_procedures),
