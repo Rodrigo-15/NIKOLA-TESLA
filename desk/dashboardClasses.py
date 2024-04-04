@@ -107,7 +107,7 @@ class YourView(APIView):
                     plazosareas = {"en_plazo": 0, "por_vencer": 0, "vencidos": 0}
                     estadosareas = {"iniciados": 0, "en_proceso": 0, "archivado": 0, "concluido": 0}
 
-                    for procedure in procedures:
+                    for procedure in serialized_procedures:
                         state = procedure["state"]
                         state_date = procedure["state_date"]
 
