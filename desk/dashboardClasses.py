@@ -47,39 +47,7 @@ class YourView(APIView):
             date_range = [fecha_inicio + timedelta(days=x) for x in range((today - fecha_inicio).days + 1)]
             date_range = [d.strftime("%d/%m/%Y") for d in date_range]
 
-            tracings_for_user = ProcedureTracing.objects.select_related('procedure').filter(user_id=usuario_id).order_by("-created_at")
-            procedures = [ProcedureSerializer(tracing.procedure).data for tracing in tracings_for_user]
-
-            # Procesamiento de datos...
-            i = 0
-
-            ###-------se saca el porcentaje de tramites aprobados-----------####
-
-            filtred_trackins = ProcedureTracing.objects.filter(
-                procedure_id__in=[procedure["id"] for procedure in procedures], is_approved=False, assigned_user_id=None
-                ).order_by("-created_at")
-            proceduretracing = ProcedureTracingSerializer(filtred_trackins, many=True)
-
-            procedures_not_aproved = Procedure.objects.filter(
-                    id__in=[procedure["procedure"] for procedure in proceduretracing.data]
-                )
-            
-            percentage_aproved = (len(procedures) - len(procedures_not_aproved))/len(procedures)
-
-            ###------------------------------------------------###
-
-            procedures = [
-                    {**procedure, "created_at": procedure["created_at"].split(" ")[0]}
-                    for procedure in procedures
-                ] 
-
-            for l in range(len(procedures)):
-                    if procedures[l]['created_at'] not in date_range:   #tomamos solo los tramites que fueron creados en nuestro rango de tiempo
-                        procedures[l] = 0
-
-            thing = [procedure for procedure in procedures if procedure != 0]
-
-            procedures = thing
+            procedures = ProcedureSerializer(Procedure.objects.filter(user__id = usuario_id), many = True).data
             
             if wantsData:
                 plazos = {"en_plazo": 0, "por_vencer": 0, "vencidos" : 0}
@@ -94,19 +62,18 @@ class YourView(APIView):
                     state_date = procedure["state_date"]
 
                     if state != "Archivado" and state != "Concluido":
-
                         plazos[
                             "vencidos" if state_date == 1 else
                             "por_vencer" if state_date == 2 else
                             "en_plazo"
                         ] += 1
 
-                    if state != "Iniciado":
-
-                        estados[
-                            state.lower() if state != "En proceso" else "en_proceso"
-                        ] += 1
-
+                    estados[
+                        "archivado" if state == "Archivado" else
+                        "iniciados" if state == "Iniciado" else
+                        "en_proceso" if state ==  "En proceso" else
+                        "concluido"
+                    ] += 1
             #--------obtenemos el area del usuario-----------#
 
                 if usuario_id == None:
@@ -153,9 +120,15 @@ class YourView(APIView):
                                 "por_vencer" if state_date == 2 else
                                 "en_plazo"
                             ] += 1
+                        
+                        estadosareas[
+                        "archivado" if state == "Archivado" else
+                        "iniciados" if state == "Iniciado" else
+                        "en_proceso" if state ==  "En proceso" else
+                        "concluido"
+                        ] += 1
 
-                        if state != "Iniciado":
-                            estadosareas[state.lower() if state != "En proceso" else "en_proceso"] += 1
+                     
 
                     returnList.append({"area": area["nombre"], "state_procedure": estadosareas, "state_date": plazosareas})
 
@@ -169,14 +142,21 @@ class YourView(APIView):
                 cache.set(cache_key, [dashboard_data, "data"], timeout=3600)  # 1 hora(3600 segundos) de tiempo de vida de la caché/3600 segundos
                 return Response(dashboard_data)
             else:
+                for l in range(len(procedures)):
+                    if procedures[l]['created_at'].split(" ")[0] not in date_range:   #tomamos solo los tramites que fueron creados en nuestro rango de tiempo
+                        procedures[l] = 0
+
+                thing = [procedure for procedure in procedures if procedure != 0]
+
+                procedures = thing
                 dates = defaultdict(lambda: {"concluido": 0, "archivado": 0, "en_proceso": 0, "iniciados": 0})
                 
                 trakins = ProcedureTracingSerializer(ProcedureTracing.objects.filter(procedure_id__in =[procedure["id"] for procedure in procedures]).order_by("-created_at"), many = True).data
 
             # Procesar trakins y procedures juntos
                 for item in trakins:
-                    fecha = item["created_at"].split("T")[0].replace("-", "/")
-                    año, mes, dia = fecha.split("/")
+                    fecha = item["created_at"].split("T")[0]
+                    año, mes, dia = fecha.split("-")
                     fecha = f"{dia}/{mes}/{año}"
 
                     # Actualizar los conteos correspondientes en el diccionario
@@ -188,14 +168,17 @@ class YourView(APIView):
                         dates[fecha]["en_proceso"] += 1
 
                 for procedure in procedures:
-                    fecha = procedure["created_at"].split("T")[0].replace("-", "/")
+                    fecha = procedure["created_at"].split(" ")[0].replace("-", "/")
                     dia, mes, año = fecha.split("/")
                     fecha = f"{dia}/{mes}/{año}"
 
 
                     for datel in date_range:
                         if fecha == datel:
+                            print(fecha+ "1")
+                            print(datel + "2")
                             dates[datel]['iniciados'] += 1
+                            dates[datel]['en_proceso'] -= 1
                 i = 0
 
                 for l in range(len(dates)):
@@ -214,6 +197,7 @@ class YourView(APIView):
                     try:
                         fecha = datetime.strptime(key, "%Y/%m/%d")
                     except ValueError:
+                        print(key)
                         fecha = datetime.strptime(key, "%d/%m/%Y")
 
                     week_start = fecha - timedelta(days=fecha.weekday())
@@ -237,7 +221,7 @@ class YourView(APIView):
                 weekGroupsf = {}
                 lista = [week for week in weekGroups.keys()]
                 for i in range(len(weekGroups)):
-                    weekGroupsf[f"Semana{i+1}"] = weekGroups[lista[i]]
+                    weekGroupsf[f"Semana{i+1}"] = weekGroups[lista[i]] 
 
 
 
@@ -249,5 +233,5 @@ class YourView(APIView):
                 # Guardar en caché los datos obtenidos
             
         except Exception as e:
-            print("Error: " + e)
+            print("Error: " + str(e))
             return None
