@@ -15,11 +15,24 @@ class YourView(APIView):
             usuario_id = request.GET.get("user_id")
             time_filter = request.GET.get("time_filter")
 
-            if time_filter is None:
-                return Response(
-                    {"error": "No se ha proporcionado un filtro de tiempo"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            if time_filter:
+                today = date.today()
+                fecha_inicio = ""
+
+                if time_filter == "1":
+                    fecha_inicio = today - timedelta(days=90)
+                elif time_filter == "2":
+                    fecha_inicio = today - timedelta(days=180)
+                elif time_filter == "3":
+                    fecha_inicio = today - timedelta(days=365)
+                elif time_filter == "4":
+                    dia, mes, año = today.strftime("%d/%m/%Y").split("/")
+                    fecha_inicio = f"01/01/{año}"
+                    fecha_inicio = datetime.strptime(fecha_inicio, "%d/%m/%Y").date()
+
+                date_range = [fecha_inicio + timedelta(days=x) for x in range((today - fecha_inicio).days + 1)]
+                date_range = [d.strftime("%d/%m/%Y") for d in date_range]
+        
 
             # Consulta en caché
             cache_key = f"dashboard_data_{usuario_id}_{time_filter}"
@@ -30,22 +43,7 @@ class YourView(APIView):
                 elif cached_data[1] == "dates" and wantsData == False:
                     return Response(cached_data[0])
             
-            today = date.today()
-            fecha_inicio = ""
-
-            if time_filter == "1":
-                fecha_inicio = today - timedelta(days=90)
-            elif time_filter == "2":
-                fecha_inicio = today - timedelta(days=180)
-            elif time_filter == "3":
-                fecha_inicio = today - timedelta(days=365)
-            elif time_filter == "4":
-                dia, mes, año = today.strftime("%d/%m/%Y").split("/")
-                fecha_inicio = f"01/01/{año}"
-                fecha_inicio = datetime.strptime(fecha_inicio, "%d/%m/%Y").date()
-
-            date_range = [fecha_inicio + timedelta(days=x) for x in range((today - fecha_inicio).days + 1)]
-            date_range = [d.strftime("%d/%m/%Y") for d in date_range]
+            
 
             procedures = ProcedureSerializer(Procedure.objects.filter(user__id = usuario_id), many = True).data
             
@@ -105,12 +103,11 @@ class YourView(APIView):
                     serialized_procedures = ProcedureSerializer(procedures, many=True).data
 
                     # Filtering procedures based on date range
-                    filtered_procedures = [procedure for procedure in serialized_procedures if procedure['created_at'].split(" ")[0] in date_range]
 
                     plazosareas = {"en_plazo": 0, "por_vencer": 0, "vencidos": 0}
                     estadosareas = {"iniciados": 0, "en_proceso": 0, "archivado": 0, "concluido": 0}
 
-                    for procedure in filtered_procedures:
+                    for procedure in procedures:
                         state = procedure["state"]
                         state_date = procedure["state_date"]
 
