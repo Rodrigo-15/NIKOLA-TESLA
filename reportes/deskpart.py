@@ -592,9 +592,6 @@ def get_charge_procedure(data) -> str:
         #
 
         path_return = settings.MEDIA_URL + pdf_file_key
-        c.drawString(
-            limiteIzquierda, limiteAbajo, "Universidad Nacional de la Amazonia Peruana"
-        )
 
         qr = qrcode.QRCode(
             version=1,
@@ -825,9 +822,9 @@ def generate_constancia_de_registro(data) -> str:
     # milisecond
     milisecond = str(int(round(time.time() * 1000)))
     folder_name = "pdf/constancia_de_registro/"
-    pdf_file_name = f"{folder_name}-{data[1]}-{milisecond}.pdf"
+    pdf_file_name = f"constancia_de_registro-{data[1]}-{milisecond}.pdf"
 
-    pdf_file_key = pdf_file_name
+    pdf_file_key = folder_name + pdf_file_name
 
     # -----generar pdf-----#
     if settings.DEBUG:
@@ -866,6 +863,10 @@ def generate_constancia_de_registro(data) -> str:
     tipoTramite = data[0]["procedure_type_description"]
 
     fecha, hora = data[0]["created_at"].split(" ", 1)
+
+    hora = hora.replace("P", "")
+    hora = hora.replace("A", "")
+    hora = hora.replace("M", "")
 
     addres = "Los Rosales s/n, San Juan Bautista"
     email = "postgrado@unapiquitos.edu.pe"
