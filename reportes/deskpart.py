@@ -591,7 +591,10 @@ def get_charge_procedure(data) -> str:
         c.setTitle("hoja_de_cargo-{}-{}".format(area, milisecond))
         #
 
+
         path_return = settings.MEDIA_URL + pdf_file_key
+        c.drawString(
+            limiteIzquierda, limiteAbajo, "Universidad Nacional de la Amazonia Peruana")
 
         qr = qrcode.QRCode(
             version=1,
@@ -618,7 +621,6 @@ def get_charge_procedure(data) -> str:
         c.save()
 
         path_return = upload_file_to_s3(pdf_file_name, folder_name)
-        # path_return = settings.MEDIA_URL + pdf_file_key
         return path_return
     except Exception as e:
         print(e)
@@ -993,6 +995,5 @@ def generate_constancia_de_registro(data) -> str:
     c.drawImage(img_buffer, A4[0] / 2 - 35, lBot + fontzise * 3, 70, 70)
 
     c.save()
-
 
     return path_return

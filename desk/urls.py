@@ -4,7 +4,8 @@ from desk.router import router
 from desk.views import (
     generete_code_hash,
     get_procedure_and_tracing_by_id,
-    get_dashboard_desk,
+    get_dashboard_dates_desk,
+    get_dashboard_data_desk,
     update_procedure,
     years_for_procedures,
     save_derive_procedure,
@@ -92,7 +93,8 @@ urlpatterns = [
         save_procedure_externo_register,
     ),
     # OLD
-    path("get_dashboard_desk/", get_dashboard_desk),
+    path("get_dashboard_dates_desk/", get_dashboard_dates_desk),
+    path("get_dashboard_data_desk/", get_dashboard_data_desk),
     path("years_for_procedures", years_for_procedures),
     path("get_areas", get_areas, name="get_areas"),
     path(

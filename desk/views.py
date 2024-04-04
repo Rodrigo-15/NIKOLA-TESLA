@@ -1305,8 +1305,14 @@ def save_procedure_externo_register(request):
 
 
 @api_view(["GET"])
-def get_dashboard_desk(request):
+def get_dashboard_dates_desk(request):
     dashboardData = YourView()
-    data = dashboardData.get(request)
+    data = dashboardData.get(request, False)
 
+    return data
+
+@api_view(["GET"])
+def get_dashboard_data_desk(request):
+    dashboardData = YourView()
+    data = dashboardData.get(request, True)
     return data
