@@ -99,8 +99,6 @@ def get_user_profile(request):
 
 
 # generators
-
-
 @api_view(["GET"])
 def generete_code_hash(request):
     if request.method == "GET":
@@ -621,7 +619,7 @@ def save_derive_procedure(request):
 
         procedure = Procedure.objects.filter(id=procedure_id).first()
         procedure.number_of_sheets = number_of_sheets
-        #update
+        # update
         procedure.save()
 
         if assigned_user_id != None:
@@ -1305,8 +1303,184 @@ def save_procedure_externo_register(request):
 
 
 @api_view(["GET"])
-def get_dashboard_desk(request):
+def get_dashboard_dates_desk(request):
     dashboardData = YourView()
-    data = dashboardData.get(request)
+    data = dashboardData.get(request, False)
 
     return data
+
+
+@api_view(["GET"])
+def get_dashboard_data_desk(request):
+    # if request.method == "GET":
+    #     user_id = request.GET.get("user_id")
+
+    #     try:
+
+    #         state_procedure = {"iniciados": 0, "en_proceso": 0, "concluido": 0}
+
+    #         state_date = {"en_plazo": 0, "por_vencer": 0, "vencidos": 0}
+
+    #         area_procedures = []
+
+    #         areas del usuario
+    #         cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+    #         if not cargo_area:
+    #             areas = []
+    #         data_area = cargo_area.area.all()
+    #         areas = AreaSerializer(data_area, many=True).data
+
+    #         de las areas
+    #         for area in areas:
+    #             area_nombre = area["nombre"]
+
+    #         inciiados total por el usuario
+    #         procedure_starter = ProcedureTracing.objects.filter(
+    #             is_finished=False,
+    #             user_id=user_id,
+    #             procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+    #             .annotate(count=Count("procedure_id"))
+    #             .filter(count=1)
+    #             .values("procedure_id"),
+    #         )
+    #         state_procedure["iniciados"] = procedure_starter.count()
+    #         en proceso total por el usuario
+    #         procedure_in_progress = (
+    #             ProcedureTracing.objects.filter(
+    #                 is_finished=False,
+    #                 is_approved=False,
+    #                 from_area_id__in=[area["id"] for area in areas],
+    #                 to_area_id__isnull=True,
+    #                 user_id=user_id,
+    #             )
+    #             .exclude(
+    #                 procedure_id__in=ProcedureTracing.objects.filter(
+    #                     is_finished=True
+    #                 ).values("procedure_id")
+    #             )
+    #             .exclude(
+    #                 procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+    #                 .annotate(count=Count("procedure_id"))
+    #                 .filter(count=1)
+    #                 .values("procedure_id"),
+    #             )
+    #             .exclude(
+    #                 id__lt=Subquery(
+    #                     ProcedureTracing.objects.filter(
+    #                         user_id=user_id, procedure_id=OuterRef("procedure_id")
+    #                     )
+    #                     .order_by("-id")
+    #                     .values("id")[:1]
+    #                 )
+    #             )
+    #         )
+    #         state_procedure["en_proceso"] = procedure_in_progress.count()
+    #         concluidos total por el usuario
+    #         procedure_finished = ProcedureTracing.objects.filter(
+    #             is_finished=True,
+    #             user_id=user_id,
+    #         )
+    #         state_procedure["concluido"] = procedure_finished.count()
+
+    #     except:
+    #         return Response(
+    #             status=status.HTTP_400_BAD_REQUEST,
+    #             data={"message": "Error al obtener los datos"},
+    #         )
+    # return Response(state_procedure)
+    dashboardData = YourView()
+    data = dashboardData.get(request, True)
+    return data
+
+
+@api_view(["GET"])
+def desk_notification(request):
+    user_id = request.GET.get("user_id")
+    obj_notify_area = []
+    obj_notify_user = []
+    obj_notify_external = []
+    count_notify = {
+        "notify_area": 0,
+        "notify_user": 0,
+        "notify_external": 0,
+    }
+    # for area
+    cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+
+    if not cargo_area:
+        obj_notify_area = []
+
+    data_area = cargo_area.area.all()
+
+    areas = AreaSerializer(data_area, many=True).data
+    if areas:
+        area_id = [area["id"] for area in areas]
+
+        tracings_for_area = ProcedureTracing.objects.filter(
+            to_area_id__in=area_id, is_approved=False, assigned_user_id=None
+        ).order_by("-created_at")
+
+        for tracing in tracings_for_area:
+            obj_notify_area.append(
+                {
+                    "procedure_id": tracing.procedure.id,
+                    "message": f"{tracing.user}, te ha asignado un trámite con número {tracing.procedure.code_number}. Revisalo por favor.",
+                    "date": tracing.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                }
+            )
+    # for user
+    tracings_for_user = ProcedureTracing.objects.filter(
+        to_area_id__in=area_id, assigned_user_id=user_id, is_approved=False
+    ).order_by("-created_at")
+    for tracing in tracings_for_user:
+        obj_notify_user.append(
+            {
+                "procedure_id": tracing.procedure.id,
+                "message": f"{tracing.user}, te ha asignado un trámite con número {tracing.procedure.code_number}. Revisalo por favor.",
+                "date": tracing.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            }
+        )
+    # for external
+    tracings_for_external = ProcedureTracing.objects.filter(
+        is_approved=False, assigned_user_id=None, from_area_id__in=area_id
+    ).order_by("-created_at")
+    proceduretracing = ProcedureTracingSerializer(tracings_for_external, many=True)
+
+    procedures = Procedure.objects.filter(
+        id__in=[procedure["procedure"] for procedure in proceduretracing.data],
+        is_external=True,
+    ).exclude(
+        id__in=ProcedureTracing.objects.values("procedure_id")
+        .annotate(count=Count("procedure_id"))
+        .filter(count__gt=1)
+        .values("procedure_id"),
+    )
+    procedures = ProcedureSerializer(procedures, many=True).data
+    tracings_for_external = ProcedureTracing.objects.filter(
+        procedure_id__in=[p["id"] for p in procedures],
+        is_approved=False,
+        assigned_user_id=None,
+        from_area_id__in=area_id,
+    ).order_by("-created_at")
+
+    for tracing in tracings_for_external:
+        obj_notify_external.append(
+            {
+                "procedure_id": tracing.procedure.id,
+                "message": f"se creo un  un trámite en linea con número {tracing.procedure.code_number}. Revisalo por favor.",
+                "date": tracing.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            }
+        )
+
+    count_notify["notify_area"] = len(obj_notify_area)
+    count_notify["notify_user"] = len(obj_notify_user)
+    count_notify["notify_external"] = len(obj_notify_external)
+
+    return Response(
+        {
+            "count_notify": count_notify,
+            "notify_area": obj_notify_area,
+            "notify_user": obj_notify_user,
+            "notify_external": obj_notify_external,
+        }
+    )

@@ -142,13 +142,16 @@ class ProcedureSerializer(serializers.ModelSerializer):
         return "No adjunto"
 
     def get_state(self, obj):
-        if ProcedureTracing.objects.filter(procedure_id=obj.id).count() == 1:
+        try:
+            if ProcedureTracing.objects.filter(procedure_id=obj.id).count() == 1:
+                return "Iniciado"
+            elif ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_archived:
+                return "Archivado"
+            elif ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_finished:
+                return "Concluido"
+            return "En proceso"
+        except:
             return "Iniciado"
-        elif ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_archived:
-            return "Archivado"
-        elif ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_finished:
-            return "Concluido"
-        return "En proceso"
 
     def get_due_date(self, obj: Procedure):
         # Obtener el tipo de procedimiento y los días hábiles necesarios

@@ -18,9 +18,9 @@ import datetime
 import time
 import os
 
-
 def diploma_egresado(data):    
     try:
+        print(data)
         # Guardar el PDF en la carpeta media
         media_root = settings.MEDIA_ROOT
         pdf_folder = os.path.join(media_root)

@@ -8,7 +8,9 @@ urls_dict = {
         "login": f"{url}desk/login/",  # post
         "get_areas": f"{url}desk/get_areas",  # get
         "get_user_for_area": f"{url}desk/get_user_for_area",  # post
-        "get_dashboard_desk": f"{url}desk/get_dashboard_desk",  # get
+        "get_dashboard_dates_desk": f"{url}desk/get_dashboard_dates_desk",  # get
+        "get_dashboard_data_desk": f"{url}desk/get_dashboard_data_desk",  # get
+        "desk_notification": f"{url}desk/desk_notification",  # post
         "headquarters": {
             "get": f"{url}desk/headquarters/",  # get
             "create": f"{url}desk/headquarters/",  # post

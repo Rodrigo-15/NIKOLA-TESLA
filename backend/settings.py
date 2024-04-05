@@ -170,8 +170,10 @@ AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME")
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+# MEDIA_URL = "/media/"
 MEDIA_URL = "https://sigae-epg-bucket.s3.us-east-2.amazonaws.com/"
-# MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_LOCAL_URL = "/media/"
 import boto3
 
 CREATE_STORAGE = s3_client = boto3.client(
