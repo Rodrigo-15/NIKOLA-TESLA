@@ -15,7 +15,6 @@ def procedure_tracing_post_save(sender, instance, created, **kwargs):
         if instance.to_area_id and not instance.assigned_user_id:
             area = CargoArea.objects.filter(area__id=instance.to_area_id)
             # sacar los id de usuarios de la area
-            print(area)
             for user in area:
                 try:
                     async_to_sync(channel_layer.group_send)(

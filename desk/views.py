@@ -1312,6 +1312,82 @@ def get_dashboard_dates_desk(request):
 
 @api_view(["GET"])
 def get_dashboard_data_desk(request):
+    # if request.method == "GET":
+    #     user_id = request.GET.get("user_id")
+
+    #     try:
+
+    #         state_procedure = {"iniciados": 0, "en_proceso": 0, "concluido": 0}
+
+    #         state_date = {"en_plazo": 0, "por_vencer": 0, "vencidos": 0}
+
+    #         area_procedures = []
+
+    #         areas del usuario
+    #         cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
+    #         if not cargo_area:
+    #             areas = []
+    #         data_area = cargo_area.area.all()
+    #         areas = AreaSerializer(data_area, many=True).data
+
+    #         de las areas
+    #         for area in areas:
+    #             area_nombre = area["nombre"]
+
+    #         inciiados total por el usuario
+    #         procedure_starter = ProcedureTracing.objects.filter(
+    #             is_finished=False,
+    #             user_id=user_id,
+    #             procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+    #             .annotate(count=Count("procedure_id"))
+    #             .filter(count=1)
+    #             .values("procedure_id"),
+    #         )
+    #         state_procedure["iniciados"] = procedure_starter.count()
+    #         en proceso total por el usuario
+    #         procedure_in_progress = (
+    #             ProcedureTracing.objects.filter(
+    #                 is_finished=False,
+    #                 is_approved=False,
+    #                 from_area_id__in=[area["id"] for area in areas],
+    #                 to_area_id__isnull=True,
+    #                 user_id=user_id,
+    #             )
+    #             .exclude(
+    #                 procedure_id__in=ProcedureTracing.objects.filter(
+    #                     is_finished=True
+    #                 ).values("procedure_id")
+    #             )
+    #             .exclude(
+    #                 procedure_id__in=ProcedureTracing.objects.values("procedure_id")
+    #                 .annotate(count=Count("procedure_id"))
+    #                 .filter(count=1)
+    #                 .values("procedure_id"),
+    #             )
+    #             .exclude(
+    #                 id__lt=Subquery(
+    #                     ProcedureTracing.objects.filter(
+    #                         user_id=user_id, procedure_id=OuterRef("procedure_id")
+    #                     )
+    #                     .order_by("-id")
+    #                     .values("id")[:1]
+    #                 )
+    #             )
+    #         )
+    #         state_procedure["en_proceso"] = procedure_in_progress.count()
+    #         concluidos total por el usuario
+    #         procedure_finished = ProcedureTracing.objects.filter(
+    #             is_finished=True,
+    #             user_id=user_id,
+    #         )
+    #         state_procedure["concluido"] = procedure_finished.count()
+
+    #     except:
+    #         return Response(
+    #             status=status.HTTP_400_BAD_REQUEST,
+    #             data={"message": "Error al obtener los datos"},
+    #         )
+    # return Response(state_procedure)
     dashboardData = YourView()
     data = dashboardData.get(request, True)
     return data
