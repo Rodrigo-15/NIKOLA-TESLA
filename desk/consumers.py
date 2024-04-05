@@ -1,27 +1,22 @@
 import json
-from channels.generic.websocket import WebsocketConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import async_to_sync
-import datetime
 
 
-class DeskSocket(WebsocketConsumer):
-    def connect(self):
+class DeskSocket(AsyncWebsocketConsumer):
+    async def connect(self):
         self.user_id = self.scope["url_route"]["kwargs"]["user_id"]
-        # self.user = self.scope["user"]
-        async_to_sync(self.channel_layer.group_add)(self.user_id, self.channel_name)
-        self.accept()
-        print("connected")
+        await self.channel_layer.group_add(self.user_id, self.channel_name)
+        await self.accept()
+        print("Conexión establecida")
 
-    def disconnect(self, close_code):
-        print("Disconnected")
-        async_to_sync(self.channel_layer.group_discard)(self.user_id, self.channel_name)
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.user_id, self.channel_name)
+        print("Desconectado")
+
+    async def receive(self, text_data):
         pass
 
-    def receive(self, text_data):
-        print("Received")
-        pass
-
-    def desk_notification(self, event):
+    async def desk_notification(self, event):
         message = event["message"]
-        self.send(text_data=json.dumps(message))
-        pass
+        await self.send(text_data=json.dumps(message))
