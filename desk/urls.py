@@ -7,14 +7,12 @@ from desk.views import (
     get_dashboard_dates_desk,
     get_dashboard_data_desk,
     update_procedure,
-    years_for_procedures,
     save_derive_procedure,
     approve_tracing,
     get_areas,
     get_user_for_area,
     finally_procedure,
     get_procedures_requirements,
-    get_user_profile,
     # new views
     login,
     get_procedures,
@@ -97,12 +95,10 @@ urlpatterns = [
     # OLD
     path("get_dashboard_dates_desk/", get_dashboard_dates_desk),
     path("get_dashboard_data_desk/", get_dashboard_data_desk),
-    path("years_for_procedures", years_for_procedures),
     path("get_areas", get_areas, name="get_areas"),
     path(
         "get_procedures_requirements",
         get_procedures_requirements,
         name="get_procedures_requirements",
     ),
-    path("get_user_profile", get_user_profile, name="get_user_profile"),
 ]

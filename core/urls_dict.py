@@ -69,6 +69,10 @@ urls_dict = {
             "get_procedure_and_tracing_by_code_number": f"{url}desk/get_procedure_and_tracing_by_code_number",
         },
     },
+    "core": {
+        "get_user_profile": f"{url}core/get_user_profile",
+        "change_profile_image": f"{url}core/change_profile_image",
+    },
     "person": {
         "get_person_list": f"{url}core/get_person_list",  # get
         "get": f"{url}core/persona/",  # get

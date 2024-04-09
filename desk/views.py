@@ -6,9 +6,7 @@ from core.serializers import (
     AreaSerializer,
     CargoAreaPersonSerializer,
 )
-from .dashboardClasses import *
 from django.core.cache import cache
-from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from desk.NAMES import APP_NAME
 from desk.models import File, Procedure
@@ -48,69 +46,13 @@ from desk.serializers import (
 
 from core.pagination import CustomPagination
 from django.db.models.functions import TruncDate
+from django.utils import timezone
 
-from .getdata import *
-
-
-@api_view(["GET"])
-def years_for_procedures(request):
-    if request.method == "GET":
-        years = Procedure.objects.values("created_at__year").distinct()
-        years = [year["created_at__year"] for year in years]
-        return Response(years)
-
-
-@api_view(["GET"])
-@check_is_auth()
-def get_user_profile(request):
-    if request.method == "GET":
-        user_id = request.user.id
-        user = User.objects.filter(id=user_id).first()
-        groups = user.groups.all()
-        person = Persona.objects.get(user_id=user.id)
-        headquarter = (
-            CargoArea.objects.filter(persona_id=person.id)
-            .values("headquarter_id", "headquarter__name")
-            .first()
-        )
-        person_data = PersonSerializer(person).data
-        from backend.settings import DEBUG, URL_LOCAL, URL_PROD
-
-        url = URL_LOCAL if DEBUG else URL_PROD
-        path = person_data["foto"]
-        if path:
-            path = path.replace("/media", "media")
-            person_data["foto"] = url + path
-
-        cargo_area = CargoArea.objects.filter(persona=person).first()
-        if not cargo_area:
-            area = {}
-        area = AreaSerializer(cargo_area.area).data
-
-        return Response(
-            {
-                "user": UserSerializer(user).data,
-                "groups": GroupSerializer(groups, many=True).data,
-                "person": person_data,
-                "headquarter": headquarter,
-                "area": area,
-            }
-        )
-
-
-# generators
-@api_view(["GET"])
-def generete_code_hash(request):
-    if request.method == "GET":
-
-        procedure = Procedure.objects.all()
-
-        import shortuuid
-
-        for p in procedure:
-            p.code_hash = shortuuid.ShortUUID().random(length=6)
-            p.save()
-        return Response(status=status.HTTP_200_OK, data={"message": "ok"})
+from desk.api import (
+    api_generete_code_hash,
+    api_get_dashboard_data_desk,
+    api_get_dashboard_dates_desk,
+)
 
 
 # new modification
@@ -157,13 +99,6 @@ def login(request):
                 .first()
             )
             person_data = PersonSerializer(person).data
-            from backend.settings import DEBUG, URL_LOCAL, URL_PROD
-
-            url = URL_LOCAL if DEBUG else URL_PROD
-            path = person_data["foto"]
-            if path:
-                path = path.replace("/media", "media")
-                person_data["foto"] = url + path
 
             cargo_area = CargoArea.objects.filter(persona=person).first()
             if not cargo_area:
@@ -185,6 +120,13 @@ def login(request):
                 "User does not have permission",
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+
+# generators
+@api_view(["GET"])
+def generete_code_hash(request):
+    if request.method == "GET":
+        return api_generete_code_hash(request)
 
 
 @api_view(["GET"])
@@ -1304,93 +1246,14 @@ def save_procedure_externo_register(request):
 
 @api_view(["GET"])
 def get_dashboard_dates_desk(request):
-    dashboardData = YourView()
-    data = dashboardData.get(request, False)
-
-    return data
+    if request.method == "GET":
+        return api_get_dashboard_dates_desk(request)
 
 
 @api_view(["GET"])
 def get_dashboard_data_desk(request):
-    # if request.method == "GET":
-    #     user_id = request.GET.get("user_id")
-
-    #     try:
-
-    #         state_procedure = {"iniciados": 0, "en_proceso": 0, "concluido": 0}
-
-    #         state_date = {"en_plazo": 0, "por_vencer": 0, "vencidos": 0}
-
-    #         area_procedures = []
-
-    #         areas del usuario
-    #         cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
-    #         if not cargo_area:
-    #             areas = []
-    #         data_area = cargo_area.area.all()
-    #         areas = AreaSerializer(data_area, many=True).data
-
-    #         de las areas
-    #         for area in areas:
-    #             area_nombre = area["nombre"]
-
-    #         inciiados total por el usuario
-    #         procedure_starter = ProcedureTracing.objects.filter(
-    #             is_finished=False,
-    #             user_id=user_id,
-    #             procedure_id__in=ProcedureTracing.objects.values("procedure_id")
-    #             .annotate(count=Count("procedure_id"))
-    #             .filter(count=1)
-    #             .values("procedure_id"),
-    #         )
-    #         state_procedure["iniciados"] = procedure_starter.count()
-    #         en proceso total por el usuario
-    #         procedure_in_progress = (
-    #             ProcedureTracing.objects.filter(
-    #                 is_finished=False,
-    #                 is_approved=False,
-    #                 from_area_id__in=[area["id"] for area in areas],
-    #                 to_area_id__isnull=True,
-    #                 user_id=user_id,
-    #             )
-    #             .exclude(
-    #                 procedure_id__in=ProcedureTracing.objects.filter(
-    #                     is_finished=True
-    #                 ).values("procedure_id")
-    #             )
-    #             .exclude(
-    #                 procedure_id__in=ProcedureTracing.objects.values("procedure_id")
-    #                 .annotate(count=Count("procedure_id"))
-    #                 .filter(count=1)
-    #                 .values("procedure_id"),
-    #             )
-    #             .exclude(
-    #                 id__lt=Subquery(
-    #                     ProcedureTracing.objects.filter(
-    #                         user_id=user_id, procedure_id=OuterRef("procedure_id")
-    #                     )
-    #                     .order_by("-id")
-    #                     .values("id")[:1]
-    #                 )
-    #             )
-    #         )
-    #         state_procedure["en_proceso"] = procedure_in_progress.count()
-    #         concluidos total por el usuario
-    #         procedure_finished = ProcedureTracing.objects.filter(
-    #             is_finished=True,
-    #             user_id=user_id,
-    #         )
-    #         state_procedure["concluido"] = procedure_finished.count()
-
-    #     except:
-    #         return Response(
-    #             status=status.HTTP_400_BAD_REQUEST,
-    #             data={"message": "Error al obtener los datos"},
-    #         )
-    # return Response(state_procedure)
-    dashboardData = YourView()
-    data = dashboardData.get(request, True)
-    return data
+    if request.method == "GET":
+        return api_get_dashboard_data_desk(request)
 
 
 @api_view(["GET"])
