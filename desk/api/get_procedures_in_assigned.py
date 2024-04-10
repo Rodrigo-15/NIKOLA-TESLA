@@ -1,5 +1,4 @@
 from django.db.models import Count, OuterRef, Subquery, Q
-from rest_framework.pagination import PageNumberPagination
 from desk.models import Procedure, ProcedureTracing
 from desk.serializers import ProcedureListSerializer, ProcedureTracingSerializer
 from core.models import CargoArea

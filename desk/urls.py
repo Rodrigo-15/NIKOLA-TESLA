@@ -13,7 +13,6 @@ from desk.views import (
     get_user_for_area,
     finally_procedure,
     get_procedures_requirements,
-    # new views
     login,
     get_procedures,
     get_procedures_in_started,
@@ -35,13 +34,13 @@ from desk.views import (
     get_tracings_to_approved_for_external,
     save_procedure_externo_register,
     desk_notification,
+    save_procedure_action,
 )
 
 urlpatterns = [
     path("", include(router.urls)),
-    path("generete_code_hash", generete_code_hash),
-    # new paths
     path("login/", login, name="login"),
+    path("generete_code_hash", generete_code_hash),
     path("get_procedures", get_procedures, name="get_procedures"),
     path(
         "get_procedures_in_started",
@@ -92,7 +91,6 @@ urlpatterns = [
         save_procedure_externo_register,
     ),
     path("desk_notification", desk_notification),
-    # OLD
     path("get_dashboard_dates_desk/", get_dashboard_dates_desk),
     path("get_dashboard_data_desk/", get_dashboard_data_desk),
     path("get_areas", get_areas, name="get_areas"),
@@ -101,4 +99,5 @@ urlpatterns = [
         get_procedures_requirements,
         name="get_procedures_requirements",
     ),
+    path("save_procedure_action", save_procedure_action),
 ]

@@ -29,6 +29,7 @@ urls_dict = {
             "finally_procedure": f"{url}desk/finally_procedure",  # post
             "archive_procedure": f"{url}desk/archive_procedure",  # post
             "anexar_procedure": f"{url}desk/anexar_procedure",  # post
+            "save_procedure_action": f"{url}desk/save_procedure_action",  # post
         },
         "procedure_type": {
             "get": f"{url}desk/procedure_type/",  # get

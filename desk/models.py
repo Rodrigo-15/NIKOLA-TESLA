@@ -271,7 +271,8 @@ class Procedure(models.Model):
                 "to": [f"{correo}"],
                 "subject": "REGISTRO DE TRAMITE EN LINEA - EPG-UNAP",
                 "html": html_content,
-                "headers": {"X-Entity-Ref-ID": "123456789"},
+                # "headers": {"X-Entity-Ref-ID": "123456789"},
+                "headers": {"X-Entity-Ref-ID": f"{code_hash}"},
                 # "attachments": [{"filename": "invoice.pdf", "content": list(f)}],
             }
 
