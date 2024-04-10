@@ -26,7 +26,6 @@ from core.models import Apps, Menu, Persona, Area
 
 
 from desk.serializers import ProcedureListSerializer, ProcedureSerializer
-from core.decorators import check_app_name, check_is_auth, check_credentials
 from core.models import Persona, CargoArea
 from desk.models import (
     Procedure,
@@ -52,12 +51,15 @@ from desk.api import (
     api_generete_code_hash,
     api_get_dashboard_data_desk,
     api_get_dashboard_dates_desk,
+    api_get_procedures_in_assigned,
 )
+from desk.NAMES import APP_NAME
+from core.decorators import check_app_name, check_is_auth, check_credentials
 
 
 # new modification
 @api_view(["POST"])
-@check_app_name()
+@check_app_name(APP_NAME)
 @check_credentials()
 def login(request):
     if request.method == "POST":
@@ -203,61 +205,7 @@ def get_procedures_in_started(request):
 @api_view(["GET"])
 def get_procedures_in_assigned(request):
     if request.method == "GET":
-        user_id = request.GET.get("user_id")
-        query = request.GET.get("query")
-        cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
-        if not cargo_area:
-            areas = []
-        data_area = cargo_area.area.all()
-        areas = AreaSerializer(data_area, many=True).data
-        procedure_tracings = (
-            ProcedureTracing.objects.filter(
-                is_finished=False,
-                is_approved=False,
-                from_area_id__in=[area["id"] for area in areas],
-                to_area_id__isnull=True,
-                user_id=user_id,
-            )
-            .exclude(
-                procedure_id__in=ProcedureTracing.objects.filter(
-                    is_finished=True
-                ).values("procedure_id")
-            )
-            .exclude(
-                procedure_id__in=ProcedureTracing.objects.values("procedure_id")
-                .annotate(count=Count("procedure_id"))
-                .filter(count=1)
-                .values("procedure_id"),
-            )
-            .exclude(
-                id__lt=Subquery(
-                    ProcedureTracing.objects.filter(
-                        user_id=user_id, procedure_id=OuterRef("procedure_id")
-                    )
-                    .order_by("-id")
-                    .values("id")[:1]
-                )
-            )
-        )
-        proceduretracing = ProcedureTracingSerializer(procedure_tracings, many=True)
-
-        procedures = Procedure.objects.filter(
-            id__in=[procedure["procedure"] for procedure in proceduretracing.data]
-        )
-        procedures = procedures.filter(
-            Q(code_number__icontains=query)
-            | Q(subject__icontains=query)
-            | Q(file__person__full_name__icontains=query)
-            | Q(file__area__nombre__icontains=query)
-            | Q(file__legalperson__razon_social__icontains=query)
-            | Q(file__person__numero_documento__icontains=query)
-            | Q(file__legalperson__numero_documento__icontains=query),
-        ).order_by("-code_number")
-        paginator = CustomPagination()
-        paginated_procedures = paginator.paginate_queryset(procedures, request)
-        serializer = ProcedureListSerializer(paginated_procedures, many=True)
-
-        return paginator.get_paginated_response(serializer.data)
+        return api_get_procedures_in_assigned(request)
 
 
 @api_view(["GET"])

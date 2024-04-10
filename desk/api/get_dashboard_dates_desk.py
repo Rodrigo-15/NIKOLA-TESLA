@@ -102,5 +102,5 @@ def api_get_dashboard_dates_desk(request):
                 "state_procedure": state_procedure,
             }
     except Exception as e:
-        return Response(return_obj, status=status.HTTP_400_BAD_REQUEST)
+        return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
     return Response(return_obj, status=status.HTTP_200_OK)

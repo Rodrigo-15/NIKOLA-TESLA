@@ -179,7 +179,7 @@ def get_periodo_etapa_active(request):
 @api_view(["GET"])
 def get_user_profile(request):
     if request.method == "GET":
-        user_id = request.user.id
+        user_id = request.GET.get("user_id")
         user = User.objects.filter(id=user_id).first()
         groups = user.groups.all()
         person = Persona.objects.get(user_id=user.id)
@@ -189,18 +189,12 @@ def get_user_profile(request):
             .first()
         )
         person_data = PersonSerializer(person).data
-        from backend.settings import DEBUG, URL_LOCAL, URL_PROD
 
-        url = URL_LOCAL if DEBUG else URL_PROD
-        path = person_data["foto"]
-        if path:
-            path = path.replace("/media", "media")
-            person_data["foto"] = url + path
-
-        cargo_area = CargoArea.objects.filter(persona=person).first()
+        cargo_area = CargoArea.objects.filter(persona__user_id=user_id).first()
         if not cargo_area:
-            area = {}
-        area = AreaSerializer(cargo_area.area).data
+            areas = []
+        data_area = cargo_area.area.all()
+        areas = AreaSerializer(data_area, many=True).data
 
         return Response(
             {
@@ -208,6 +202,6 @@ def get_user_profile(request):
                 "groups": GroupSerializer(groups, many=True).data,
                 "person": person_data,
                 "headquarter": headquarter,
-                "area": area,
+                "areas": areas,
             }
         )
