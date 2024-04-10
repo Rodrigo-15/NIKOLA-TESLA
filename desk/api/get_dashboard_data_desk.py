@@ -254,13 +254,8 @@ def api_get_dashboard_data_desk(request):
                 }
             )
 
+        return_obj["user_procedures"] = user_procedures
+        return_obj["area_procedures"] = area_procedures
+        return Response(return_obj, status=status.HTTP_200_OK)
     except Exception as e:
-
-        print(e)
-        return Response(
-            status=status.HTTP_400_BAD_REQUEST,
-            data={"message": "Error al obtener los datos:"},
-        )
-    return_obj["user_procedures"] = user_procedures
-    return_obj["area_procedures"] = area_procedures
-    return Response(return_obj, status=status.HTTP_200_OK)
+        return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
