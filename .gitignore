@@ -139,6 +139,7 @@ GitHub.sublime-settings
 *.code-workspace
 
 #ignorar migrations
+*/migrations/*
 
 docker-compose.yml
 docker-compose.override.yml
