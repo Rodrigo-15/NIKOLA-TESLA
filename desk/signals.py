@@ -27,7 +27,7 @@ def procedure_tracing_post_save(sender, instance, created, **kwargs):
                 except Exception as e:
                     print(e)
 
-        elif instance.to_area_id and instance.assign_user_id:
+        elif instance.to_area_id and instance.assigned_user_id:
             try:
                 async_to_sync(channel_layer.group_send)(
                     str(instance.assigned_user_id),

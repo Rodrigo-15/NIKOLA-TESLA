@@ -24,6 +24,7 @@ def api_get_procedure_and_tracing_by_id(request):
                     ref_procedure_tracking_id__isnull=False,
                     procedure_id=procedure_id,
                     is_finished=False,
+                    is_internal=False,
                 ).values("id")
             )
             .order_by("-created_at")
