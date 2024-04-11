@@ -49,7 +49,7 @@ def api_save_procedure_action(request):
             action=action,
             ref_procedure_tracking_id=ref_procedure_tracking_id,
             document_response=document_response,
-            is_approved=True,
+            is_internal=True,
         )
 
         return Response(status=status.HTTP_200_OK)

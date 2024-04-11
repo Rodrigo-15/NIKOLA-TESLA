@@ -366,10 +366,13 @@ class ProcedureTracing(models.Model):
     procedure_charge = models.ForeignKey(
         ProcedureCharge, on_delete=models.CASCADE, null=True, blank=True
     )
+    is_internal = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.is_anexed and self.is_finished:
             self.action_log = self.action = self.get_anexed_message(self)
+        elif self.is_internal:
+            self.action_log = self.get_internal_message(self)
         elif not self.ref_procedure_tracking and self.procedure.is_external:
             self.action_log = self.action = self.get_external_message(self)
         elif not self.ref_procedure_tracking:
@@ -456,6 +459,13 @@ class ProcedureTracing(models.Model):
     def get_external_message(self):
         person = Persona.objects.filter(id=self.procedure.file.person_id).first()
         return f"El tramite fue creado por el usuario {person.get_full_name()} por el sistema en linea el dia {date_formatter(self.created_at)}"
+
+    @staticmethod
+    def get_internal_message(self):
+        person = Persona.objects.filter(user=self.user).first()
+        if not person:
+            return f"Accion interna realizada por el usuario {self.user} en el area {self.from_area} el dia {date_formatter(self.created_at)}"
+        return f"Accion interna realizada por el usuario {person.get_full_name()} en el area {self.from_area} el dia {date_formatter(self.created_at)}"
 
     @staticmethod
     def get_tracing_by_procedure_id(procedure_id):
