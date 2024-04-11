@@ -6,3 +6,7 @@ from .get_procedure_and_tracing_by_id import api_get_procedure_and_tracing_by_id
 from .desk_notification import api_desk_notification
 from .save_procedure_action import api_save_procedure_action
 from .get_tracings_to_approved_for_user import api_get_tracings_to_approved_for_user
+from .save_procedure_externo_register import api_save_procedure_externo_register
+from .get_tracings_to_approved_for_external import (
+    api_get_tracings_to_approved_for_external,
+)
