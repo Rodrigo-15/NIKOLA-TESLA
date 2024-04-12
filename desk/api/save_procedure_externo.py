@@ -1,6 +1,6 @@
 from rest_framework.response import Response
 from rest_framework import status
-from desk.models import ProcedureTracing, Procedure, File
+from desk.models import ProcedureTracing, Procedure, File, ProcedureFiles
 from core.models import Persona, CargoArea
 
 
@@ -35,13 +35,14 @@ def api_save_procedure_externo(request):
         procedure = Procedure.objects.create(
             file_id=file.id,
             subject=subject,
-            attached_files=attached_files,
             procedure_type_id=procedure_type_id,
             headquarter_id=headquarter_id,
             user_id=user_id,
             number_of_sheets=number_of_sheets,
             is_external=True,
         )
+        for attached_file in attached_files:
+            ProcedureFiles.objects.create(procedure_id=procedure.id, file=attached_file)
 
         ProcedureTracing.objects.create(
             procedure_id=procedure.id,

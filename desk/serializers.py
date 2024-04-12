@@ -10,6 +10,7 @@ from desk.models import (
     ProcedureType,
     Anexo,
     ProcedureCharge,
+    ProcedureFiles,
 )
 from django.db.models import Count
 from datetime import datetime, timedelta
@@ -53,7 +54,6 @@ class ProcedureSerializer(serializers.ModelSerializer):
     )
     subject = serializers.CharField()
     description = serializers.CharField()
-    attached_files = serializers.FileField()
     reference_doc_number = serializers.CharField()
     headquarter_id = serializers.IntegerField()
     headquarter_name = serializers.SerializerMethodField(source="get_headquarter_name")
@@ -145,9 +145,13 @@ class ProcedureSerializer(serializers.ModelSerializer):
         try:
             if ProcedureTracing.objects.filter(procedure_id=obj.id).count() == 1:
                 return "Iniciado"
-            elif ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_archived:
+            elif (
+                ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_archived
+            ):
                 return "Archivado"
-            elif ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_finished:
+            elif (
+                ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_finished
+            ):
                 return "Concluido"
             return "En proceso"
         except:
@@ -605,3 +609,9 @@ class ProcedureChargeSerializer(serializers.Serializer):
         if person:
             return person.get_full_name()
         return ""
+
+
+class ProcedureFilesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcedureFiles
+        fields = "__all__"

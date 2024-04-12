@@ -1,6 +1,6 @@
 from rest_framework.response import Response
 from rest_framework import status
-from desk.models import Procedure, File, ProcedureTracing
+from desk.models import Procedure, File, ProcedureTracing, ProcedureFiles
 from core.models import CargoArea
 
 
@@ -64,7 +64,6 @@ def api_save_procedure(request):
             file_id=file.id,
             subject=subject,
             description=description,
-            attached_files=attached_files,
             procedure_type_id=procedure_type_id,
             reference_doc_number=reference_doc_number,
             headquarter_id=headquarter_id,
@@ -72,6 +71,8 @@ def api_save_procedure(request):
             number_of_sheets=number_of_sheets,
             for_the_area_id=for_the_area_id,
         )
+        for attached_file in attached_files:
+            ProcedureFiles.objects.create(procedure_id=procedure.id, file=attached_file)
 
         ProcedureTracing.objects.create(
             procedure_id=procedure.id,

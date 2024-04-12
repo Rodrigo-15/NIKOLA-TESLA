@@ -1,6 +1,6 @@
 from rest_framework.response import Response
 from rest_framework import status
-from desk.models import Procedure, File
+from desk.models import Procedure, File, ProcedureFiles
 from desk.serializers import ProcedureSerializer
 
 
@@ -70,13 +70,17 @@ def api_update_procedure(request):
         procedure.description = description
         procedure.file_id = file.id
         procedure.procedure_type_id = procedure_type_id
-        if attached_files:
-            procedure.attached_files = attached_files
         procedure.reference_doc_number = reference_doc_number
-
         procedure.number_of_sheets = number_of_sheets
         procedure.for_the_area_id = for_the_area_id
         procedure.save()
+
+        if attached_files:
+            ProcedureFiles.objects.filter(procedure_id=procedure.id).delete()
+            for attached_file in attached_files:
+                ProcedureFiles.objects.create(
+                    procedure_id=procedure.id, file=attached_file
+                )
 
         data = ProcedureSerializer(procedure).data
 

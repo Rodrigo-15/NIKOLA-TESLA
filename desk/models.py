@@ -71,9 +71,6 @@ class Procedure(models.Model):
     code_number = models.CharField(max_length=15, null=True, blank=True)
     subject = models.TextField(null=False, blank=False)
     description = models.TextField(null=True, blank=True, default="")
-    attached_files = models.FileField(
-        upload_to="tramites/adjunto/", null=True, blank=True
-    )
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
     reference_doc_number = models.CharField(max_length=250, null=True, blank=True)
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
@@ -644,3 +641,17 @@ class Anexo(models.Model):
 
     def __str__(self):
         return f"{self.procedure} - {self.procedure_anexo}"
+
+
+class ProcedureFiles(models.Model):
+    procedure = models.ForeignKey(Procedure, on_delete=models.CASCADE)
+    file = models.FileField(upload_to="tramites/adjunto/", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
+    updated_at = models.DateTimeField(auto_now_add=False, auto_now=True)
+
+    class Meta:
+        verbose_name = "procedure file"
+        verbose_name_plural = "procedure files"
+
+    def __str__(self):
+        return f"{self.procedure} - {self.file}"
