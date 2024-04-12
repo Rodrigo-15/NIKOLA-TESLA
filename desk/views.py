@@ -38,7 +38,6 @@ from desk.api import (
 )
 
 
-# new modification
 @api_view(["POST"])
 @check_app_name(APP_NAME)
 @check_credentials()
@@ -47,7 +46,6 @@ def login(request):
         return api_login(request)
 
 
-# generators
 @api_view(["GET"])
 def generete_code_hash(request):
     if request.method == "GET":
