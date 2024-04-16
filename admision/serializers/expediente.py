@@ -36,6 +36,7 @@ class ExpedienteAlumnoSerializer(serializers.Serializer):
     numero_documento = serializers.CharField(source="persona.numero_documento")
     programa_nombre = serializers.CharField(source="programa.nombre")
     programa_id = serializers.IntegerField(source="programa.id")
+    programa_tipo_id = serializers.IntegerField(source="programa.tipo.id")
     promocion = serializers.CharField()
     foto = serializers.SerializerMethodField(source="get_foto")
     correo = serializers.CharField(source="persona.correo")

@@ -65,9 +65,9 @@ INSTALLED_APPS = [
     "core",
     "admision",
     "reportes",
-    "django.contrib.humanize",     
+    "django.contrib.humanize",
     "desk",
-    'django_seed',
+    "django_seed",
 ]
 
 MIDDLEWARE = [
@@ -172,16 +172,12 @@ REST_FRAMEWORK = {
 }
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 
-EMAIL_BACKEND = env("EMAIL_BACKEND")
-EMAIL_HOST = env("EMAIL_HOST")
-EMAIL_PORT = env("EMAIL_PORT")
-EMAIL_USE_TLS = env("EMAIL_USE_TLS")
-EMAIL_HOST_USER = env("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+EMAIL_KEY = env("EMAIL_KEY")
+EMAIL_FROM = env("EMAIL_FROM")
 URL_LOCAL = env("URL_LOCAL")
 URL_PROD = env("URL_PROD")
 
 FILE_UPLOAD_HANDLERS = [
-    'django.core.files.uploadhandler.MemoryFileUploadHandler',
-    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+    "django.core.files.uploadhandler.MemoryFileUploadHandler",
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
 ]
