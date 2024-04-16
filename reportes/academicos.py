@@ -1,7 +1,3 @@
-import barcode.base
-import barcode.codex
-import barcode.pybarcode
-import barcode.upc
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, A4
 from reportlab.lib import utils
@@ -18,14 +14,15 @@ from django.conf import settings
 from PIL import Image
 from io import BytesIO
 import barcode
-from barcode.writer import ImageWriter
-from barcode import ean
+
+# from barcode.writer import ImageWriter
 import qrcode
 import datetime
 import time
 import os
 import json
 from xlsxwriter import Workbook
+
 
 def diploma_egresado(data):
     try:
@@ -258,10 +255,9 @@ def diploma_diplomado(data):
         persona = data["persona"]
         num_doc = data["num_doc"]
         programa: str = data["programa"]
-        programa_id = data["programa_id"]
         diplomado = programa
-        fondo1 = "media\config\diploma_diplomado01.jpg"
-        fondo2 = "media\config\diploma_diplomado02.jpg"
+        fondo1 = "media\config\diplomado01.png"
+        fondo2 = "media\config\diplomado02.png"
         c = canvas.Canvas(
             os.path.join(
                 settings.MEDIA_ROOT,
@@ -311,11 +307,15 @@ def diploma_diplomado(data):
             "8": "VIII",
         }
 
-        codigo = "dasfafadfa5310"
+        codigo = data["codigo_diploma"]
 
-        barcodeThing = barcode.codex.Code128(codigo, ImageWriter())
+        barcodeThing = barcode.codex.Code128(codigo, barcode.writer.ImageWriter())
+        barcodePath = f"media/codigos_de_barra/codigo-{num_doc}"
+        directory = os.path.dirname(barcodePath)
 
-        barcodePath = f"media\codigos_de_barra\{milisecond}"
+        # Check if the directory exists, if not, create it
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
         barcodeThing.save(barcodePath)
 
@@ -326,29 +326,26 @@ def diploma_diplomado(data):
         rutaJson = "media/config/autoridades.json"
 
         with open(rutaJson, "r+") as file:
-            datosJson = json.load(file)   
+            datosJson = json.load(file)
 
             for value in datosJson["director"]:
                 if value["is_active"] == True:
                     director = value["nombre"]
+                    directorCargo = value["cargo"]
+                    break
 
-            
             secretario = datosJson["secretario"][0]["nombre"]
-        
-
-                
-
 
         datosFirma = [
-            [director, "DIRECTOR DE LA EPG-UNAP", ""],
-            [secretario, "SECRETARIO ACADEMICO", ""],
+            [director, directorCargo, ""],
+            [secretario, datosJson["secretario"][0]["cargo"], ""],
         ]
 
         modulos = data["cursos"]
         i = 1
         for value in modulos:
             value.append(f"MODULO {roman_numbers[str(i)]}")
-            i +=1
+            i += 1
 
         creditosTotales = 0
         sumaDeNotas = 0
@@ -361,7 +358,7 @@ def diploma_diplomado(data):
         nota = round(nota, 2)
 
         # ------------------pagina 1--------------------#
-        c.drawImage(fondo1, 0,0, A4[1], A4[0])
+        c.drawImage(fondo1, 0, 0, A4[1], A4[0])
 
         currenty = lTop - 190
 
@@ -391,7 +388,7 @@ def diploma_diplomado(data):
         parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
 
-        currenty -= parrafo1.height +10
+        currenty -= parrafo1.height + 10
 
         setF(25, "Arial-Bold")
 
@@ -430,10 +427,10 @@ def diploma_diplomado(data):
         c.showPage()
 
         # -------------------pagina 2-------------------------#
-        c.drawImage(fondo2, 0,0, A4[1], A4[0])
+        c.drawImage(fondo2, 0, 0, A4[1], A4[0])
 
         setF(12)
-        currenty = lTop- 150
+        currenty = lTop - 150
         style.alignment = 0
 
         avHeigh = 170
@@ -447,7 +444,7 @@ def diploma_diplomado(data):
             totalHeight += parrafoCurso.height
 
         remainingHeight = avHeigh - totalHeight
-        spaceBetwen = remainingHeight/len(modulos)
+        spaceBetwen = remainingHeight / len(modulos)
 
         for value in modulos:
             setF(12, "Arial-Bold")
@@ -462,7 +459,7 @@ def diploma_diplomado(data):
 
         c.drawString(lRight - 245, lTop - 357, f"{nota}")
 
-        c.drawImage(barcodePath+".png", (A4[1]/2) - 90, lBot - 10, 180,80)
+        c.drawImage(barcodePath + ".png", (A4[1] / 2) - 90, lBot - 10, 180, 80)
 
         c.save()
 

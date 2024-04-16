@@ -2214,7 +2214,10 @@ def generate_diploma_pdf(request):
                 "fecha_final": expediente.periodo.fecha_fin,
                 "docentes": docentes,
                 "cursos": curso_nota,
-                "id_facultad": FacultadSerializer(expediente.programa.facultad).data["id"],
+                "id_facultad": FacultadSerializer(expediente.programa.facultad).data[
+                    "id"
+                ],
+                "codigo_diploma": expediente.codigo_diploma,
             }
             path_return = diploma_diplomado(data)
         else:
