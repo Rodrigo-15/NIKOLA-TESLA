@@ -22,6 +22,7 @@ from rest_framework.response import Response
 from django.template.defaulttags import register
 from django.shortcuts import render
 from academicos.models import Matricula, Programa
+from academicos.serializers import FacultadSerializer
 from admision.models import Expediente
 from admision.serializers.expediente import (
     ExpedienteReportSerializer,
@@ -2213,6 +2214,7 @@ def generate_diploma_pdf(request):
                 "fecha_final": expediente.periodo.fecha_fin,
                 "docentes": docentes,
                 "cursos": curso_nota,
+                "id_facultad": FacultadSerializer(expediente.programa.facultad).data["id"],
             }
             path_return = diploma_diplomado(data)
         else:
