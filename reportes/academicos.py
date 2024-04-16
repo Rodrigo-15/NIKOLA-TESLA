@@ -1,3 +1,5 @@
+import barcode.base
+import barcode.codex
 import barcode.pybarcode
 import barcode.upc
 from reportlab.lib import colors
@@ -17,6 +19,7 @@ from PIL import Image
 from io import BytesIO
 import barcode
 from barcode.writer import ImageWriter
+from barcode import ean
 import qrcode
 import datetime
 import time
@@ -308,6 +311,14 @@ def diploma_diplomado(data):
             "8": "VIII",
         }
 
+        codigo = "dasfafadfa5310"
+
+        barcodeThing = barcode.codex.Code128(codigo, ImageWriter())
+
+        barcodePath = f"media\codigos_de_barra\{milisecond}"
+
+        barcodeThing.save(barcodePath)
+
         texto1 = "El Director de la Escuela de Postgrado de la Universidad Nacional de la Amazonia Peruana otorga el presente diploma de conocimiento a:"
         texto2 = "Por haber culminado satisfactoriamente los estudios del:"
         texto3 = f"Por tanto se expide este presente diploma para que se le reconozca como tal."
@@ -450,6 +461,8 @@ def diploma_diplomado(data):
         c.drawString(lRight - 575, lTop - 357, "PROMEDIO OBTENIDO")
 
         c.drawString(lRight - 245, lTop - 357, f"{nota}")
+
+        c.drawImage(barcodePath+".png", (A4[1]/2) - 90, lBot - 10, 180,80)
 
         c.save()
 
