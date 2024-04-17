@@ -236,7 +236,7 @@ def get_process_tracking_sheet(data) -> str:
             datosTabla.append(
                 [
                     f'{thing["date"]} {thing["hour"]}',
-                    thing["action"],
+                    thing["action_description"],
                     thing["area_name"],
                 ]
             )
@@ -477,7 +477,7 @@ def get_charge_procedure(data) -> str:
                 [
                     value["code_number"],
                     value["subject"].upper(),
-                    value["action"].upper(),
+                    value["action_description"].upper(),
                     value["to_area"]["nombre"].upper(),
                     value["number_of_sheets"],
                     fechaaa,
