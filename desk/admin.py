@@ -7,6 +7,7 @@ from desk.models import (
     ProcedureRequirement,
     ProcedureTracing,
     ProcedureType,
+    procedureAction,
 )
 
 # Register your models here.
@@ -17,3 +18,4 @@ admin.site.register(ProcedureType)
 admin.site.register(Procedure)
 admin.site.register(Procedure_ProcReq)
 admin.site.register(ProcedureTracing)
+admin.site.register(procedureAction)
