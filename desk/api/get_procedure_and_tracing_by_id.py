@@ -1,10 +1,11 @@
 from rest_framework.response import Response
 from rest_framework import status
-from desk.models import Procedure, ProcedureTracing, Anexo
+from desk.models import Procedure, ProcedureTracing, Anexo, ProcedureFiles
 from desk.serializers import (
     AnexoListSerializer,
     ProcedureSerializer,
     ProcedureTracingsList,
+    ProcedureFilesSerializer,
 )
 
 
@@ -42,10 +43,15 @@ def api_get_procedure_and_tracing_by_id(request):
         serializer_procedure_tracings_log = ProcedureTracingsList(
             procedure_tracings_log, many=True
         )
+        procedure_files = ProcedureFiles.objects.filter(procedure_id=procedure_id)
+        serializer_procedure_files = ProcedureFilesSerializer(
+            procedure_files, many=True
+        )
 
         return Response(
             {
                 "procedure": serializer_procedure.data,
+                "procedure_files": serializer_procedure_files.data,
                 "anexos": serializer_anexo.data,
                 "procedure_tracings": serializer_procedure_tracings.data,
                 "procedure_tracings_log": serializer_procedure_tracings_log.data,

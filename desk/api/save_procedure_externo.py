@@ -4,42 +4,22 @@ from desk.models import ProcedureTracing, Procedure, File, ProcedureFiles
 from core.models import Persona, CargoArea
 
 
-def api_save_procedure_externo_register(request):
+def api_save_procedure_externo(request):
     try:
-        # data person
-        nombres = request.data["nombres"]
-        numero_documento = request.data["numero_documento"]
-        tipo_documento_id = 1
-        apellido_paterno = request.data["apellido_paterno"]
-        apellido_materno = request.data["apellido_materno"]
+        person_id = request.data["person_id"]
         correo = request.data["correo"]
         celular = request.data["celular"]
-        # data procedure
         subject = request.data["subject"]
         attached_files = request.FILES.getlist("attached_files[]")
         procedure_type_id = request.data["procedure_type_id"]
         headquarter_id = 1
 
         number_of_sheets = 0
-        # creeate person
-        obj_person = Persona.objects.filter(
-            numero_documento=numero_documento, tipo_documento_id=tipo_documento_id
-        ).first()
-        if obj_person:
-            return Response(
-                status=status.HTTP_400_BAD_REQUEST,
-                data={"message": "La persona ya se encuentra registrada"},
-            )
-        person = Persona.objects.create(
-            nombres=nombres,
-            numero_documento=numero_documento,
-            tipo_documento_id=tipo_documento_id,
-            apellido_paterno=apellido_paterno,
-            apellido_materno=apellido_materno,
-            correo=correo,
-            celular=celular,
-        )
-        person_id = person.id
+        # actualizar persona persona si el correo o celular estan null o ambos
+        person = Persona.objects.filter(id=person_id).first()
+        person.correo = correo
+        person.celular = celular
+        person.save()
 
         area_id = 3
         user_id = (
@@ -66,6 +46,7 @@ def api_save_procedure_externo_register(request):
                 ProcedureFiles.objects.create(
                     procedure_id=procedure.id, file=attached_file
                 )
+
         ProcedureTracing.objects.create(
             procedure_id=procedure.id,
             from_area_id=area_id if area_id else None,
@@ -76,6 +57,5 @@ def api_save_procedure_externo_register(request):
         return Response(
             status=status.HTTP_200_OK, data={"code_number": procedure.code_number}
         )
-
     except Exception as e:
         return Response(str(e), status=status.HTTP_400_BAD_REQUEST)

@@ -11,6 +11,7 @@ urls_dict = {
         "get_dashboard_dates_desk": f"{url}desk/get_dashboard_dates_desk",  # get
         "get_dashboard_data_desk": f"{url}desk/get_dashboard_data_desk",  # get
         "desk_notification": f"{url}desk/desk_notification",  # post
+        "get_action_procedure": f"{url}desk/get_action_procedure",  # get
         "headquarters": {
             "get": f"{url}desk/headquarters/",  # get
             "create": f"{url}desk/headquarters/",  # post

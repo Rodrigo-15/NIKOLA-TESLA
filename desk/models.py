@@ -71,9 +71,6 @@ class Procedure(models.Model):
     code_number = models.CharField(max_length=15, null=True, blank=True)
     subject = models.TextField(null=False, blank=False)
     description = models.TextField(null=True, blank=True, default="")
-    attached_files = models.FileField(
-        upload_to="tramites/adjunto/", null=True, blank=True
-    )
     procedure_type = models.ForeignKey(ProcedureType, on_delete=models.CASCADE)
     reference_doc_number = models.CharField(max_length=250, null=True, blank=True)
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
@@ -329,6 +326,20 @@ class ProcedureCharge(models.Model):
         return f"{self.correlative} - {self.user}"
 
 
+class procedureAction(models.Model):
+    id = models.AutoField(primary_key=True)
+    action = models.TextField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "procedure action"
+        verbose_name_plural = "procedure actions"
+
+    def __str__(self):
+        return f"{self.id} - {self.action}"
+
+
 class ProcedureTracing(models.Model):
     procedure = models.ForeignKey(Procedure, on_delete=models.CASCADE)
     from_area = models.ForeignKey(
@@ -337,7 +348,10 @@ class ProcedureTracing(models.Model):
     to_area = models.ForeignKey(
         Area, on_delete=models.CASCADE, related_name="to_area", null=True, blank=True
     )
-    action = models.TextField()
+    action = models.ForeignKey(
+        procedureAction, on_delete=models.CASCADE, null=True, blank=True
+    )
+    action_description = models.TextField()
     is_finished = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
     updated_at = models.DateTimeField(auto_now_add=False, auto_now=True)
@@ -370,25 +384,25 @@ class ProcedureTracing(models.Model):
 
     def save(self, *args, **kwargs):
         if self.is_anexed and self.is_finished:
-            self.action_log = self.action = self.get_anexed_message(self)
+            self.action_log = self.action_description = self.get_anexed_message(self)
         elif self.is_internal:
             self.action_log = self.get_internal_message(self)
         elif not self.ref_procedure_tracking and self.procedure.is_external:
-            self.action_log = self.action = self.get_external_message(self)
+            self.action_log = self.action_description = self.get_external_message(self)
         elif not self.ref_procedure_tracking:
-            self.action_log = self.action = self.get_created_message(self)
+            self.action_log = self.action_description = self.get_created_message(self)
         elif self.is_anexed and not self.is_finished:
-            self.action_log = self.action = self.get_in_anexed_message(self)
+            self.action_log = self.action_description = self.get_in_anexed_message(self)
         elif self.is_finished and self.is_archived:
-            self.action_log = self.action = self.get_archived_message(self)
+            self.action_log = self.action_description = self.get_archived_message(self)
         elif self.from_area and self.to_area:
             self.action_log = self.get_derivation_message(self)
         elif self.from_area and not self.to_area and not self.is_finished:
             self.action_log = self.get_received_message(self)
-            self.action = self.get_received_message(self)
+            self.action_description = self.get_received_message(self)
         elif self.from_area and self.is_finished:
             self.action_log = self.get_finished_message(self)
-            self.action = self.action
+            self.action_description = self.action_description
         super(ProcedureTracing, self).save(*args, **kwargs)
         if self.is_finished:
             self.notification_email()
@@ -644,3 +658,17 @@ class Anexo(models.Model):
 
     def __str__(self):
         return f"{self.procedure} - {self.procedure_anexo}"
+
+
+class ProcedureFiles(models.Model):
+    procedure = models.ForeignKey(Procedure, on_delete=models.CASCADE)
+    file = models.FileField(upload_to="tramites/adjunto/", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
+    updated_at = models.DateTimeField(auto_now_add=False, auto_now=True)
+
+    class Meta:
+        verbose_name = "procedure file"
+        verbose_name_plural = "procedure files"
+
+    def __str__(self):
+        return f"{self.procedure} - {self.file}"
