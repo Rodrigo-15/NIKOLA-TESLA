@@ -2202,6 +2202,7 @@ def generate_diploma_pdf(request):
 
         for i in range(len(cursos)):
             curso_nota.append([cursos[i], notas[i], creditos[i]])
+
         if expediente.programa.tipo.id == 3:
             data = {
                 "num_doc": num_doc,
@@ -2214,9 +2215,7 @@ def generate_diploma_pdf(request):
                 "fecha_final": expediente.periodo.fecha_fin,
                 "docentes": docentes,
                 "cursos": curso_nota,
-                "id_facultad": FacultadSerializer(expediente.programa.facultad).data[
-                    "id"
-                ],
+                "facultad_id": facultad_id,
                 "codigo_diploma": expediente.codigo_diploma,
             }
             path_return = diploma_diplomado(data)
