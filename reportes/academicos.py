@@ -333,12 +333,14 @@ def diploma_diplomado(data):
             for value in datosJson["director"]:
                 if value["is_active"] == True:
                     director = value["nombre"]
+                    directorCargo = value["cargo"]
 
             secretario = datosJson["secretario"][0]["nombre"]
+            secretarioCargo = datosJson["secretario"][0]["cargo"]
 
         datosFirma = [
-            [director, "S", ""],
-            [secretario, "S", ""],
+            [director, directorCargo, ""],
+            [secretario, secretarioCargo, ""],
         ]
 
         modulos = data["cursos"]
