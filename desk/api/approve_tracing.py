@@ -17,8 +17,11 @@ def api_approve_tracing(request):
         )
         procedure = Procedure.objects.filter(id=procedure_id).first()
         ProcedureTracing.objects.filter(id=tracing_id).update(is_approved=True)
+        count_tracing = ProcedureTracing.objects.filter(
+            procedure_id=procedure_id
+        ).count()
 
-        if procedure.is_external:
+        if procedure.is_external and count_tracing == 1:
             from_area_id = (
                 ProcedureTracing.objects.filter(id=tracing_id).first().from_area_id
             )
