@@ -16,7 +16,7 @@ from PIL import Image
 from io import BytesIO
 import barcode
 from barcode.writer import ImageWriter
-from barcode import Code128
+from barcode.codex import Code128
 
 # from barcode.writer import ImageWriter
 import qrcode
@@ -281,7 +281,7 @@ def diploma_diplomado(data):
             style.leading = size
 
         pdfmetrics.registerFont(TTFont("Arial", f"media/config/arial.ttf"))
-        pdfmetrics.registerFont(TTFont("Arial-Bold", f"media/config/arialbd.ttf"))
+        pdfmetrics.registerFont(TTFont("Arial-Bold", f"media/config/Arial_Bold.ttf"))
         pdfmetrics.registerFont(TTFont("Cookie", f"media/config/Cookie-Regular.ttf"))
         lTop = A4[0] - cm * 2
         lBot = cm * 2
@@ -358,6 +358,7 @@ def diploma_diplomado(data):
         nota = sumaDeNotas / creditosTotales
 
         nota = round(nota, 2)
+        
 
         # ------------------pagina 1--------------------#
         c.drawImage(fondo1, 0, 0, A4[1], A4[0])
@@ -397,9 +398,10 @@ def diploma_diplomado(data):
         parrafo1 = Paragraph(diplomado, style)
         parrafo1.wrap(maxWidht - 100, 1000)
         parrafo1.wrapOn(c, maxWidht - 100, 1000)
-        parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
+        parrafo1.drawOn(c, lLeft + 50, currenty -parrafo1.height+ fontzise)
+        c.line(lLeft + 50, currenty- parrafo1.height, lRight -50, currenty- parrafo1.height)
 
-        currenty -= parrafo1.height + 10
+        currenty -= parrafo1.height + 20
 
         setF(18)
 
