@@ -280,9 +280,9 @@ def diploma_diplomado(data):
             style.fontName = fontname
             style.leading = size
 
-        pdfmetrics.registerFont(TTFont("Arial", "arial.ttf"))
-        pdfmetrics.registerFont(TTFont("Arial-Bold", "arialbd.ttf"))
-        pdfmetrics.registerFont(TTFont("Cookie", "media\config\Cookie-Regular.ttf"))
+        pdfmetrics.registerFont(TTFont("Arial", f"media/config/arial.ttf"))
+        pdfmetrics.registerFont(TTFont("Arial-Bold", f"media/config/arialbd.ttf"))
+        pdfmetrics.registerFont(TTFont("Cookie", f"media/config/Cookie-Regular.ttf"))
         lTop = A4[0] - cm * 2
         lBot = cm * 2
         lLeft = cm * 2
