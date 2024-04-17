@@ -1,3 +1,4 @@
+import barcode.writer
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, A4
 from reportlab.lib import utils
@@ -14,6 +15,8 @@ from django.conf import settings
 from PIL import Image
 from io import BytesIO
 import barcode
+from barcode.writer import ImageWriter
+from barcode import Code128
 
 # from barcode.writer import ImageWriter
 import qrcode
@@ -256,13 +259,13 @@ def diploma_diplomado(data):
         num_doc = data["num_doc"]
         programa: str = data["programa"]
         diplomado = programa
-        fondo1 = "media\config\diplomado01.png"
-        fondo2 = "media\config\diplomado02.png"
+        fondo1 = os.path.join(media_root, "config", "diplomado01.png")
+        fondo2 = os.path.join(media_root, "config", "diplomado02.png")
         c = canvas.Canvas(
             os.path.join(
                 settings.MEDIA_ROOT,
                 "diplomas",
-                f"diploma_egregasado-{persona}-{num_doc}-{programa}-{milisecond}.pdf",
+                f"diploma_egregasado-{num_doc}-{milisecond}.pdf",
             ),
             landscape(A4),
         )
@@ -308,8 +311,8 @@ def diploma_diplomado(data):
         }
 
         codigo = data["codigo_diploma"]
-
-        barcodeThing = barcode.codex.Code128(codigo, barcode.writer.ImageWriter())
+        print(data["codigo_diploma"])
+        barcodeThing = Code128(codigo, writer=ImageWriter())
         barcodePath = f"media/codigos_de_barra/codigo-{num_doc}"
         directory = os.path.dirname(barcodePath)
 
@@ -331,14 +334,12 @@ def diploma_diplomado(data):
             for value in datosJson["director"]:
                 if value["is_active"] == True:
                     director = value["nombre"]
-                    directorCargo = value["cargo"]
-                    break
 
             secretario = datosJson["secretario"][0]["nombre"]
 
         datosFirma = [
-            [director, directorCargo, ""],
-            [secretario, datosJson["secretario"][0]["cargo"], ""],
+            [director, "S", ""],
+            [secretario, "S", ""],
         ]
 
         modulos = data["cursos"]
@@ -467,7 +468,7 @@ def diploma_diplomado(data):
         path_return = os.path.join(
             settings.MEDIA_URL,
             "diplomas",
-            f"diploma_egregasado-{persona}-{num_doc}-{programa}-{milisecond}.pdf",
+            f"diploma_egregasado-{num_doc}-{milisecond}.pdf",
         )
         path_return = path_return.replace("\\", "/")
         return path_return
