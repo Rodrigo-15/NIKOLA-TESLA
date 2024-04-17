@@ -11,6 +11,7 @@ from desk.models import (
     Anexo,
     ProcedureCharge,
     ProcedureFiles,
+    procedureAction,
 )
 from django.db.models import Count
 from datetime import datetime, timedelta
@@ -48,6 +49,7 @@ class ProcedureSerializer(serializers.ModelSerializer):
     person_full_name = serializers.SerializerMethodField(source="get_person_full_name")
     person_document = serializers.SerializerMethodField(source="get_person_document")
     code_number = serializers.CharField()
+    code_hash = serializers.CharField()
     procedure_type_id = serializers.IntegerField()
     procedure_type_description = serializers.SerializerMethodField(
         source="get_procedure_type_description"
@@ -300,7 +302,9 @@ class ProcedureTracingsList(serializers.Serializer):
     id = serializers.IntegerField()
     procedure_id = serializers.IntegerField()
     code_number = serializers.SerializerMethodField(source="get_code_number")
-    action = serializers.CharField()
+    action_id = serializers.IntegerField()
+    action_name = serializers.SerializerMethodField(source="get_action_name")
+    action_description = serializers.CharField()
     action_log = serializers.CharField()
     is_finished = serializers.BooleanField()
     is_approved = serializers.BooleanField()
@@ -379,6 +383,12 @@ class ProcedureTracingsList(serializers.Serializer):
         elif obj.is_finished:
             return "Concluido"
         return "En proceso"
+
+    def get_action_name(self, obj):
+        if obj.action_id:
+            act = procedureAction.objects.filter(id=obj.action_id).first()
+            return act.action
+        return "No registrado"
 
 
 class ProcedureListSerializer(serializers.Serializer):
@@ -611,7 +621,18 @@ class ProcedureChargeSerializer(serializers.Serializer):
         return ""
 
 
-class ProcedureFilesSerializer(serializers.ModelSerializer):
+class ProcedureFilesSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    file = serializers.FileField()
+    procedure_id = serializers.IntegerField()
+    file_name = serializers.SerializerMethodField(source="get_file_name")
+    created_at = serializers.DateTimeField(format="%d/%m/%Y %H:%M:%S %p")
+
+    def get_file_name(self, obj):
+        return obj.file.name.split("/")[-1]
+
+
+class ProcedureActionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ProcedureFiles
+        model = procedureAction
         fields = "__all__"

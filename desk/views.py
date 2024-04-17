@@ -35,6 +35,7 @@ from desk.api import (
     api_get_procedures_in_started,
     api_get_procedures,
     api_login,
+    api_get_action_procedure,
 )
 
 
@@ -236,3 +237,9 @@ def desk_notification(request):
 def save_procedure_action(request):
     if request.method == "POST":
         return api_save_procedure_action(request)
+
+
+@api_view(["GET"])
+def get_action_procedure(request):
+    if request.method == "GET":
+        return api_get_action_procedure(request)

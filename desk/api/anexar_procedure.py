@@ -38,6 +38,7 @@ def api_anexar_procedure(request):
             ref_procedure_tracking_id=ref_procedure_tracking_id,
             is_finished=True,
             is_anexed=True,
+            action_id=4,
         )
         # mensaje anexo el tramite principal
         from_area_id = (
@@ -54,6 +55,7 @@ def api_anexar_procedure(request):
             user_id=user_id,
             ref_procedure_tracking_id=ref_procedure_tracking_id,
             is_anexed=True,
+            action_id=5,
         )
 
         return Response(status=status.HTTP_200_OK)

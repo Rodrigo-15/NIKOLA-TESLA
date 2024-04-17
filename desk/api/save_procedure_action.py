@@ -13,7 +13,8 @@ def api_save_procedure_action(request):
             else 0
         )
         document_response = request.FILES.get("document_response")
-        action = request.data["action"]
+        action_id = request.data["action_id"]
+        action_description = request.data["action_description"]
         ref_procedure_tracking_id = (
             ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
         )
@@ -46,7 +47,8 @@ def api_save_procedure_action(request):
             procedure_id=procedure_id,
             from_area_id=from_area_id,
             user_id=user_id,
-            action=action,
+            action_id=action_id,
+            action_description=action_description,
             ref_procedure_tracking_id=ref_procedure_tracking_id,
             document_response=document_response,
             is_internal=True,

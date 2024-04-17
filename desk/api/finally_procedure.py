@@ -12,7 +12,7 @@ def api_finally_procedure(request):
             .last()
             .from_area_id
         )
-        action = request.data["action"]
+        action_description = request.data["action_description"]
         document_response = request.FILES.get("document_response")
         ref_procedure_tracking_id = (
             ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
@@ -21,10 +21,11 @@ def api_finally_procedure(request):
             procedure_id=procedure_id,
             from_area_id=from_area_id,
             user_id=user_id,
-            action=action,
+            action_description=action_description,
             ref_procedure_tracking_id=ref_procedure_tracking_id,
             is_finished=True,
             document_response=document_response,
+            action_id=2,
         )
 
         return Response(status=status.HTTP_200_OK)

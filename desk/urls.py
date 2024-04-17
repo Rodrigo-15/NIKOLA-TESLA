@@ -35,6 +35,7 @@ from desk.views import (
     save_procedure_externo_register,
     desk_notification,
     save_procedure_action,
+    get_action_procedure,
 )
 
 urlpatterns = [
@@ -100,4 +101,5 @@ urlpatterns = [
         name="get_procedures_requirements",
     ),
     path("save_procedure_action", save_procedure_action),
+    path("get_action_procedure", get_action_procedure),
 ]

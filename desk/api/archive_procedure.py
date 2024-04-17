@@ -22,6 +22,7 @@ def api_archive_procedure(request):
             ref_procedure_tracking_id=ref_procedure_tracking_id,
             is_archived=True,
             is_finished=True,
+            action_id=6,
         )
         code_number = Procedure.objects.filter(id=procedure_id).first().code_number
 

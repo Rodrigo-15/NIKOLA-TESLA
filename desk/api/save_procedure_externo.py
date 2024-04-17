@@ -10,7 +10,7 @@ def api_save_procedure_externo(request):
         correo = request.data["correo"]
         celular = request.data["celular"]
         subject = request.data["subject"]
-        attached_files = request.FILES.get("attached_files")
+        attached_files = request.FILES.getlist("attached_files[]")
         procedure_type_id = request.data["procedure_type_id"]
         headquarter_id = 1
 
@@ -41,13 +41,17 @@ def api_save_procedure_externo(request):
             number_of_sheets=number_of_sheets,
             is_external=True,
         )
-        for attached_file in attached_files:
-            ProcedureFiles.objects.create(procedure_id=procedure.id, file=attached_file)
+        if attached_files:
+            for attached_file in attached_files:
+                ProcedureFiles.objects.create(
+                    procedure_id=procedure.id, file=attached_file
+                )
 
         ProcedureTracing.objects.create(
             procedure_id=procedure.id,
             from_area_id=area_id if area_id else None,
             user_id=user_id,
+            action_id=1,
         )
 
         return Response(

@@ -19,7 +19,8 @@ def api_save_derive_procedure(request):
             .from_area_id
         )
         to_area_id = request.data["to_area_id"]
-        action = request.data["action"]
+        action_id = request.data["action_id"]
+        action_description = request.data["action_description"]
         ref_procedure_tracking_id = (
             ProcedureTracing.objects.filter(procedure_id=procedure_id).last().id
         )
@@ -54,7 +55,8 @@ def api_save_derive_procedure(request):
                 from_area_id=from_area_id,
                 to_area_id=to_area_id,
                 user_id=user_id,
-                action=action,
+                action_id=action_id,
+                action_description=action_description,
                 assigned_user_id=assigned_user_id,
                 ref_procedure_tracking_id=ref_procedure_tracking_id,
                 document_response=document_response,
@@ -68,7 +70,8 @@ def api_save_derive_procedure(request):
                 from_area_id=from_area_id,
                 to_area_id=to_area_id,
                 user_id=user_id,
-                action=action,
+                action_id=action_id,
+                action_description=action_description,
                 ref_procedure_tracking_id=ref_procedure_tracking_id,
                 document_response=document_response,
             )

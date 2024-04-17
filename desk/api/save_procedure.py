@@ -12,7 +12,7 @@ def api_save_procedure(request):
         description = (
             request.data["description"] if "description" in request.data else ""
         )
-        attached_files = request.FILES.get("attached_files")
+        attached_files = request.FILES.getlist("attached_files[]")
         procedure_type_id = request.data["procedure_type_id"]
         for_the_area_id = (
             request.data["for_the_area_id"]
@@ -71,13 +71,17 @@ def api_save_procedure(request):
             number_of_sheets=number_of_sheets,
             for_the_area_id=for_the_area_id,
         )
-        for attached_file in attached_files:
-            ProcedureFiles.objects.create(procedure_id=procedure.id, file=attached_file)
+        if attached_files:
+            for attached_file in attached_files:
+                ProcedureFiles.objects.create(
+                    procedure_id=procedure.id, file=attached_file
+                )
 
         ProcedureTracing.objects.create(
             procedure_id=procedure.id,
             from_area_id=area_id if area_id else None,
             user_id=user_id,
+            action_id=1,
         )
 
         return Response(

@@ -10,7 +10,7 @@ def api_update_procedure(request):
             procedure_id = request.data["procedure_id"]
             subject = request.data["subject"]
             description = request.data["description"]
-            attached_files = request.FILES.get("attached_files")
+            attached_files = request.FILES.getlist("attached_files[]")
             reference_doc_number = request.data["reference_doc_number"]
             for_the_area_id = request.data["for_the_area_id"]
             number_of_sheets = request.data["number_of_sheets"]
@@ -76,10 +76,10 @@ def api_update_procedure(request):
         procedure.save()
 
         if attached_files:
-            ProcedureFiles.objects.filter(procedure_id=procedure.id).delete()
+            ProcedureFiles.objects.filter(procedure_id=procedure_id).delete()
             for attached_file in attached_files:
                 ProcedureFiles.objects.create(
-                    procedure_id=procedure.id, file=attached_file
+                    procedure_id=procedure_id, file=attached_file
                 )
 
         data = ProcedureSerializer(procedure).data

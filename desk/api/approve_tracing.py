@@ -36,6 +36,7 @@ def api_approve_tracing(request):
             from_area_id=from_area_id,
             user_id=user_id,
             ref_procedure_tracking_id=ref_procedure_tracking_id,
+            action_id=3,
         )
 
         return Response(status=status.HTTP_200_OK)
