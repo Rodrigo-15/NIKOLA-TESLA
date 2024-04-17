@@ -311,7 +311,6 @@ def diploma_diplomado(data):
         }
 
         codigo = data["codigo_diploma"]
-        print(data["codigo_diploma"])
         barcodeThing = Code128(codigo, writer=ImageWriter())
         barcodePath = f"media/codigos_de_barra/codigo-{num_doc}"
         directory = os.path.dirname(barcodePath)
@@ -473,7 +472,9 @@ def diploma_diplomado(data):
         path_return = path_return.replace("\\", "/")
         return path_return
     except Exception as e:
-        return e
+
+        path_return = str(e)
+        return path_return
 
 
 def reporte_matricula(data):
