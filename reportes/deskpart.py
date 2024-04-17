@@ -404,8 +404,8 @@ def get_process_tracking_sheet(data) -> str:
         path_return = upload_file_to_s3(pdf_file_name, folder_name)
         return path_return
     except Exception as e:
-        print("error", e)
-        return None
+        path_return = str(e)
+        return path_return
 
 
 def get_charge_procedure(data) -> str:
@@ -662,8 +662,8 @@ def get_charge_procedure(data) -> str:
         path_return = upload_file_to_s3(pdf_file_name, folder_name)
         return path_return
     except Exception as e:
-        print(e)
-        return None
+        path_return = str(e)
+        return path_return
 
 
 def get_procedure_data_xlsx(data) -> str:
