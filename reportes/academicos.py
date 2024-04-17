@@ -473,8 +473,7 @@ def diploma_diplomado(data):
         path_return = path_return.replace("\\", "/")
         return path_return
     except Exception as e:
-        print(e)
-        return
+        return e
 
 
 def reporte_matricula(data):
