@@ -2198,7 +2198,7 @@ def get_charge_procedure_pdf(request):
         serialized_procedure = ProcedureSerializer(procedure).data
         to_area = Area.objects.filter(id=trackin.to_area_id).first()
         serialized_procedure["to_area"] = AreaSerializer(to_area).data
-        serialized_procedure["action"] = trackin.action
+        serialized_procedure["action_description"] = trackin.action
         obj_procedure.append(serialized_procedure)
 
     procedure_charge = ProcedureCharge.objects.filter(id=procedure_charge_id).first()
