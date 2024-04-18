@@ -309,17 +309,30 @@ def diploma_diplomado(data):
             "7": "VII",
             "8": "VIII",
         }
-
+        data["codigo_diploma"] = "1235468215"
         codigo = data["codigo_diploma"]
-        barcodeThing = Code128(codigo, writer=ImageWriter())
-        barcodePath = f"media/codigos_de_barra/codigo-{num_doc}"
-        directory = os.path.dirname(barcodePath)
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(codigo)
+        qr.make(fit=True)
 
-        # Check if the directory exists, if not, create it
+        # Create the QR code image
+        qr_image = qr.make_image(fill_color="black", back_color="white")
+
+        # Specify the path to save the QR code image
+        qr_path = f"media/qrcodes/codigo-{num_doc}.png"
+
+        # Create the directory if it doesn't exist
+        directory = os.path.dirname(qr_path)
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        barcodeThing.save(barcodePath)
+        # Save the QR code image to the specified path
+        qr_image.save(qr_path)
 
         texto1 = "El Director de la Escuela de Postgrado de la Universidad Nacional de la Amazonia Peruana otorga el presente diploma de conocimiento a:"
         texto2 = "Por haber culminado satisfactoriamente los estudios del:"
@@ -344,10 +357,6 @@ def diploma_diplomado(data):
         ]
 
         modulos = data["cursos"]
-        i = 1
-        for value in modulos:
-            value.append(f"MODULO {roman_numbers[str(i)]}")
-            i += 1
 
         creditosTotales = 0
         sumaDeNotas = 0
@@ -434,36 +443,69 @@ def diploma_diplomado(data):
         c.drawImage(fondo2, 0, 0, A4[1], A4[0])
 
         setF(12)
-        currenty = lTop - 150
+        currenty = lTop - 110
         style.alignment = 0
 
         avHeigh = 170
         totalHeight = 0
 
+        style.alignment = 0
+        l = 1
+        
         for value in modulos:
-            setF(12)
-            parrafoCurso = Paragraph(value[0], style)
-            parrafoCurso.wrapOn(c, 430, 1000)
-            value[0] = parrafoCurso
-            totalHeight += parrafoCurso.height
-
-        remainingHeight = avHeigh - totalHeight
-        spaceBetwen = remainingHeight / len(modulos)
-
+            value: list
+            value.insert(0, str(l))
+            l +=1
+        
+        modulos.insert(0, ["N°","MODULO","NOTA","CREDITOS"])
+        modulos.insert(0,["MODULOS CURSADOS"])
         for value in modulos:
-            setF(12, "Arial-Bold")
-            c.drawString(170, currenty, f"{value[3]}:")
-            setF(12)
-            value[0].drawOn(c, 270, currenty - value[0].height + fontzise)
-            currenty -= value[0].height + spaceBetwen
+            for i in range(len(value)):
+                if i == 1:
+                    value[i] = Paragraph(str(value[i]), style)
+        
+        maxWidth = 600
+        tablaCursos = Table(
+            modulos,
+            [
+                maxWidth * 0.05,
+                maxWidth * 0.67,
+                maxWidth * 0.08,
+                maxWidth * 0.125,
+            ],
+        )
+
+        tableStyle = TableStyle(
+            [
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("FONTSIZE", (0, 0), (-1, -1), 12),
+                ("FONTNAME", (0, 0), (-1, -1), fontname),
+                ("SPAN", (0, 0), (-1, 0)),
+            ]
+        )
+
+        tablaCursos.setStyle(tableStyle)
+
+        tablaCursos.wrapOn(c, maxWidth, 1000)
+        tablaCursos.drawOn(c, 143, currenty - tablaCursos._height)
+
+        currenty -= tablaCursos._height + 20
+
+        setF(15, "Arial-Bold")
+
+        horasCursadas = 240                            #HORAS CURSADAS
+        c.drawString(500, currenty -15,f"HORAS CURSADAS: {horasCursadas}")
 
         setF(20, "Arial-Bold")
 
-        c.drawString(lRight - 575, lTop - 357, "PROMEDIO OBTENIDO")
+        c.drawString(lRight - 575, lTop - 357, "PROMEDIO GENERAL")
 
         c.drawString(lRight - 245, lTop - 357, f"{nota}")
 
-        c.drawImage(barcodePath + ".png", (A4[1] / 2) - 90, lBot - 10, 180, 80)
+        setF(15, "Arial-Bold")
+
+        c.drawImage(qr_path, (A4[1] / 2) - 40, lBot + 5, 80, 80)
+        c.drawCentredString(A4[1]/2, lBot, f"CODIGO: {data['codigo_diploma']}")
 
         c.save()
 
