@@ -2217,6 +2217,10 @@ def generate_diploma_pdf(request):
                 "cursos": curso_nota,
                 "facultad_id": facultad_id,
                 "codigo_diploma": expediente.codigo_diploma,
+                "fecha_diploma": expediente.fecha_diploma,
+                "horas_academicas": expediente.programa.horas_academicas,
+                "resolucion": expediente.res_diploma,
+                "resolucion_directoral": expediente.res_dirc_ingreso,
             }
             path_return = diploma_diplomado(data)
         else:

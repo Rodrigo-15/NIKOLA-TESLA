@@ -16,7 +16,7 @@ from PIL import Image
 from io import BytesIO
 import barcode
 from barcode.writer import ImageWriter
-from barcode import Code128
+from barcode.codex import Code128
 
 # from barcode.writer import ImageWriter
 import qrcode
@@ -254,13 +254,33 @@ def diploma_diplomado(data):
         # milisecond
         milisecond = str(int(round(time.time() * 1000)))
         # Crear un objeto PDF con orientación horizontal y tamaño de página A4
-
-        persona = data["persona"]
         num_doc = data["num_doc"]
         programa: str = data["programa"]
+        horas_academicas = data["horas_academicas"]
+        resolucion = data["resolucion"]
+        resolucion_directoral = data["resolucion_directoral"]
         diplomado = programa
         fondo1 = os.path.join(media_root, "config", "diplomado01.png")
         fondo2 = os.path.join(media_root, "config", "diplomado02.png")
+        fecha_diploma = data["fecha_diploma"]
+        day = fecha_diploma.day
+        month = fecha_diploma.month
+        arrayMeses = [
+            "Enero",
+            "Febrero",
+            "Marzo",
+            "Abril",
+            "Mayo",
+            "Junio",
+            "Julio",
+            "Agosto",
+            "Septiembre",
+            "Octubre",
+            "Noviembre",
+            "Diciembre",
+        ]
+        month = arrayMeses[month - 1]
+
         c = canvas.Canvas(
             os.path.join(
                 settings.MEDIA_ROOT,
@@ -282,7 +302,7 @@ def diploma_diplomado(data):
 
         pdfmetrics.registerFont(TTFont("Arial", f"media/config/arial.ttf"))
         pdfmetrics.registerFont(TTFont("Arial-Bold", f"media/config/arialbd.ttf"))
-        pdfmetrics.registerFont(TTFont("Cookie", f"media/config/Cookie-Regular.ttf"))
+        pdfmetrics.registerFont(TTFont("Chalisa", f"media/config/Chalisa Octavia.ttf"))
         lTop = A4[0] - cm * 2
         lBot = cm * 2
         lLeft = cm * 2
@@ -309,21 +329,35 @@ def diploma_diplomado(data):
             "7": "VII",
             "8": "VIII",
         }
-
         codigo = data["codigo_diploma"]
-        barcodeThing = Code128(codigo, writer=ImageWriter())
-        barcodePath = f"media/codigos_de_barra/codigo-{num_doc}"
-        directory = os.path.dirname(barcodePath)
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(codigo)
+        qr.make(fit=True)
 
-        # Check if the directory exists, if not, create it
+        # Create the QR code image
+        qr_image = qr.make_image(fill_color="black", back_color="white")
+
+        # Specify the path to save the QR code image
+        qr_path = f"media/qrcodes/codigo-{num_doc}.png"
+
+        # Create the directory if it doesn't exist
+        directory = os.path.dirname(qr_path)
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        barcodeThing.save(barcodePath)
+        # Save the QR code image to the specified path
+        qr_image.save(qr_path)
 
-        texto1 = "El Director de la Escuela de Postgrado de la Universidad Nacional de la Amazonia Peruana otorga el presente diploma de conocimiento a:"
-        texto2 = "Por haber culminado satisfactoriamente los estudios del:"
-        texto3 = f"Por tanto se expide este presente diploma para que se le reconozca como tal."
+        texto1 = "El Director de la Escuela de Postgrado de la Universidad Nacional de la Amazonia Peruana tiene el honor de otorgar el presente a:"
+        texto2 = "Por haber culminado satisfactoriamente el Diplomado especializado en:"
+        texto3 = f"Con una duración de {horas_academicas} horas académicas, el diplomado se impartió de manera presencial y contó con la aprobación oficial según la Resolución Directoral N° {resolucion_directoral}"
+        texto4 = f"Resolución Directoral de Diploma N° {resolucion}"
+        texto5 = f"Iquitos, {day} de {month} de 2023"
 
         rutaJson = "media/config/autoridades.json"
 
@@ -344,10 +378,6 @@ def diploma_diplomado(data):
         ]
 
         modulos = data["cursos"]
-        i = 1
-        for value in modulos:
-            value.append(f"MODULO {roman_numbers[str(i)]}")
-            i += 1
 
         creditosTotales = 0
         sumaDeNotas = 0
@@ -362,11 +392,11 @@ def diploma_diplomado(data):
         # ------------------pagina 1--------------------#
         c.drawImage(fondo1, 0, 0, A4[1], A4[0])
 
-        currenty = lTop - 190
+        currenty = lTop - 180
 
         setF(18, "Arial-Bold")
 
-        style.alignment = 1
+        style.alignment = 0
 
         parrafo1 = Paragraph(texto1, style)
         parrafo1.wrap(maxWidht - 100, 1000)
@@ -377,14 +407,14 @@ def diploma_diplomado(data):
 
         currenty -= parrafo1.height + fontzise + 18 + 30
 
-        setF(40, "Cookie")
+        setF(60, "Chalisa")
 
-        c.drawCentredString(A4[1] / 2, currenty + 5, egresado)
+        c.drawCentredString(A4[1] / 2, currenty + 5, egresado.title())
 
-        setF(17)
+        setF(16)
 
-        currenty -= fontzise + 30
-
+        currenty -= fontzise + 20
+        style.alignment = 1
         parrafo1 = Paragraph(texto2, style)
         parrafo1.wrap(maxWidht - 100, 1000)
         parrafo1.wrapOn(c, maxWidht - 100, 1000)
@@ -392,21 +422,30 @@ def diploma_diplomado(data):
 
         currenty -= parrafo1.height + 10
 
-        setF(25, "Arial-Bold")
+        setF(22, "Arial-Bold")
 
         parrafo1 = Paragraph(diplomado, style)
         parrafo1.wrap(maxWidht - 100, 1000)
         parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
 
-        currenty -= parrafo1.height + 10
+        currenty -= parrafo1.height + 20
 
-        setF(18)
-
+        setF(16)
+        style.alignment = 0
         parrafo1 = Paragraph(texto3, style)
         parrafo1.wrap(maxWidht - 100, 1000)
         parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
+        currenty -= parrafo1.height + 10
+
+        setF(12)
+        style.alignment = 2
+        parrafo1 = Paragraph(texto5, style)
+        parrafo1.wrap(maxWidht - 100, 1000)
+        parrafo1.wrapOn(c, maxWidht - 100, 1000)
+        parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
+        currenty -= parrafo1.height + 10
 
         xd = lBot
 
@@ -432,36 +471,76 @@ def diploma_diplomado(data):
         c.drawImage(fondo2, 0, 0, A4[1], A4[0])
 
         setF(12)
-        currenty = lTop - 150
+        currenty = lTop - 120
         style.alignment = 0
 
         avHeigh = 170
         totalHeight = 0
 
-        for value in modulos:
-            setF(12)
-            parrafoCurso = Paragraph(value[0], style)
-            parrafoCurso.wrapOn(c, 430, 1000)
-            value[0] = parrafoCurso
-            totalHeight += parrafoCurso.height
-
-        remainingHeight = avHeigh - totalHeight
-        spaceBetwen = remainingHeight / len(modulos)
+        style.alignment = 0
+        l = 1
 
         for value in modulos:
-            setF(12, "Arial-Bold")
-            c.drawString(170, currenty, f"{value[3]}:")
-            setF(12)
-            value[0].drawOn(c, 270, currenty - value[0].height + fontzise)
-            currenty -= value[0].height + spaceBetwen
+            value: list
+            value.insert(0, str(l))
+            l += 1
+
+        modulos.insert(0, ["N°", "MODULO", "NOTA", "CREDITOS"])
+        modulos.insert(0, ["MODULOS CURSADOS"])
+        for value in modulos:
+            for i in range(len(value)):
+                if i == 1:
+                    style.fontName = "Arial-Bold"
+                    value[i] = Paragraph(str(value[i]), style)
+
+        maxWidth = 600
+        tablaCursos = Table(
+            modulos,
+            [
+                maxWidth * 0.05,
+                maxWidth * 0.67,
+                maxWidth * 0.08,
+                maxWidth * 0.125,
+            ],
+        )
+
+        tableStyle = TableStyle(
+            [
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("FONTSIZE", (0, 0), (-1, -1), 12),
+                ("FONTNAME", (0, 0), (-1, -1), "Arial-Bold"),
+                ("SPAN", (0, 0), (-1, 0)),
+            ]
+        )
+
+        tablaCursos.setStyle(tableStyle)
+
+        tablaCursos.wrapOn(c, maxWidth, 1000)
+        tablaCursos.drawOn(c, 143, currenty - tablaCursos._height)
+
+        currenty -= tablaCursos._height + 20
+
+        setF(12, "Arial-Bold")
+
+        c.drawString(510, currenty - 15, f"Total: {horas_academicas} horas académicas")
 
         setF(20, "Arial-Bold")
 
-        c.drawString(lRight - 575, lTop - 357, "PROMEDIO OBTENIDO")
+        c.drawString(lRight - 575, lTop - 357, "PROMEDIO GENERAL")
 
         c.drawString(lRight - 245, lTop - 357, f"{nota}")
 
-        c.drawImage(barcodePath + ".png", (A4[1] / 2) - 90, lBot - 10, 180, 80)
+        setF(12, "Arial")
+        style.alignment = 1
+        parrafo1 = Paragraph(texto4, style)
+        parrafo1.wrap(maxWidht - 100, 1000)
+        parrafo1.wrapOn(c, maxWidht - 100, 1000)
+        parrafo1.drawOn(c, lLeft + 50, lTop - 430 + fontzise)
+
+        setF(9, "Arial-Bold")
+
+        c.drawImage(qr_path, (A4[1] / 2) - 20, lBot + 5, 40, 40)
+        c.drawCentredString(A4[1] / 2, lBot, f"CODIGO: {codigo}")
 
         c.save()
 

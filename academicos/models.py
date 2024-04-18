@@ -38,6 +38,7 @@ class Programa(models.Model):
     costo = models.DecimalField(max_digits=10, decimal_places=2)
     cantidad_matriculas = models.IntegerField(default=0)
     cuotas = models.IntegerField(default=1)
+    horas_academicas = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.id}. {self.nombre} - {self.codigo}"
