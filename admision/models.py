@@ -30,6 +30,7 @@ class Expediente(models.Model):
         max_length=100, null=True, blank=True, default=""
     )
     codigo_diploma = models.CharField(max_length=100, null=True, blank=True, default="")
+    res_diploma = models.CharField(max_length=100, null=True, blank=True, default="")
 
     def __str__(self):
         return f"{self.persona} {self.programa} {self.promocion}"

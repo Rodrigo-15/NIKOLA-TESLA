@@ -254,13 +254,31 @@ def diploma_diplomado(data):
         # milisecond
         milisecond = str(int(round(time.time() * 1000)))
         # Crear un objeto PDF con orientación horizontal y tamaño de página A4
-
-        persona = data["persona"]
         num_doc = data["num_doc"]
         programa: str = data["programa"]
+        horas_academicas = data["horas_academicas"]
+        resolucion = data["resolucion"]
         diplomado = programa
         fondo1 = os.path.join(media_root, "config", "diplomado01.png")
         fondo2 = os.path.join(media_root, "config", "diplomado02.png")
+        day = datetime.datetime.now().day
+        month = datetime.datetime.now().month
+        arrayMeses = [
+            "Enero",
+            "Febrero",
+            "Marzo",
+            "Abril",
+            "Mayo",
+            "Junio",
+            "Julio",
+            "Agosto",
+            "Septiembre",
+            "Octubre",
+            "Noviembre",
+            "Diciembre",
+        ]
+        month = arrayMeses[month - 1]
+
         c = canvas.Canvas(
             os.path.join(
                 settings.MEDIA_ROOT,
@@ -282,7 +300,7 @@ def diploma_diplomado(data):
 
         pdfmetrics.registerFont(TTFont("Arial", f"media/config/arial.ttf"))
         pdfmetrics.registerFont(TTFont("Arial-Bold", f"media/config/arialbd.ttf"))
-        pdfmetrics.registerFont(TTFont("Cookie", f"media/config/Cookie-Regular.ttf"))
+        pdfmetrics.registerFont(TTFont("Chalisa", f"media/config/Chalisa Octavia.ttf"))
         lTop = A4[0] - cm * 2
         lBot = cm * 2
         lLeft = cm * 2
@@ -321,9 +339,11 @@ def diploma_diplomado(data):
 
         barcodeThing.save(barcodePath)
 
-        texto1 = "El Director de la Escuela de Postgrado de la Universidad Nacional de la Amazonia Peruana otorga el presente diploma de conocimiento a:"
-        texto2 = "Por haber culminado satisfactoriamente los estudios del:"
-        texto3 = f"Por tanto se expide este presente diploma para que se le reconozca como tal."
+        texto1 = "El Director de la Escuela de Postgrado de la Universidad Nacional de la Amazonia Peruana tiene el honor de otorgar el presente a:"
+        texto2 = "Por haber culminado satisfactoriamente el Diplomado especializado en:"
+        texto3 = f"Evento realizado con una duración de {horas_academicas} horas académicas, con clases presenciales."
+        texto4 = f"Aprobado mediante Resolución Directoral N° {resolucion}."
+        texto5 = f"Iquitos, {day} de {month} de 2023"
 
         rutaJson = "media/config/autoridades.json"
 
@@ -362,11 +382,11 @@ def diploma_diplomado(data):
         # ------------------pagina 1--------------------#
         c.drawImage(fondo1, 0, 0, A4[1], A4[0])
 
-        currenty = lTop - 190
+        currenty = lTop - 180
 
         setF(18, "Arial-Bold")
 
-        style.alignment = 1
+        style.alignment = 0
 
         parrafo1 = Paragraph(texto1, style)
         parrafo1.wrap(maxWidht - 100, 1000)
@@ -377,22 +397,22 @@ def diploma_diplomado(data):
 
         currenty -= parrafo1.height + fontzise + 18 + 30
 
-        setF(40, "Cookie")
+        setF(60, "Chalisa")
 
-        c.drawCentredString(A4[1] / 2, currenty + 5, egresado)
+        c.drawCentredString(A4[1] / 2, currenty + 5, egresado.title())
 
         setF(17)
 
-        currenty -= fontzise + 30
-
+        currenty -= fontzise + 15
+        style.alignment = 1
         parrafo1 = Paragraph(texto2, style)
         parrafo1.wrap(maxWidht - 100, 1000)
         parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
 
-        currenty -= parrafo1.height + 10
+        currenty -= parrafo1.height + 2
 
-        setF(25, "Arial-Bold")
+        setF(22, "Arial-Bold")
 
         parrafo1 = Paragraph(diplomado, style)
         parrafo1.wrap(maxWidht - 100, 1000)
@@ -402,11 +422,28 @@ def diploma_diplomado(data):
         currenty -= parrafo1.height + 10
 
         setF(18)
-
+        style.alignment = 0
         parrafo1 = Paragraph(texto3, style)
         parrafo1.wrap(maxWidht - 100, 1000)
         parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
+        currenty -= parrafo1.height + 10
+
+        setF(16, "Arial-Bold")
+        style.alignment = 0
+        parrafo1 = Paragraph(texto4, style)
+        parrafo1.wrap(maxWidht - 100, 1000)
+        parrafo1.wrapOn(c, maxWidht - 100, 1000)
+        parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
+        currenty -= parrafo1.height + 10
+
+        setF(12)
+        style.alignment = 2
+        parrafo1 = Paragraph(texto5, style)
+        parrafo1.wrap(maxWidht - 100, 1000)
+        parrafo1.wrapOn(c, maxWidht - 100, 1000)
+        parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
+        currenty -= parrafo1.height + 10
 
         xd = lBot
 
