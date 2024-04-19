@@ -263,9 +263,19 @@ def diploma_diplomado(data):
         fondo1 = os.path.join(media_root, "config", "diplomado01.png")
         fondo2 = os.path.join(media_root, "config", "diplomado02.png")
         fecha_diploma = data["fecha_diploma"]
+        fecha_inicio = data["fecha_inicio"]
+        fecha_fin = data["fecha_fin"]
         day = fecha_diploma.day
         month = fecha_diploma.month
         year = fecha_diploma.year
+        # feha de inicio
+        day_inicio = fecha_inicio.day
+        month_inicio = fecha_inicio.month
+        year_inicio = fecha_inicio.year
+        # fecha de fin
+        day_fin = fecha_fin.day
+        month_fin = fecha_fin.month
+        year_fin = fecha_fin.year
         arrayMeses = [
             "Enero",
             "Febrero",
@@ -281,6 +291,8 @@ def diploma_diplomado(data):
             "Diciembre",
         ]
         month = arrayMeses[month - 1]
+        month_inicio = arrayMeses[month_inicio - 1]
+        month_fin = arrayMeses[month_fin - 1]
 
         c = canvas.Canvas(
             os.path.join(
@@ -356,7 +368,7 @@ def diploma_diplomado(data):
 
         texto1 = "El Director de la Escuela de Postgrado de la Universidad Nacional de la Amazonia Peruana tiene el honor de otorgar el presente a:"
         texto2 = "Por haber culminado satisfactoriamente el Diplomado especializado en:"
-        texto3 = f"Con una duración de {horas_academicas} horas académicas, el diplomado se impartió de manera presencial y contó con la aprobación oficial según la Resolución Directoral N° {resolucion_directoral}"
+        texto3 = f"Evento realizado del {day_inicio} de {month_inicio} al {day_fin} de {month_fin} de {year_inicio}, con una duración de {horas_academicas} horas académicas, el diplomado se impartió de manera presencial y contó con la aprobación oficial según la Resolución Directoral N° {resolucion_directoral}."
         texto4 = f"Resolución Directoral de Diploma N° {resolucion}."
         texto5 = f"Iquitos, {day} de {month} de {year}."
 
@@ -433,12 +445,12 @@ def diploma_diplomado(data):
         currenty -= parrafo1.height + 10
 
         setF(16)
-        style.alignment = 0
+        style.alignment = 1
         parrafo1 = Paragraph(texto3, style)
         parrafo1.wrap(maxWidht - 100, 1000)
         parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
-        currenty -= parrafo1.height
+        currenty -= parrafo1.height + 5
 
         setF(12)
         style.alignment = 2
