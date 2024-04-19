@@ -2221,6 +2221,8 @@ def generate_diploma_pdf(request):
                 "horas_academicas": expediente.programa.horas_academicas,
                 "resolucion": expediente.res_diploma,
                 "resolucion_directoral": expediente.res_dirc_ingreso,
+                "fecha_inicio": expediente.fecha_inicio,
+                "fecha_fin": expediente.fecha_fin,
             }
             path_return = diploma_diplomado(data)
         else:
