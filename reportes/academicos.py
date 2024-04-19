@@ -368,7 +368,7 @@ def diploma_diplomado(data):
 
         texto1 = "El Director de la Escuela de Postgrado de la Universidad Nacional de la Amazonia Peruana tiene el honor de otorgar el presente a:"
         texto2 = "Por haber culminado satisfactoriamente el Diplomado especializado en:"
-        texto3 = f"Evento realizado del {day_inicio} de {month_inicio} al {day_fin} de {month_fin} de {year_inicio}, con una duración de {horas_academicas} horas académicas, el diplomado se impartió de manera presencial y contó con la aprobación oficial según la Resolución Directoral N° {resolucion_directoral}"
+        texto3 = f"Evento realizado del {day_inicio} de {month_inicio} al {day_fin} de {month_fin} de {year_inicio}, con una duración de {horas_academicas} horas académicas, el diplomado se impartió de manera presencial y contó con la aprobación oficial según la Resolución Directoral N° {resolucion_directoral}."
         texto4 = f"Resolución Directoral de Diploma N° {resolucion}."
         texto5 = f"Iquitos, {day} de {month} de {year}."
 
