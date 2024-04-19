@@ -357,7 +357,7 @@ def diploma_diplomado(data):
         texto1 = "El Director de la Escuela de Postgrado de la Universidad Nacional de la Amazonia Peruana tiene el honor de otorgar el presente a:"
         texto2 = "Por haber culminado satisfactoriamente el Diplomado especializado en:"
         texto3 = f"Con una duración de {horas_academicas} horas académicas, el diplomado se impartió de manera presencial y contó con la aprobación oficial según la Resolución Directoral N° {resolucion_directoral}"
-        texto4 = f"Resolución Directoral de Diploma N° {resolucion}"
+        texto4 = f"Resolución Directoral de Diploma N° {resolucion}."
         texto5 = f"Iquitos, {day} de {month} de {year}."
 
         rutaJson = "media/config/autoridades.json"
@@ -421,7 +421,7 @@ def diploma_diplomado(data):
         parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
 
-        currenty -= parrafo1.height + 10
+        currenty -= parrafo1.height + 5
 
         setF(22, "Arial-Bold")
 
@@ -430,7 +430,7 @@ def diploma_diplomado(data):
         parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
 
-        currenty -= parrafo1.height + 20
+        currenty -= parrafo1.height + 10
 
         setF(16)
         style.alignment = 0
@@ -438,7 +438,7 @@ def diploma_diplomado(data):
         parrafo1.wrap(maxWidht - 100, 1000)
         parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
-        currenty -= parrafo1.height + 10
+        currenty -= parrafo1.height
 
         setF(12)
         style.alignment = 2
