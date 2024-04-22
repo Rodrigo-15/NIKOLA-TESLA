@@ -7,6 +7,11 @@ class ProgramaSerializer(ModelSerializer):
         model = Programa
         fields = "__all__"
 
+class FacultadSerializer(ModelSerializer):
+    class Meta:
+        model = Facultad
+        fields = "__all__"
+
 
 # cursos, docente, horario, matricula
 class CursosSerializer(ModelSerializer):

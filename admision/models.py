@@ -29,6 +29,11 @@ class Expediente(models.Model):
     codigo_universitario = models.CharField(
         max_length=100, null=True, blank=True, default=""
     )
+    codigo_diploma = models.CharField(max_length=100, null=True, blank=True, default="")
+    fecha_inicio = models.DateField(null=True, blank=True)
+    fecha_fin = models.DateField(null=True, blank=True)
+    res_diploma = models.CharField(max_length=100, null=True, blank=True, default="")
+    fecha_diploma = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.persona} {self.programa} {self.promocion}"

@@ -37,3 +37,4 @@ shortuuid
 daphne
 django-storages
 boto3
+python-barcode

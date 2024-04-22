@@ -24,8 +24,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.template.defaulttags import register
 from django.shortcuts import render
-from academicos.models import Matricula, Programa, PlanEstudio
-from academicos.serializers import CursosSerializer, MatriculaSerializer
+from academicos.models import Matricula, Programa
 from admision.models import Expediente
 from admision.serializers.expediente import (
     ExpedienteReportSerializer,
@@ -2099,6 +2098,7 @@ def generate_diploma_pdf(request):
         )
         programa = expediente.programa.nombre
         programa_id = expediente.programa
+        facultad_id = expediente.programa.facultad.id
 
         data_matricula = Matricula.objects.filter(expediente=expediente_id)
 
@@ -2115,6 +2115,7 @@ def generate_diploma_pdf(request):
 
         for i in range(len(cursos)):
             curso_nota.append([cursos[i], notas[i], creditos[i]])
+
         if expediente.programa.tipo.id == 3:
             data = {
                 "num_doc": num_doc,
@@ -2127,6 +2128,13 @@ def generate_diploma_pdf(request):
                 "fecha_final": expediente.periodo.fecha_fin,
                 "docentes": docentes,
                 "cursos": curso_nota,
+                "codigo_diploma": expediente.codigo_diploma,
+                "fecha_diploma": expediente.fecha_diploma,
+                "horas_academicas": expediente.programa.horas_academicas,
+                "resolucion": expediente.res_diploma,
+                "resolucion_directoral": expediente.res_dirc_ingreso,
+                "fecha_inicio": expediente.fecha_inicio,
+                "fecha_fin": expediente.fecha_fin,
             }
             path_return = diploma_diplomado(data)
         else:
@@ -2137,6 +2145,7 @@ def generate_diploma_pdf(request):
                 "apellidos": apellidos,
                 "programa": programa,
                 "programa_id": programa_id,
+                "facultad_id": facultad_id,
             }
             path_return = diploma_egresado(data)
         return Response({"path": path_return})

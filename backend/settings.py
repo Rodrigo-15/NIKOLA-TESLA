@@ -197,7 +197,6 @@ REST_FRAMEWORK = {
 }
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 
-
 EMAIL_KEY = env("EMAIL_KEY")
 EMAIL_FROM = env("EMAIL_FROM")
 URL_LOCAL = env("URL_LOCAL")

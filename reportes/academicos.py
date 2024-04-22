@@ -1,3 +1,4 @@
+import barcode.writer
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, A4
 from reportlab.lib import utils
@@ -13,14 +14,21 @@ from rest_framework.response import Response
 from django.conf import settings
 from PIL import Image
 from io import BytesIO
+import barcode
+from barcode.writer import ImageWriter
+from barcode.codex import Code128
+
+# from barcode.writer import ImageWriter
 import qrcode
 import datetime
 import time
 import os
+import json
+from xlsxwriter import Workbook
 
-def diploma_egresado(data):    
+
+def diploma_egresado(data):
     try:
-        print(data)
         # Guardar el PDF en la carpeta media
         media_root = settings.MEDIA_ROOT
         pdf_folder = os.path.join(media_root)
@@ -31,10 +39,11 @@ def diploma_egresado(data):
         milisecond = str(int(round(time.time() * 1000)))
         # Crear un objeto PDF con orientación horizontal y tamaño de página A4
 
-        persona = data['persona']
-        num_doc = data['num_doc']
-        programa: str = data['programa']
-        programa_id = data['programa_id']
+        persona = data["persona"]
+        num_doc = data["num_doc"]
+        programa: str = data["programa"]
+        programa_id = data["programa_id"]
+        facultad_id = data["facultad_id"]
         archivoPdf = canvas.Canvas(
             os.path.join(
                 settings.MEDIA_ROOT,
@@ -44,23 +53,48 @@ def diploma_egresado(data):
             landscape(A4),
         )
 
-        background = os.path.join(
-            settings.MEDIA_ROOT, "config", f"diploma7.jpg"
-        )
+        background = os.path.join(settings.MEDIA_ROOT, "config", f"diploma.png")
 
         lLeft = 48
         lRight = A4[1] - 82
-        maxWidth = lRight- lLeft
+        maxWidth = lRight - lLeft
 
         style = getSampleStyleSheet()
         style = style["Normal"]
 
-        parrafo1 = 'El Director de la Escuela de Postgrado de la Universidad Nacional de la Amazonia Peruana otorga el presente a:'
-        parrafo2 = f'Como testimonio de haber culminado satisfactoriamente sus estudios en el Programa de {programa.capitalize()}'
+        parrafo1 = "El Director de la Escuela de Postgrado de la Universidad Nacional de la Amazonia Peruana otorga el presente a:"
+        parrafo2 = f"Como testimonio de haber culminado satisfactoriamente sus estudios en el Programa de {programa.title()}."
 
-        firma01 = ['Dr. CARLOS HERNAN ZUMAETA VASQUEZ', 'Director de la EPG UNAP']
-        firma02 = ['Dr. VICTOR ARTURO JESUS CASTILLO CANANI', 'Director de la Unidad de Postgrado de la Facultad de Ciencias Economicas y de Negocio']
-        firma03 = ['Dr. JOSE RICARDO BALBUENA HERNANDEZ', 'Secretario Academico']
+        import json
+
+        ruta_archivo = f"media/config/autoridades.json"
+        with open(ruta_archivo, "r") as archivo:
+            autoridades = json.load(archivo)
+
+        # cargar la firma verificando si es director y esta activo
+        director = ["", ""]
+        secretario = ["", ""]
+        unidad = ["", ""]
+
+        for item in autoridades["director"]:
+            if item["is_active"]:
+                director = [item["nombre"], item["cargo"]]
+            break
+
+        for item in autoridades["secretario"]:
+            if item["is_active"]:
+                secretario = [item["nombre"], item["cargo"]]
+            break
+
+        for item in autoridades["unidad"]:
+            if item["is_active"] and item["facultad"] == facultad_id:
+                unidad = [item["nombre"], item["cargo"]]
+                break
+
+        # cerrar el archivo
+        archivo.close()
+
+        print(unidad)
 
         fecha = datetime.datetime.now().strftime("%d/%m/%Y")
         dia = datetime.datetime.now().day
@@ -87,105 +121,115 @@ def diploma_egresado(data):
 
         font_path = os.path.join(settings.MEDIA_ROOT, "config", "times.ttf")
         font_path1 = os.path.join(settings.MEDIA_ROOT, "config", "timesbd.ttf")
-        font_path2 = os.path.join(settings.MEDIA_ROOT, "config", 'Chalisa Octavia.ttf')
+        font_path2 = os.path.join(settings.MEDIA_ROOT, "config", "Chalisa Octavia.ttf")
         # Ajusta la ruta
         pdfmetrics.registerFont(TTFont("times", font_path))
         pdfmetrics.registerFont(TTFont("timesbd", font_path1))
-        pdfmetrics.registerFont(TTFont('chalsiaoctavia', font_path2))
+        pdfmetrics.registerFont(TTFont("chalsiaoctavia", font_path2))
 
         # Crear un objeto PDF con orientación horizontal y tamaño de página A4
         archivoPdf.drawImage(background, 0, 0, A4[1], A4[0])
 
         archivoPdf.setFillColor(HexColor("#02273E"))
-        archivoPdf.setFont("timesbd", 32)
+        archivoPdf.setFont("timesbd", 38)
 
         style.fontSize = 70
         style.alignment = 1
         style.leading = 60
-        style.fontName = 'chalsiaoctavia'
+        style.fontName = "chalsiaoctavia"
         style.textColor = HexColor("#02273E")
 
-        titulo = Paragraph('Diploma de Egresado', style)
+        titulo = Paragraph("Diploma de Egresado", style)
         titulo.wrapOn(archivoPdf, maxWidth, 1000)
         titulo.drawOn(archivoPdf, lLeft, 430 - titulo.height + style.fontSize)
 
         style.fontSize = 21
         style.alignment = 0
         style.leading = 25.2
-        style.fontName = 'times'
+        style.fontName = "times"
         style.textColor = "#000000"
+        style.alignment = 4  # Justificar
 
         para01 = Paragraph(parrafo1, style)
         para01.wrapOn(archivoPdf, maxWidth, 1000)
         para01.drawOn(archivoPdf, lLeft, 340)
 
         style.fontSize = 32
-        style.fontName = 'timesbd'
+        style.fontName = "timesbd"
         style.alignment = 1
         style.leading = 38.4
         style.textColor = HexColor("#02273E")
 
-
         namePara = Paragraph(persona, style)
         namePara.wrap(maxWidth, 1000)
         namePara.wrapOn(archivoPdf, maxWidth, 1000)
-        namePara.drawOn(archivoPdf, lLeft, 290-namePara.height + style.fontSize)
+        namePara.drawOn(archivoPdf, lLeft, 290 - namePara.height + style.fontSize)
 
-        currenty = 290-namePara.height
+        currenty = 290 - namePara.height
 
         style.fontSize = 21
         style.alignment = 0
         style.leading = 25.2
-        style.fontName = 'times'
+        style.fontName = "times"
         style.textColor = "#000000"
+        style.alignment = 4  # Justificar
 
-        para02 = Paragraph(parrafo2, style) 
+        para02 = Paragraph(parrafo2, style)
         para02.wrapOn(archivoPdf, maxWidth, 1000)
         para02.drawOn(archivoPdf, lLeft, currenty - para02.height + style.fontSize)
 
-        currenty -= para02.height 
-
+        currenty -= para02.height
 
         archivoPdf.setFillColor(HexColor("#000000"))
         archivoPdf.setFont("times", 21)
-        archivoPdf.drawString(500, currenty, f"{fecha}.".capitalize())
+        archivoPdf.drawString(500, 150, f"{fecha}.".capitalize())
 
-        style.fontName = 'times'
+        style.fontName = "times"
         style.fontSize = 9
         style.alignment = 1
         style.leading = 10.8
 
-        firma1Nombre = Paragraph(firma01[0], style)
+        firma1Nombre = Paragraph(director[0], style)
         firma1Nombre.wrapOn(archivoPdf, 195, 1000)
-        firma1Nombre.drawOn(archivoPdf, lLeft + 11, 83 - firma1Nombre.height + style.fontSize)
+        firma1Nombre.drawOn(
+            archivoPdf, lLeft + 11, 83 - firma1Nombre.height + style.fontSize
+        )
         currenty = 83 - firma1Nombre.height
 
-        firma1Cargo = Paragraph(firma01[1], style)
+        firma1Cargo = Paragraph(director[1], style)
         firma1Cargo.wrapOn(archivoPdf, 195, 1000)
-        firma1Cargo.drawOn(archivoPdf, lLeft + 11, currenty - firma1Cargo.height + style.fontSize)
+        firma1Cargo.drawOn(
+            archivoPdf, lLeft + 11, currenty - firma1Cargo.height + style.fontSize
+        )
 
-        firma2Nombre = Paragraph(firma02[0], style)
+        firma2Nombre = Paragraph(unidad[0], style)
         firma2Nombre.wrapOn(archivoPdf, 195, 1000)
-        firma2Nombre.drawOn(archivoPdf, lLeft + 226, 83 - firma2Nombre.height + style.fontSize)
+        firma2Nombre.drawOn(
+            archivoPdf, lLeft + 226, 83 - firma2Nombre.height + style.fontSize
+        )
         currenty = 83 - firma2Nombre.height
 
-        firma2Cargo = Paragraph(firma02[1], style)
+        firma2Cargo = Paragraph(unidad[1], style)
         firma2Cargo.wrapOn(archivoPdf, 195, 1000)
-        firma2Cargo.drawOn(archivoPdf, lLeft + 226, currenty - firma2Cargo.height + style.fontSize)
+        firma2Cargo.drawOn(
+            archivoPdf, lLeft + 226, currenty - firma2Cargo.height + style.fontSize
+        )
 
-        firma3Nombre = Paragraph(firma03[0], style)
+        firma3Nombre = Paragraph(secretario[0], style)
         firma3Nombre.wrapOn(archivoPdf, 195, 1000)
-        firma3Nombre.drawOn(archivoPdf, lLeft + 449, 83 - firma3Nombre.height + style.fontSize)
+        firma3Nombre.drawOn(
+            archivoPdf, lLeft + 449, 83 - firma3Nombre.height + style.fontSize
+        )
         currenty = 83 - firma3Nombre.height
 
-        firma3Cargo = Paragraph(firma03[1], style)
+        firma3Cargo = Paragraph(secretario[1], style)
         firma3Cargo.wrapOn(archivoPdf, 195, 1000)
-        firma3Cargo.drawOn(archivoPdf, lLeft + 449, currenty - firma3Cargo.height + style.fontSize)
+        firma3Cargo.drawOn(
+            archivoPdf, lLeft + 449, currenty - firma3Cargo.height + style.fontSize
+        )
 
         archivoPdf.save()
 
-        
-        
         # retornar la ruta del archivo PDF
         path_return = os.path.join(
             settings.MEDIA_URL,
@@ -195,12 +239,13 @@ def diploma_egresado(data):
         path_return = path_return.replace("\\", "/")
         return path_return
     except Exception as e:
-        print(e)
-        return None
-    
+        path_return = str(e)
+        return path_return
+
+
 def diploma_diplomado(data):
     try:
-    # Guardar el PDF en la carpeta media
+        # Guardar el PDF en la carpeta media
         media_root = settings.MEDIA_ROOT
         pdf_folder = os.path.join(media_root)
         if not os.path.exists(pdf_folder):
@@ -209,35 +254,73 @@ def diploma_diplomado(data):
         # milisecond
         milisecond = str(int(round(time.time() * 1000)))
         # Crear un objeto PDF con orientación horizontal y tamaño de página A4
+        num_doc = data["num_doc"]
+        programa: str = data["programa"]
+        horas_academicas = data["horas_academicas"]
+        resolucion = data["resolucion"]
+        resolucion_directoral = data["resolucion_directoral"]
+        diplomado = programa
+        fondo1 = os.path.join(media_root, "config", "diplomado01.png")
+        fondo2 = os.path.join(media_root, "config", "diplomado02.png")
+        fecha_diploma = data["fecha_diploma"]
+        fecha_inicio = data["fecha_inicio"]
+        fecha_fin = data["fecha_fin"]
+        day = fecha_diploma.day
+        month = fecha_diploma.month
+        year = fecha_diploma.year
+        # feha de inicio
+        day_inicio = fecha_inicio.day
+        month_inicio = fecha_inicio.month
+        year_inicio = fecha_inicio.year
+        # fecha de fin
+        day_fin = fecha_fin.day
+        month_fin = fecha_fin.month
+        year_fin = fecha_fin.year
+        arrayMeses = [
+            "Enero",
+            "Febrero",
+            "Marzo",
+            "Abril",
+            "Mayo",
+            "Junio",
+            "Julio",
+            "Agosto",
+            "Septiembre",
+            "Octubre",
+            "Noviembre",
+            "Diciembre",
+        ]
+        month = arrayMeses[month - 1]
+        month_inicio = arrayMeses[month_inicio - 1]
+        month_fin = arrayMeses[month_fin - 1]
 
-        persona = data['persona']
-        num_doc = data['num_doc']
-        programa: str = data['programa']
-        programa_id = data['programa_id']
         c = canvas.Canvas(
             os.path.join(
                 settings.MEDIA_ROOT,
                 "diplomas",
-                f"diploma_egregasado-{persona}-{num_doc}-{programa}-{milisecond}.pdf",
+                f"diploma_egregasado-{num_doc}-{milisecond}.pdf",
             ),
             landscape(A4),
         )
 
-        def setF(size, name = "Arial"):
+        def setF(size, name="Arial"):
             fontzise = size
-            fontname = name             #simplemente nos ayuda a cambiar las fuentes de todo mas rapido
-            c.setFont(psfontname=fontname, size= fontzise)
+            fontname = (
+                name  # simplemente nos ayuda a cambiar las fuentes de todo mas rapido
+            )
+            c.setFont(psfontname=fontname, size=fontzise)
             style.fontSize = fontzise
             style.fontName = fontname
             style.leading = size
 
-        pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
-        pdfmetrics.registerFont(TTFont('Arial-Bold', 'arialbd.ttf'))
-        lTop = A4[0] - cm *2
-        lBot = cm*2
-        lLeft = cm*2
-        lRight = A4[1] - cm*2
-        maxWidht = lRight- lLeft
+        pdfmetrics.registerFont(TTFont("Arial", f"media/config/arial.ttf"))
+        pdfmetrics.registerFont(TTFont("Arial-Bold", f"media/config/arialbd.ttf"))
+        pdfmetrics.registerFont(TTFont("Chalisa", f"media/config/Chalisa Octavia.ttf"))
+        lTop = A4[0] - cm * 2
+        lBot = cm * 2
+        lLeft = cm * 2
+        lRight = A4[1] - cm * 2
+        maxWidht = lRight - lLeft
         maxHeight = lTop - lBot
         fontzise = 10
         fontname = "Arial"
@@ -245,13 +328,21 @@ def diploma_diplomado(data):
         style = getSampleStyleSheet()
         style = style["Normal"]
 
+        # ------variables que se utilizan dentro del documento------#
 
-        #------variables que se utilizan dentro del documento------#
-        logoUnap = "media\config\logo_UNAP.jpg"
-        logoPostgrado = "media\config\postgrado.png"
+        egresado = data["persona"]
 
-        # Generate QR code
-        codigo = 'CY3ILIXD'
+        roman_numbers = {
+            "1": "I",
+            "2": "II",
+            "3": "III",
+            "4": "IV",
+            "5": "V",
+            "6": "VI",
+            "7": "VII",
+            "8": "VIII",
+        }
+        codigo = data["codigo_diploma"]
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -261,248 +352,227 @@ def diploma_diplomado(data):
         qr.add_data(codigo)
         qr.make(fit=True)
 
-        # Create an image from the QR code instance
-        QRImage = qr.make_image(fill_color="black", back_color="white")
+        # Create the QR code image
+        qr_image = qr.make_image(fill_color="black", back_color="white")
 
-        img_buffer = BytesIO()
-        QRImage.save(img_buffer)
-        img_buffer.seek(0)
+        # Specify the path to save the QR code image
+        qr_path = f"media/qrcodes/codigo-{num_doc}.png"
 
-        img_buffer = ImageReader(img_buffer)
+        # Create the directory if it doesn't exist
+        directory = os.path.dirname(qr_path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
+        # Save the QR code image to the specified path
+        qr_image.save(qr_path)
 
+        texto1 = "El Director de la Escuela de Postgrado de la Universidad Nacional de la Amazonia Peruana tiene el honor de otorgar el presente a:"
+        texto2 = "Por haber culminado satisfactoriamente el Diplomado especializado en:"
+        texto3 = f"Evento realizado del {day_inicio} de {month_inicio} al {day_fin} de {month_fin} de {year_inicio}, con una duración de {horas_academicas} horas académicas, el diplomado se impartió de manera presencial y contó con la aprobación oficial según la Resolución Directoral N° {resolucion_directoral}."
+        texto4 = f"Resolución Directoral de Diploma N° {resolucion}."
+        texto5 = f"Iquitos, {day} de {month} de {year}."
 
-        egresado = data['persona']
-        docentes = data['docentes']
+        rutaJson = "media/config/autoridades.json"
 
-        diplomado = data['programa']
-        duracion = 260
-        fechaInicio = data['fecha_inicio']
-        fechaFinal = data['fecha_final']
+        with open(rutaJson, "r+") as file:
+            datosJson = json.load(file)
 
-        año1, mes1, dia1 = str(fechaInicio).split('-')
-        año2, mes2, dia2 = str(fechaFinal).split('-')
+            for value in datosJson["director"]:
+                if value["is_active"] == True:
+                    director = value["nombre"]
+                    directorCargo = value["cargo"]
 
-        mes_array = {
-            "01": "Enero",
-            "02": "Febrero",
-            "03": "Marzo",
-            "04": "Abril",
-            "05": "Mayo",
-            "06": "Junio",
-            "07": "Julio",
-            "08": "Agosto",
-            "09": "Septiembre",
-            "10": "Octubre",
-            "11": "Noviembre",
-            "12": "Diciembre",
-        }
+            secretario = datosJson["secretario"][0]["nombre"]
+            secretarioCargo = datosJson["secretario"][0]["cargo"]
 
-        mes1 = mes_array[mes1]
-        mes2 = mes_array[mes2]
+        datosFirma = [
+            [director, directorCargo, ""],
+            [secretario, secretarioCargo, ""],
+        ]
 
-        dia1 = fechaInicio.day
-        dia2 = fechaFinal.day
+        modulos = data["cursos"]
 
-        fechaInicio = f'{dia1} de {mes1} del {año1}'
-        fechaFinal = f'{dia2} de {mes2} del {año2}'
-
-        fechaEmisionDelDiploma = datetime.date.today()
-
-        texto1 = 'La Universidad Nacional de la Amazonia Peruana y La escuela de Postgrado tienen el honor de entregar el presente:'
-        texto2 = 'Por haber culminado satisfactoriamente el:'
-        texto3 = f'Con fecha de inicio el {fechaInicio} y finalizado el {fechaFinal}, con una duracion de {duracion} horas academicas.'
-
-        datosFirma = [['Mauricio Lovera Torres', 'Director', ''],
-                    ['Ernesto Chavez Tuaname', 'Secretario Academico', '']]
-
-        modulos = data['cursos']
         creditosTotales = 0
         sumaDeNotas = 0
-            
+
         for curso in modulos:
             creditosTotales += curso[2]
             sumaDeNotas += curso[1] * curso[2]
-        nota = sumaDeNotas/creditosTotales
-        
-        #------------------pagina 1--------------------#
+        nota = sumaDeNotas / creditosTotales
 
-        c.drawImage(logoUnap, lLeft, lTop - 70, 140, 70)
-        c.drawImage(logoPostgrado, lRight - 70, lTop -70, 70, 70)
+        nota = round(nota, 2)
 
-        currenty = lTop - 80
+        # ------------------pagina 1--------------------#
+        c.drawImage(fondo1, 0, 0, A4[1], A4[0])
 
-        setF(18, 'Arial-Bold')
+        currenty = lTop - 180
 
-        style.alignment = 1
+        setF(18, "Arial-Bold")
+
+        style.alignment = 0
 
         parrafo1 = Paragraph(texto1, style)
-        parrafo1.wrap(maxWidht -100, 1000)
-        parrafo1.wrapOn(c, maxWidht -100, 1000)
+        parrafo1.wrap(maxWidht - 100, 1000)
+        parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height)
 
-        setF(40, 'Arial-Bold')
+        setF(30, "Arial")
 
-        currenty -= parrafo1.height + fontzise + 18 +30
+        currenty -= parrafo1.height + fontzise + 18 + 30
 
-        c.drawCentredString(A4[1]/2, currenty, 'DIPLOMA')
+        setF(60, "Chalisa")
 
-        currenty -= fontzise + 40 
+        c.drawCentredString(A4[1] / 2, currenty + 5, egresado.title())
 
-        setF(20)
+        setF(16)
 
-        c.drawString(150, currenty, 'a:')
-        c.line(170, currenty, 700, currenty)
-
-        c.drawCentredString(A4[1]/2, currenty + 5, egresado)
-
-        setF(17)
-
-        currenty -= fontzise + 10
-
+        currenty -= fontzise + 20
+        style.alignment = 1
         parrafo1 = Paragraph(texto2, style)
-        parrafo1.wrap(maxWidht -100, 1000)
-        parrafo1.wrapOn(c, maxWidht -100, 1000)
+        parrafo1.wrap(maxWidht - 100, 1000)
+        parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
 
-        currenty -= parrafo1.height
+        currenty -= parrafo1.height + 5
 
-        setF(25, 'Arial-Bold')
+        setF(22, "Arial-Bold")
 
         parrafo1 = Paragraph(diplomado, style)
-        parrafo1.wrap(maxWidht -100, 1000)
-        parrafo1.wrapOn(c, maxWidht -100, 1000)
+        parrafo1.wrap(maxWidht - 100, 1000)
+        parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
 
         currenty -= parrafo1.height + 10
 
-        setF(18)
-
+        setF(16)
+        style.alignment = 1
         parrafo1 = Paragraph(texto3, style)
-        parrafo1.wrap(maxWidht -100, 1000)
-        parrafo1.wrapOn(c, maxWidht -100, 1000)
+        parrafo1.wrap(maxWidht - 100, 1000)
+        parrafo1.wrapOn(c, maxWidht - 100, 1000)
         parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
+        currenty -= parrafo1.height + 5
+
+        setF(12)
+        style.alignment = 2
+        parrafo1 = Paragraph(texto5, style)
+        parrafo1.wrap(maxWidht - 100, 1000)
+        parrafo1.wrapOn(c, maxWidht - 100, 1000)
+        parrafo1.drawOn(c, lLeft + 50, currenty - parrafo1.height + fontzise)
+        currenty -= parrafo1.height + 10
 
         xd = lBot
 
-        lBot += 30
+        lBot -= 15
 
-        c.line(lLeft, lBot + 20, lLeft + 250, lBot + 20)
-        setF(16)
-        c.drawCentredString(lLeft + 125, lBot +2, datosFirma[0][0])
         setF(10)
-        c.drawCentredString(lLeft + 125, lBot -16, datosFirma[0][1])
-        c.drawCentredString(lLeft + 125, lBot -34, datosFirma[0][2])
+        c.drawCentredString(lLeft + 135, lBot + 2, datosFirma[0][0])
+        setF(7)
+        c.drawCentredString(lLeft + 135, lBot - 10, datosFirma[0][1])
+        c.drawCentredString(lLeft + 135, lBot - 34, datosFirma[0][2])
 
-        c.line(lRight - 250, lBot + 20, lRight, lBot + 20)
-        setF(16)
-        c.drawCentredString(lRight - 125, lBot +2, datosFirma[1][0])
         setF(10)
-        c.drawCentredString(lRight - 125, lBot -16, datosFirma[1][1])
-        c.drawCentredString(lRight - 125, lBot -34, datosFirma[1][2])
+        c.drawCentredString(lRight - 140, lBot + 2, datosFirma[1][0])
+        setF(7)
+        c.drawCentredString(lRight - 140, lBot - 10, datosFirma[1][1])
+        c.drawCentredString(lRight - 140, lBot - 34, datosFirma[1][2])
 
         lBot = xd
 
-        c.drawImage(img_buffer, 385, lBot+ fontzise + 10, 75, 75)
-        c.drawCentredString(A4[1]/2, lBot, f'Codigo: {codigo}')
-
         c.showPage()
 
-        #-------------------pagina 2-------------------------#
-
-
-
-        tablaModulosLista1 = [['','MODULO', 'NOTA MODULO']]
-        tablaModulosLista = []
+        # -------------------pagina 2-------------------------#
+        c.drawImage(fondo2, 0, 0, A4[1], A4[0])
 
         setF(12)
+        currenty = lTop - 120
+        style.alignment = 0
 
-        for value in tablaModulosLista1:
+        avHeigh = 170
+        totalHeight = 0
+
+        style.alignment = 0
+        l = 1
+
+        for value in modulos:
+            value: list
+            value.insert(0, str(l))
+            l += 1
+
+        modulos.insert(0, ["N°", "MODULO", "NOTA", "CREDITOS"])
+        modulos.insert(0, ["MODULOS CURSADOS"])
+        for value in modulos:
             for i in range(len(value)):
-                value[i] = Paragraph(value[i], style)
-            tablaModulosLista.append([value[0], value[1], value[2]])
+                if i == 1:
+                    style.fontName = "Arial-Bold"
+                    value[i] = Paragraph(str(value[i]), style)
 
-        for i in range(len(modulos)):
-            parrafo1 = Paragraph(modulos[i][0], style)
-            parrafo2 = Paragraph(str(modulos[i][1]), style)
+        maxWidth = 600
+        tablaCursos = Table(
+            modulos,
+            [
+                maxWidth * 0.05,
+                maxWidth * 0.67,
+                maxWidth * 0.08,
+                maxWidth * 0.125,
+            ],
+        )
 
-            tablaModulosLista.append([f'{i+1}', parrafo1, parrafo2])
+        tableStyle = TableStyle(
+            [
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("FONTSIZE", (0, 0), (-1, -1), 12),
+                ("FONTNAME", (0, 0), (-1, -1), "Arial-Bold"),
+                ("SPAN", (0, 0), (-1, 0)),
+            ]
+        )
 
-        tablaModulos = Table(tablaModulosLista, [0.05*maxWidht, 0.75*maxWidht, 0.2*maxWidht])
+        tablaCursos.setStyle(tableStyle)
 
-        currenty = lTop
+        tablaCursos.wrapOn(c, maxWidth, 1000)
+        tablaCursos.drawOn(c, 143, currenty - tablaCursos._height)
 
-        setF(20, 'Arial-Bold')
+        currenty -= tablaCursos._height + 20
 
-        c.drawCentredString(A4[1]/2, currenty - fontzise, 'CONTENIDO TEMATICO')
+        setF(12, "Arial-Bold")
 
-        currenty -= fontzise + 20
+        c.drawString(510, currenty - 15, f"Total: {horas_academicas} horas académicas")
 
-        setF(20)
+        setF(20, "Arial-Bold")
 
-        light_red = colors.HexColor('#A90000')
-        tableStyle = TableStyle([
-        ('GRID', (0, 0), (-1, -1), 1, light_red),  # Light red grid
-        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),  # Center-align the first row
-        ('ALIGN', (-1, 0), (-1, -1), 'CENTER'),  # Center-align the last column
-        ('ALIGN', (1, 1), (1, -1), 'LEFT'),  # Left-align the second column from the second to the last row
-        ('FONTSIZE', (0, 0), (-1, -1), fontzise),
-    ])
+        c.drawString(lRight - 575, lTop - 357, "PROMEDIO GENERAL")
 
-        tablaModulos = Table(tablaModulosLista, [0.05*maxWidht, 0.75*maxWidht, 0.2*maxWidht])
-        tablaModulos.setStyle(tableStyle)
+        c.drawString(lRight - 245, lTop - 357, f"{nota}")
 
-        tablaModulos.wrapOn(c, maxWidht, 1000)
-        tablaModulos.drawOn(c, lLeft, currenty-tablaModulos._height)
+        setF(12, "Arial")
+        style.alignment = 1
+        parrafo1 = Paragraph(texto4, style)
+        parrafo1.wrap(maxWidht - 100, 1000)
+        parrafo1.wrapOn(c, maxWidht - 100, 1000)
+        parrafo1.drawOn(c, lLeft + 50, lTop - 430 + fontzise)
 
-        currenty -= tablaModulos._height + 30
+        setF(9, "Arial-Bold")
 
-        setF(20)
-
-        c.drawString(lLeft, currenty - fontzise, 'Docentes: ')
-        a = currenty
-        currenty -= 2* fontzise + 20
-
-        setF(13)
-
-        for docente in docentes:
-            c.drawString(lLeft, currenty, f'- {docente}')
-            currenty -= fontzise * 2
-
-        currenty = a
-
-        setF(13, 'Arial-Bold')
-
-        frame = Frame(lRight - 100, currenty -fontzise - 10, 70, 30, showBoundary= 1)
-
-        frame.addFromList([], c)
-
-        c.drawString(lRight - 150, currenty - fontzise, 'Nota:')
-        c.drawString(lRight - 75, currenty - fontzise, f'{nota}')
-
-        c.drawImage(logoUnap, lLeft, lBot+ fontzise + 10, 140, 70)
-        c.drawImage(logoPostgrado, lRight - 70, lBot+ fontzise + 10, 70, 80)
-        c.drawImage(img_buffer, 385, lBot+ fontzise + 10, 75,75)
-        c.drawCentredString(A4[1]/2, lBot, f'Codigo: {codigo}')
+        c.drawImage(qr_path, (A4[1] / 2) - 20, lBot + 5, 40, 40)
+        c.drawCentredString(A4[1] / 2, lBot, f"CODIGO: {codigo}")
 
         c.save()
 
-
-     # retornar la ruta del archivo PDF
+        # retornar la ruta del archivo PDF
         path_return = os.path.join(
             settings.MEDIA_URL,
             "diplomas",
-            f"diploma_egregasado-{persona}-{num_doc}-{programa}-{milisecond}.pdf",
+            f"diploma_egregasado-{num_doc}-{milisecond}.pdf",
         )
         path_return = path_return.replace("\\", "/")
         return path_return
     except Exception as e:
-        print(e)
-        return 
-    
+        path_return = str(e)
+        return path_return
+
+
 def reporte_matricula(data):
-    lLeft = cm*2
-    lRight = A4[0] - cm*2
+    lLeft = cm * 2
+    lRight = A4[0] - cm * 2
     lTop = A4[1] - cm
     lBottom = cm
     maxWidth = lRight - lLeft
@@ -510,22 +580,24 @@ def reporte_matricula(data):
     fontzise = 10
     fontname = "Arial"
 
-    def setF(size, name = "Arial"):
+    def setF(size, name="Arial"):
         fontzise = size
-        fontname = name             #simplemente nos ayuda a cambiar las fuentes de todo mas rapido
-        c.setFont(psfontname=fontname, size= fontzise)
+        fontname = (
+            name  # simplemente nos ayuda a cambiar las fuentes de todo mas rapido
+        )
+        c.setFont(psfontname=fontname, size=fontzise)
         style.fontSize = fontzise
         style.fontName = fontname
-        style.leading = size*1.2
+        style.leading = size * 1.2
 
     style = getSampleStyleSheet()
-    style1 = style['Normal']
+    style1 = style["Normal"]
     style = style["Normal"]
 
     style1.alignment = 0
 
-    #-----generar qr-------#
-    codigo = 'https://apisunat.com/65baf74a815b810015b21374/documents/new'
+    # -----generar qr-------#
+    codigo = "https://apisunat.com/65baf74a815b810015b21374/documents/new"
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -542,79 +614,139 @@ def reporte_matricula(data):
     img_buffer.seek(0)
 
     img_buffer = ImageReader(img_buffer)
-    #--------------------------#
+    # --------------------------#
 
-    pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
-    pdfmetrics.registerFont(TTFont('Arial-Bold', 'arialbd.ttf'))
+    pdfmetrics.registerFont(TTFont("Arial", "arial.ttf"))
+    pdfmetrics.registerFont(TTFont("Arial-Bold", "arialbd.ttf"))
 
-    facultad = 'FACULTAD DE EDUCACION'
-    programa = 'DIPLOMADO EN DOCENCIA UNIVERSITARIA'
-    nombreAlumno = 'ALEGRIA REODRIGUEZ JHONATAN WALDEMA FABRICIO'
-    numExp = '4903'
-    planEstudios = 'xd'
-    correo = 'None'
-    dniAlumno = '71232701'
-    periodo = '2023-II'
-    promocion = '2023-II'
+    facultad = "FACULTAD DE EDUCACION"
+    programa = "DIPLOMADO EN DOCENCIA UNIVERSITARIA"
+    nombreAlumno = "ALEGRIA REODRIGUEZ JHONATAN WALDEMA FABRICIO"
+    numExp = "4903"
+    planEstudios = "xd"
+    correo = "None"
+    dniAlumno = "71232701"
+    periodo = "2023-II"
+    promocion = "2023-II"
 
+    cursos = [
+        ["N°", "CICLO", "CÓDIGO", "ASIGNATURA", "INTENTO", "SECCION", "CREDITOS"],
+    ]
 
-    cursos = [['N°', 'CICLO', 'CÓDIGO', 'ASIGNATURA', 'INTENTO', 'SECCION', 'CREDITOS'],['1','1', 'DPC-01', 'INTRODUCCION A LAS COMPETENCIAS DOCENTES', '01', 'A', '4.00'],
-            ['2','1', 'DPC-02', 'INNOVACION, DIVERSISDAD Y EQUIDAD EN LA EDUCACION', '01', 'A', '4.00'],
-            ['3','1', 'DPC-03', 'COMPETENCIAS DIGITALES EN DOCENCIA UNIVERSITARIA', '01', 'A', '4.00'],
-            ['4','1', 'DPC-04', 'METODOLOGIAS ACTIVAS Y TECNICAS DIDACTICAS', '01', 'A', '4.00'],
-            ['5','1', 'DPC-05', 'HERRAMIENTAS Y RECURSOS DOCENTES PARA LA ENSEÑANZA Y EL APRENDIZAJE', '01', 'A', '4.00'],
-            ['6','1', 'DPC-06', 'METODOLOGIA DE LA INVESTIGACION EDUCATIVA', '01', 'A', '4.00'],]
-    
+    cursos = [
+        ["N°", "CICLO", "CÓDIGO", "ASIGNATURA", "INTENTO", "SECCION", "CREDITOS"],
+        [
+            "1",
+            "1",
+            "DPC-01",
+            "INTRODUCCION A LAS COMPETENCIAS DOCENTES",
+            "01",
+            "A",
+            "4.00",
+        ],
+        [
+            "2",
+            "1",
+            "DPC-02",
+            "INNOVACION, DIVERSISDAD Y EQUIDAD EN LA EDUCACION",
+            "01",
+            "A",
+            "4.00",
+        ],
+        [
+            "3",
+            "1",
+            "DPC-03",
+            "COMPETENCIAS DIGITALES EN DOCENCIA UNIVERSITARIA",
+            "01",
+            "A",
+            "4.00",
+        ],
+        [
+            "4",
+            "1",
+            "DPC-04",
+            "METODOLOGIAS ACTIVAS Y TECNICAS DIDACTICAS",
+            "01",
+            "A",
+            "4.00",
+        ],
+        [
+            "5",
+            "1",
+            "DPC-05",
+            "HERRAMIENTAS Y RECURSOS DOCENTES PARA LA ENSEÑANZA Y EL APRENDIZAJE",
+            "01",
+            "A",
+            "4.00",
+        ],
+        [
+            "6",
+            "1",
+            "DPC-06",
+            "METODOLOGIA DE LA INVESTIGACION EDUCATIVA",
+            "01",
+            "A",
+            "4.00",
+        ],
+    ]
+
     logoUnap = "media\config\logo_UNAP.jpg"
     logoPostgrado = "media\config\postgrado.png"
 
-    #--------------------PAGINA 1-------------------------#
+    # --------------------PAGINA 1-------------------------#
 
-    c = canvas.Canvas('reporte_matricula.pdf')
+    c = canvas.Canvas("reporte_matricula.pdf")
 
     c.drawImage(logoUnap, lLeft, lTop - 37.5, 75, 37.5)
     c.drawImage(logoPostgrado, lRight - 40, lTop - 40, 40, 40)
 
-    setF(10, 'Arial-Bold')
+    setF(10, "Arial-Bold")
 
-    c.drawCentredString(A4[0]/2, lTop- fontzise - 40, 'UNIVERSISDAD NACIONAL DE LA AMAZONIA PERUANA')
-    c.drawCentredString(A4[0]/2, lTop- 2*fontzise - 45, 'ESCUELA DE POSTGRADO')
-    c.drawCentredString(A4[0]/2, lTop- 3*fontzise - 50, 'OFICINA DE ASUNTOS ACADEMICOS')
+    c.drawCentredString(
+        A4[0] / 2, lTop - fontzise - 40, "UNIVERSISDAD NACIONAL DE LA AMAZONIA PERUANA"
+    )
+    c.drawCentredString(A4[0] / 2, lTop - 2 * fontzise - 45, "ESCUELA DE POSTGRADO")
+    c.drawCentredString(
+        A4[0] / 2, lTop - 3 * fontzise - 50, "OFICINA DE ASUNTOS ACADEMICOS"
+    )
 
-    currenty = lTop- 3*fontzise - 50
+    currenty = lTop - 3 * fontzise - 50
 
-    setF(15, 'Arial-Bold')
+    setF(15, "Arial-Bold")
 
-    c.drawCentredString(A4[0]/2, currenty - 40, 'BOLETA DE MATRICULA')
+    c.drawCentredString(A4[0] / 2, currenty - 40, "BOLETA DE MATRICULA")
 
     currenty -= 41
-    setF(7, 'Arial-Bold')
+    setF(7, "Arial-Bold")
     leftRightColumn = lLeft + 260
 
-    c.drawString(lLeft, currenty - 30, 'FACULTAD:')
-    c.drawString(leftRightColumn, currenty - 30, 'PROGRAMA:')
-    c.drawString(lLeft, currenty - 50, 'APELLIDOS Y NOMBRES:')
-    c.drawString(lLeft, currenty - 70, 'PLAN DE ESTUDIOS:')
-    c.drawString(lLeft, currenty - 90, 'PERIODO:')
+    c.drawString(lLeft, currenty - 30, "FACULTAD:")
+    c.drawString(leftRightColumn, currenty - 30, "PROGRAMA:")
+    c.drawString(lLeft, currenty - 50, "APELLIDOS Y NOMBRES:")
+    c.drawString(lLeft, currenty - 70, "PLAN DE ESTUDIOS:")
+    c.drawString(lLeft, currenty - 90, "PERIODO:")
 
     setF(7)
 
     c.drawString(lLeft + 45, currenty - 30, facultad)
     programPara = Paragraph(programa, style)
     programPara.wrapOn(c, lRight - (leftRightColumn + 45), 1000)
-    programPara.drawOn(c, leftRightColumn + 45, currenty - 32.5 - programPara.height + fontzise)
+    programPara.drawOn(
+        c, leftRightColumn + 45, currenty - 32.5 - programPara.height + fontzise
+    )
     nombrePara = Paragraph(nombreAlumno, style)
-    nombrePara.wrapOn(c,leftRightColumn - (lLeft + 90), 1000)
+    nombrePara.wrapOn(c, leftRightColumn - (lLeft + 90), 1000)
     nombrePara.drawOn(c, lLeft + 90, currenty - 52.5 - nombrePara.height + fontzise)
-    c.drawString(lLeft+ 75, currenty - 70, planEstudios)
-    c.drawString(lLeft+ 37, currenty - 90, periodo)
+    c.drawString(lLeft + 75, currenty - 70, planEstudios)
+    c.drawString(lLeft + 37, currenty - 90, periodo)
 
     leftRightColumn = lLeft + 260
 
-    setF(7, 'Arial-Bold')
+    setF(7, "Arial-Bold")
 
-    c.drawString(leftRightColumn, currenty - 50, 'NUM. EXP.:')
-    c.drawString(leftRightColumn, currenty - 70, 'DOCUENTO DE IDENTIDAD: ')
+    c.drawString(leftRightColumn, currenty - 50, "NUM. EXP.:")
+    c.drawString(leftRightColumn, currenty - 70, "DOCUENTO DE IDENTIDAD: ")
 
     setF(7)
 
@@ -623,59 +755,94 @@ def reporte_matricula(data):
 
     currenty -= 120
 
-    #-----------------------tabla-------------------------#
+    # -----------------------tabla-------------------------#
 
     style.alignment = 0
 
     for value in cursos:
         for i in range(len(value)):
-            if i == 3 and 'ASIGNATURA' not in value:
+            if i == 3 and "ASIGNATURA" not in value:
                 value[i] = Paragraph(value[i], style)
 
-    tablaCursos = Table(cursos, [maxWidth*0.05,maxWidth*0.1,maxWidth*0.1,maxWidth*0.45,maxWidth*0.1,maxWidth*0.1,maxWidth*0.1,])
+    tablaCursos = Table(
+        cursos,
+        [
+            maxWidth * 0.05,
+            maxWidth * 0.1,
+            maxWidth * 0.1,
+            maxWidth * 0.45,
+            maxWidth * 0.1,
+            maxWidth * 0.1,
+            maxWidth * 0.1,
+        ],
+    )
 
-    tableStyle = TableStyle([
-            ('GRID', (0, 0), (-1, 0), 1, (0,0,0)),
-            ('BACKGROUND', (0,0), (-1,0),colors.lightgrey),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTSIZE', (0, 0), (-1, -1), fontzise),
-            ('BOX', (0, 0), (-1, -1), 1, colors.black),
-            ('FONTSIZE', (0,0), (-1, -1), 7),
-            ('FONTNAME', (0,0), (-1,-1), fontname),
-        ])
+    tableStyle = TableStyle(
+        [
+            ("GRID", (0, 0), (-1, 0), 1, (0, 0, 0)),
+            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("FONTSIZE", (0, 0), (-1, -1), fontzise),
+            ("BOX", (0, 0), (-1, -1), 1, colors.black),
+            ("FONTSIZE", (0, 0), (-1, -1), 7),
+            ("FONTNAME", (0, 0), (-1, -1), fontname),
+        ]
+    )
 
     tablaCursos.setStyle(tableStyle)
 
     tablaCursos.wrapOn(c, maxWidth, 1000)
-    tablaCursos.drawOn(c, lLeft, currenty-tablaCursos._height)
+    tablaCursos.drawOn(c, lLeft, currenty - tablaCursos._height)
 
-    #----------area abajo de la tabla------------#
+    # ----------area abajo de la tabla------------#
 
     currenty -= tablaCursos._height
 
     c.line(lLeft, currenty, lLeft, currenty - tablaCursos._height)
     c.line(lRight, currenty, lRight, currenty - tablaCursos._height)
-    c.line(lLeft, currenty - tablaCursos._height, lRight, currenty - tablaCursos._height)
+    c.line(
+        lLeft, currenty - tablaCursos._height, lRight, currenty - tablaCursos._height
+    )
 
-    c.line(lLeft, currenty -20, lRight, currenty - 20)
-    c.line(lLeft, currenty - tablaCursos._height + 20, lRight, currenty - tablaCursos._height + 20)
-    c.line(A4[0]/2, currenty -20, A4[0]/2, currenty - tablaCursos._height)
+    c.line(lLeft, currenty - 20, lRight, currenty - 20)
+    c.line(
+        lLeft,
+        currenty - tablaCursos._height + 20,
+        lRight,
+        currenty - tablaCursos._height + 20,
+    )
+    c.line(A4[0] / 2, currenty - 20, A4[0] / 2, currenty - tablaCursos._height)
 
-    setF(7, 'Arial-Bold')
+    setF(7, "Arial-Bold")
 
-    c.drawString(lLeft + 5, currenty - 13.5, 'OBSERVACIONES: ')
-    c.drawString(lLeft + 300, currenty - 13.5, 'TOTAL DE CREDITOS MATRICULADOS')
-    c.line(lLeft+435, currenty, lLeft + 435, currenty - 20)
-    c.drawString(lLeft + 450, currenty - 13.5, '24.00')
+    c.drawString(lLeft + 5, currenty - 13.5, "OBSERVACIONES: ")
+    c.drawString(lLeft + 300, currenty - 13.5, "TOTAL DE CREDITOS MATRICULADOS")
+    c.line(lLeft + 435, currenty, lLeft + 435, currenty - 20)
+    c.drawString(lLeft + 450, currenty - 13.5, "24.00")
 
-    c.drawString(lLeft + 5, currenty - tablaCursos._height + 7.5, 'Fecha-Hora de Matricula: 09/10/2023 - 08:34')
-    c.drawString((A4[0]/2) + 5, currenty - tablaCursos._height + 7.5, 'Fecha-Hora de Impresión: 09/10/2023 - 08:34')
+    c.drawString(
+        lLeft + 5,
+        currenty - tablaCursos._height + 7.5,
+        "Fecha-Hora de Matricula: 09/10/2023 - 08:34",
+    )
+    c.drawString(
+        (A4[0] / 2) + 5,
+        currenty - tablaCursos._height + 7.5,
+        "Fecha-Hora de Impresión: 09/10/2023 - 08:34",
+    )
 
-    c.line(lLeft + 70, currenty - tablaCursos._height + 45, lLeft + 170, currenty - tablaCursos._height + 45)
-    c.drawString(lLeft + 79, currenty - tablaCursos._height + 37, 'FIRMA DEL ESTUDIANTE')
+    c.line(
+        lLeft + 70,
+        currenty - tablaCursos._height + 45,
+        lLeft + 170,
+        currenty - tablaCursos._height + 45,
+    )
+    c.drawString(
+        lLeft + 79, currenty - tablaCursos._height + 37, "FIRMA DEL ESTUDIANTE"
+    )
 
     currenty -= tablaCursos._height
 
-    c.drawImage(img_buffer, (A4[0]/2) - 50, currenty - 110, 100, 100)
+    c.drawImage(img_buffer, (A4[0] / 2) - 50, currenty - 110, 100, 100)
 
     c.save()
