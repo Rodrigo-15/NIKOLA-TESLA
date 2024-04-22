@@ -408,6 +408,7 @@ class ProcedureListSerializer(serializers.Serializer):
     state_date_description = serializers.SerializerMethodField(
         source="get_state_date_description"
     )
+    for_the_area_id = serializers.IntegerField()
 
     def get_person_full_name(self, obj):
         file = obj.file
