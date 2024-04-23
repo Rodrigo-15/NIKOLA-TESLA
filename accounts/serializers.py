@@ -11,6 +11,7 @@ class UserSerializer(serializers.Serializer):
     last_login = serializers.DateTimeField()
     first_name = serializers.CharField(max_length=200)
     last_name = serializers.CharField(max_length=200)
+    is_authenticated = serializers.BooleanField()
 
 
 class GroupSerializer(serializers.Serializer):

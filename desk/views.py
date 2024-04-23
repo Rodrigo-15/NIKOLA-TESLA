@@ -36,6 +36,7 @@ from desk.api import (
     api_get_procedures,
     api_login,
     api_get_action_procedure,
+    api_get_expiration_date,
 )
 
 
@@ -54,6 +55,7 @@ def generete_code_hash(request):
 
 
 @api_view(["GET"])
+@check_is_auth()
 def get_procedures(request):
     if request.method == "GET":
         return api_get_procedures(request)
@@ -243,3 +245,9 @@ def save_procedure_action(request):
 def get_action_procedure(request):
     if request.method == "GET":
         return api_get_action_procedure(request)
+
+
+@api_view(["POST"])
+def get_expiration_date(request):
+    if request.method == "POST":
+        return api_get_expiration_date(request)

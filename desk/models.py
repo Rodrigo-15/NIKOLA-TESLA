@@ -351,7 +351,7 @@ class ProcedureTracing(models.Model):
     action = models.ForeignKey(
         procedureAction, on_delete=models.CASCADE, null=True, blank=True
     )
-    action_description = models.TextField()
+    action_description = models.TextField(null=True, blank=True)
     is_finished = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)
     updated_at = models.DateTimeField(auto_now_add=False, auto_now=True)
