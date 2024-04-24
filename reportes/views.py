@@ -1359,12 +1359,19 @@ def reporte_academico_function(expediente_id):
             num_acta_extracurricular = p.num_acta_ref
         else:
             num_acta_extracurricular = str(p.curso_grupo.id).zfill(6)
+
+        if p.curso_grupo.grupo == "DI":
+            modalidad = "EXAMEN DE SUFICIENCIA"
+            ejecutado = f'{p.curso_grupo.fecha_inicio.strftime("%d/%m/%Y")}'
+        else:
+            modalidad = "EXTRACURRICULAR"
+            ejecutado = f'{p.curso_grupo.fecha_inicio.strftime("%d/%m/%Y")} AL {p.curso_grupo.fecha_termino.strftime("%d/%m/%Y")}'
         cursos_extracurricular.append(
             {
                 "curso": p.curso_grupo.curso.nombre,
-                "modalidad": "EXTRACURRICULAR",
+                "modalidad": modalidad,
                 "resolucion": p.curso_grupo.resolucion or "",
-                "ejecutado": f'{p.curso_grupo.fecha_inicio.strftime("%d/%m/%Y")} AL {p.curso_grupo.fecha_termino.strftime("%d/%m/%Y")}',
+                "ejecutado": ejecutado,
                 "nota": promedio_final,
                 "docente": p.curso_grupo.docente.persona.get_full_name(),
                 "acta": num_acta_extracurricular,
