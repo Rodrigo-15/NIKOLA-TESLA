@@ -49,6 +49,7 @@ from reportes.api import (
     api_get_reporte_economico_alumno_pdf,
     api_get_reporte_pensiones_programas_excel,
     api_get_reporte_programas_excel,
+    api_generate_diploma_pdf,
 )
 
 
@@ -615,92 +616,6 @@ def generate_txt_bach(request):
 
 
 @api_view(["GET"])
-def generate_diploma_pdf(request):
-    if request.method == "GET":
-        expediente_id = request.GET.get("expediente_id")
-        if expediente_id == None:
-            return Response(
-                {"error": "No se encontro el expediente"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        expediente = Expediente.objects.filter(id=expediente_id).first()
-
-        if expediente == None:
-            return Response(
-                {"error": "No se encontro el expediente"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        num_doc = expediente.persona.numero_documento
-        persona = (
-            expediente.persona.nombres
-            + " "
-            + expediente.persona.apellido_paterno
-            + " "
-            + expediente.persona.apellido_materno
-        )
-        nombres = expediente.persona.nombres
-        apellidos = (
-            expediente.persona.apellido_paterno
-            + " "
-            + expediente.persona.apellido_materno
-        )
-        programa = expediente.programa.nombre
-        programa_id = expediente.programa
-        facultad_id = expediente.programa.facultad.id
-
-        data_matricula = Matricula.objects.filter(expediente=expediente_id)
-
-        curso_grupo_ids = list(data_matricula.values_list("curso_grupo", flat=True))
-
-        data_curso = CursoGrupo.objects.filter(id__in=curso_grupo_ids)
-
-        docentes = list(set([curso.docente.full_name() for curso in data_curso]))
-        cursos = [grupocurso.curso.nombre for grupocurso in data_curso]
-        creditos = [grupocurso.curso.creditos for grupocurso in data_curso]
-        notas = [matricula.promedio_final for matricula in data_matricula]
-
-        curso_nota = []
-
-        for i in range(len(cursos)):
-            curso_nota.append([cursos[i], notas[i], creditos[i]])
-
-        if expediente.programa.tipo.id == 3:
-            data = {
-                "num_doc": num_doc,
-                "persona": persona,
-                "nombres": nombres,
-                "apellidos": apellidos,
-                "programa": programa,
-                "programa_id": programa_id,
-                "fecha_inicio": expediente.periodo.fecha_inicio,
-                "fecha_final": expediente.periodo.fecha_fin,
-                "docentes": docentes,
-                "cursos": curso_nota,
-                "codigo_diploma": expediente.codigo_diploma,
-                "fecha_diploma": expediente.fecha_diploma,
-                "horas_academicas": expediente.programa.horas_academicas,
-                "resolucion": expediente.res_diploma,
-                "resolucion_directoral": expediente.res_dirc_ingreso,
-                "fecha_inicio": expediente.fecha_inicio,
-                "fecha_fin": expediente.fecha_fin,
-            }
-            path_return = diploma_diplomado(data)
-        else:
-            data = {
-                "num_doc": num_doc,
-                "persona": persona,
-                "nombres": nombres,
-                "apellidos": apellidos,
-                "programa": programa,
-                "programa_id": programa_id,
-                "facultad_id": facultad_id,
-            }
-            path_return = diploma_egresado(data)
-        return Response({"path": path_return})
-
-
-@api_view(["GET"])
 def get_charge_procedure_pdf(request):
     user_id = request.GET.get("user_id")
     procedure_charge_id = request.GET.get("procedure_charge_id")
@@ -1003,3 +918,9 @@ def get_reporte_pensiones_programas_excel(request):
 def get_reporte_programas_excel(request):
     if request.method == "GET":
         return api_get_reporte_programas_excel(request)
+
+
+@api_view(["GET"])
+def generate_diploma_pdf(request):
+    if request.method == "GET":
+        return api_generate_diploma_pdf(request)
