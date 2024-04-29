@@ -36,6 +36,7 @@ from desk.views import (
     desk_notification,
     save_procedure_action,
     get_action_procedure,
+    get_expiration_date,
 )
 
 urlpatterns = [
@@ -102,4 +103,5 @@ urlpatterns = [
     ),
     path("save_procedure_action", save_procedure_action),
     path("get_action_procedure", get_action_procedure),
+    path("get_expiration_date", get_expiration_date),
 ]

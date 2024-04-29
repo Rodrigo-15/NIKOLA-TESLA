@@ -1,90 +1,127 @@
 from backend.settings import DEBUG, URL_LOCAL, URL_PROD
+from desk.NAMES import APP_NAME
 
 url = URL_LOCAL if DEBUG else URL_PROD
+desk = APP_NAME
 
-urls_dict = {
-    "get_menu": f"{url}core/get_menu",
-    "desk": {
-        "login": f"{url}desk/login/",  # post
-        "get_areas": f"{url}desk/get_areas",  # get
-        "get_user_for_area": f"{url}desk/get_user_for_area",  # post
-        "get_dashboard_dates_desk": f"{url}desk/get_dashboard_dates_desk",  # get
-        "get_dashboard_data_desk": f"{url}desk/get_dashboard_data_desk",  # get
-        "desk_notification": f"{url}desk/desk_notification",  # post
-        "get_action_procedure": f"{url}desk/get_action_procedure",  # get
-        "headquarters": {
-            "get": f"{url}desk/headquarters/",  # get
-            "create": f"{url}desk/headquarters/",  # post
-            "update": f"{url}desk/headquarters/id/",  # put
-        },
-        "procedure_requirement": {
-            "get": f"{url}desk/procedure_requirement/",  # get
-            "create": f"{url}desk/procedure_requirement/",  # post
-            "update": f"{url}desk/procedure_requirement/id/",  # put
-        },
-        "procedure_tracing": {
-            "get_tracings_to_approved_for_area": f"{url}desk/get_tracings_to_approved_for_area",  # get
-            "get_tracings_to_approved_for_user": f"{url}desk/get_tracings_to_approved_for_user",  # get
-            "approve_tracing": f"{url}desk/approve_tracing",  # post
-            "save_derive_procedure": f"{url}desk/save_derive_procedure",  # post
-            "finally_procedure": f"{url}desk/finally_procedure",  # post
-            "archive_procedure": f"{url}desk/archive_procedure",  # post
-            "anexar_procedure": f"{url}desk/anexar_procedure",  # post
-            "save_procedure_action": f"{url}desk/save_procedure_action",  # post
-        },
-        "procedure_type": {
-            "get": f"{url}desk/procedure_type/",  # get
-            "create": f"{url}desk/procedure_type/",  # post
-            "update": f"{url}desk/procedure_type/id/",  # put
-        },
-        "pocedure_procreqs": {
-            "get": f"{url}desk/procedure_procreqs/",  # get
-            "get_procedures_requirements": f"{url}desk/get_procedures_requirements",  # post
-            "create": f"{url}desk/procedure_procreqs/",  # post
-            "update": f"{url}desk/procedure_procreqs/id/",  # put
-        },
-        "procedures": {
-            "get_procedures": f"{url}desk/get_procedures",
-            "get_procedures_in_started": f"{url}desk/get_procedures_in_started",
-            "get_procedures_for_user": f"{url}desk/get_procedures_for_user",
-            "get_procedures_in_assigned": f"{url}desk/get_procedures_in_assigned",
-            "get_procedures_finished": f"{url}desk/get_procedures_finished",
-            "get_procedure_and_tracing_by_id": f"{url}desk/get_procedure_and_tracing_by_id",
-            "get_tracings_to_approved_for_external": f"{url}desk/get_tracings_to_approved_for_external",
-            "save_procedure": f"{url}desk/save_procedure",
-            "update_procedure": f"{url}desk/update_procedure",
-            "get_procedure_by_id": f"{url}desk/get_procedure_by_id/",
-            "get_procedures_charges": f"{url}desk/get_procedures_charges",
-            "get_procedures_derivations": f"{url}desk/get_procedures_derivations",
-            "create_procedure_charge": f"{url}desk/create_procedure_charge",
-        },
-        "reports": {
-            "get_procedures_reports": f"{url}desk/get_procedures_reports",
-            "get_process_tracking_sheet_pdf": url
-            + "reportes/get_process_tracking_sheet_pdf/?procedure_id=",
-            "get_charge_procedure_pdf": url + "reportes/get_charge_procedure_pdf/",
-            "get_tramites_area_excel": url + "reportes/get_tramites_area_excel/",
-        },
-        "external": {
-            "save_procedure_externo": f"{url}desk/save_procedure_externo",
-            "save_procedure_externo_register": f"{url}desk/save_procedure_externo_register",
-            "get_procedure_and_tracing_by_code_number": f"{url}desk/get_procedure_and_tracing_by_code_number",
-        },
-    },
-    "core": {
-        "get_user_profile": f"{url}core/get_user_profile",
-        "change_profile_image": f"{url}core/change_profile_image",
-    },
-    "person": {
-        "get_person_list": f"{url}core/get_person_list",  # get
-        "get": f"{url}core/persona/",  # get
-        "create": f"{url}core/persona/",  # post
-        "update": f"{url}core/persona/",  # put
-        "change_profile_image": f"{url}core/change_profile_image",
-    },
-    "person_legal": {
-        "get": f"{url}core/persona_juridica/",  # get
-        "create": f"{url}core/persona_juridica/",  # post
-        "update": f"{url}core/persona_juridica/",  # put
-    },
-}
+
+def get_urls(auth, app_name) -> dict:
+    try:
+        if auth:
+            urls_dict = {
+                "get_menu": f"{url}core/get_menu",
+                "desk": {
+                    "login": f"{url}desk/login/",  # post
+                    "get_areas": f"{url}desk/get_areas",  # get
+                    "get_user_for_area": f"{url}desk/get_user_for_area",  # post
+                    "get_dashboard_dates_desk": f"{url}desk/get_dashboard_dates_desk",  # get
+                    "get_dashboard_data_desk": f"{url}desk/get_dashboard_data_desk",  # get
+                    "desk_notification": f"{url}desk/desk_notification",  # post
+                    "get_action_procedure": f"{url}desk/get_action_procedure",  # get
+                    "headquarters": {
+                        "get": f"{url}desk/headquarters/",  # get
+                        "create": f"{url}desk/headquarters/",  # post
+                        "update": f"{url}desk/headquarters/id/",  # put
+                    },
+                    "procedure_requirement": {
+                        "get": f"{url}desk/procedure_requirement/",  # get
+                        "create": f"{url}desk/procedure_requirement/",  # post
+                        "update": f"{url}desk/procedure_requirement/id/",  # put
+                    },
+                    "procedure_tracing": {
+                        "get_tracings_to_approved_for_area": f"{url}desk/get_tracings_to_approved_for_area",  # get
+                        "get_tracings_to_approved_for_user": f"{url}desk/get_tracings_to_approved_for_user",  # get
+                        "approve_tracing": f"{url}desk/approve_tracing",  # post
+                        "save_derive_procedure": f"{url}desk/save_derive_procedure",  # post
+                        "finally_procedure": f"{url}desk/finally_procedure",  # post
+                        "archive_procedure": f"{url}desk/archive_procedure",  # post
+                        "anexar_procedure": f"{url}desk/anexar_procedure",  # post
+                        "save_procedure_action": f"{url}desk/save_procedure_action",  # post
+                    },
+                    "procedure_type": {
+                        "get": f"{url}desk/procedure_type/",  # get
+                        "create": f"{url}desk/procedure_type/",  # post
+                        "update": f"{url}desk/procedure_type/id/",  # put
+                    },
+                    "procedure_procreqs": {
+                        "get": f"{url}desk/procedure_procreqs/",  # get
+                        "get_procedures_requirements": f"{url}desk/get_procedures_requirements",  # post
+                        "create": f"{url}desk/procedure_procreqs/",  # post
+                        "update": f"{url}desk/procedure_procreqs/id/",  # put
+                    },
+                    "procedures": {
+                        "get_procedures": f"{url}desk/get_procedures",
+                        "get_procedures_in_started": f"{url}desk/get_procedures_in_started",
+                        "get_procedures_for_user": f"{url}desk/get_procedures_for_user",
+                        "get_procedures_in_assigned": f"{url}desk/get_procedures_in_assigned",
+                        "get_procedures_finished": f"{url}desk/get_procedures_finished",
+                        "get_procedure_and_tracing_by_id": f"{url}desk/get_procedure_and_tracing_by_id",
+                        "get_tracings_to_approved_for_external": f"{url}desk/get_tracings_to_approved_for_external",
+                        "save_procedure": f"{url}desk/save_procedure",
+                        "update_procedure": f"{url}desk/update_procedure",
+                        "get_procedure_by_id": f"{url}desk/get_procedure_by_id/",
+                        "get_procedures_charges": f"{url}desk/get_procedures_charges",
+                        "get_procedures_derivations": f"{url}desk/get_procedures_derivations",
+                        "create_procedure_charge": f"{url}desk/create_procedure_charge",
+                        "get_expiration_date": f"{url}desk/get_expiration_date",
+                    },
+                    "reports": {
+                        "get_procedures_reports": f"{url}desk/get_procedures_reports",
+                        "get_process_tracking_sheet_pdf": url
+                        + "reportes/get_process_tracking_sheet_pdf/?procedure_id=",
+                        "get_charge_procedure_pdf": url
+                        + "reportes/get_charge_procedure_pdf/",
+                        "get_tramites_area_excel": url
+                        + "reportes/get_tramites_area_excel/",
+                    },
+                    "external": {
+                        "save_procedure_externo": f"{url}desk/save_procedure_externo",
+                        "save_procedure_externo_register": f"{url}desk/save_procedure_externo_register",
+                        "get_procedure_and_tracing_by_code_number": f"{url}desk/get_procedure_and_tracing_by_code_number",
+                    },
+                },
+                "core": {
+                    "get_user_profile": f"{url}core/get_user_profile",
+                    "change_profile_image": f"{url}core/change_profile_image",
+                },
+                "person": {
+                    "get_person_list": f"{url}core/get_person_list",  # get
+                    "get": f"{url}core/persona/",  # get
+                    "create": f"{url}core/persona/",  # post
+                    "update": f"{url}core/persona/",  # put
+                    "change_profile_image": f"{url}core/change_profile_image",
+                },
+                "person_legal": {
+                    "get": f"{url}core/persona_juridica/",  # get
+                    "create": f"{url}core/persona_juridica/",  # post
+                    "update": f"{url}core/persona_juridica/",  # put
+                },
+            }
+        else:
+            urls_dict = {
+                "person": {
+                    "get_person_list": f"{url}core/get_person_list",  # get
+                    "get": f"{url}core/persona/",  # get
+                },
+                "person_legal": {
+                    "get": f"{url}core/persona_juridica/",  # get
+                },
+            }
+            if app_name == desk:
+                urls_dict["desk"] = {
+                    "login": f"{url}desk/login/",
+                    "procedure_requirement": {
+                        "get": f"{url}desk/procedure_requirement/",  # get
+                    },
+                    "external": {
+                        "save_procedure_externo": f"{url}desk/save_procedure_externo",
+                        "save_procedure_externo_register": f"{url}desk/save_procedure_externo_register",
+                        "get_procedure_and_tracing_by_code_number": f"{url}desk/get_procedure_and_tracing_by_code_number",
+                    },
+                }
+            else:
+                urls_dict = {}
+        return urls_dict
+
+    except Exception as e:
+        return {"error": str(e)}

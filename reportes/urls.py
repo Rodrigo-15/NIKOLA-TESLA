@@ -33,11 +33,6 @@ urlpatterns = [
         name="get_reporte_programas_excel",
     ),
     path(
-        "reporte_programa_function/",
-        reporte_programa_function,
-        name="reporte_programa_function",
-    ),
-    path(
         "get_reporte_actanotas_pdf/",
         get_reporte_actanotas_pdf,
         name="get_reporte_actanotas_pdf",

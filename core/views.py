@@ -2,7 +2,7 @@ from functools import reduce
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
+from core.urls_dict import get_urls
 from core import urls_dict
 from core.models import *
 from core.serializers import *
@@ -103,7 +103,10 @@ def get_menu(request):
 
 @api_view(["GET"])
 def paths(request):
-    return Response(urls_dict.urls_dict)
+    user = request.user
+    app_name = request.headers["app-name"]
+    urls = get_urls(user.is_authenticated, app_name)
+    return Response(urls)
 
 
 @api_view(["POST"])

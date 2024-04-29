@@ -43,6 +43,7 @@ CORS_ALLOW_HEADERS = [
     "origin",
     "user-agent",
     "app-name",
+    "user",
 ]
 
 # Application definition
