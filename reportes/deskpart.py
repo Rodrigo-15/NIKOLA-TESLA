@@ -410,7 +410,6 @@ def get_process_tracking_sheet(data) -> str:
 
 def get_charge_procedure(data) -> str:
     try:
-
         area = data["area"]["nombre"].replace(" ", "_")
         charge_number = data["charge_number"]
         milisecond = str(int(round(time.time() * 1000)))
@@ -471,13 +470,14 @@ def get_charge_procedure(data) -> str:
         tramites = []
         i = 0
         for value in data["procedure"]:
+            print(value)
             fechaaa, horaaa = value["created_at"].split(" ", 1)
             tramites.insert(
                 i,
                 [
                     value["code_number"],
-                    value["subject"].upper(),
-                    value["action_description"].upper(),
+                    value["subject"],
+                    value["action_description"],
                     value["to_area"]["nombre"].upper(),
                     value["number_of_sheets"],
                     fechaaa,

@@ -70,12 +70,6 @@ class ProcedureTracingsList(serializers.Serializer):
             return area.nombre
         return "No Asignado"
 
-    def get_area_name(self, obj):
-        area = Area.objects.filter(id=obj.from_area_id).first()
-        if area:
-            return area.nombre
-        return "No Asignado"
-
     def get_estate(self, obj):
         # si es el primer registro de trazabilidad poner el estado en Iniciado si no poner en proceso
         data = (
