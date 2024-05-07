@@ -7,7 +7,7 @@ class UserController:
     def create_users(type=None):
         # tipes: alumno, docente, economico
         personas = Persona.objects.filter(
-            is_active=True, expediente__promocion="2023-I"
+            is_active=True, expediente__promocion="2024-I"
         )
         print(len)
         personas_list = []
