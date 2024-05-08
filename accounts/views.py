@@ -267,7 +267,7 @@ def resend_email(request):
 
         resend.api_key = EMAIL_KEY
         personas = Persona.objects.filter(
-            is_active=True, expediente__promocion="2023-I", numero_documento ="70246018"
+            is_active=True, expediente__promocion="2024-I",
         )
         personas_count = 0
         link_de_consulta = f"https://intranet.postgradounap.edu.pe/#/"
