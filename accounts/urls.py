@@ -13,4 +13,6 @@ urlpatterns = [
     ),
     path("rename_files/", views.rename_files, name="rename_files"),
     path("importar_persona_expediente_xlsx", views.importar_persona_expediente_xlsx),
+    path("resend_email", views.resend_email, name="resend_email"),
+    
 ]

@@ -9,7 +9,6 @@ class UserController:
         personas = Persona.objects.filter(
             is_active=True, expediente__promocion="2024-I"
         )
-        print(len)
         personas_list = []
         for persona in personas:
             if persona.user:

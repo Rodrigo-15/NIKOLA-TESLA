@@ -255,3 +255,186 @@ def importar_persona_expediente_xlsx(request):
                 "expedientes": count_expedientes,
             }
         )
+
+
+@api_view(["GET"])
+def resend_email(request):
+    if request.method == "GET":
+        import resend
+        from backend.settings import EMAIL_FROM, EMAIL_KEY, URL_PROD
+
+        resend.api_key = EMAIL_KEY
+        personas = Persona.objects.filter(
+            is_active=True, expediente__promocion="2022-II", numero_documento = "73134712"
+        )
+        personas_count = 0
+        link_de_consulta = f"https://intranet.postgradounap.edu.pe/#/"
+        logoUnap = f"{URL_PROD}media/config/logo_UNAP.svg"
+        for persona in personas:
+            if persona.correo:
+                html_content = f"""
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Bienvenida a la Intranet</title>
+                    <style>
+                        body {{
+                            font-family: Arial, sans-serif;
+                            margin: 0;
+                            padding: 0;
+                        }}
+
+                        .header {{
+                            background-color: #f2f2f2;
+                            padding: 20px;
+                            text-align: center;
+                        }}
+
+                        .content {{
+                            margin: 20px;
+                            text-align: center;
+                        }}
+
+                        .footer {{
+                            background-color: #f2f2f2;
+                            padding: 10px;
+                            text-align: center;
+                            font-size: 12px;
+                        }}
+
+                        .bg-gray-100 {{
+                            background-color: #f2f2f2;
+                            padding: 20px;
+                            text-align: center;
+                        }}
+
+                        .bg-white {{
+                            background-color: #fff;
+                            padding: 20px;
+                            margin: 20px;
+                        }}
+                        
+                        .bg-slate-100 {{
+                            background-color: #708090;
+                            padding: 20px;
+                            color: #fff;
+                            text-align: center;
+                        }}
+
+                        .text-3xl {{
+                            font-size: 24px;
+                        }}
+
+                        .font-bold {{
+                            font-weight: bold;
+                        }}
+
+                        .text-primary-800 {{
+                            color: #333366;
+                        }}
+
+                        .text-xl {{
+                            font-size: 20px;
+                        }}
+
+                        .text-primary-600 {{
+                            color: #4d4dff;
+                        }}
+
+                        .text-xs {{
+                            font-size: 12px;
+                        }}
+
+                        .text-white {{
+                            color: #fff;
+                        }}
+
+                        .bg-primary {{
+                            background-color: #3b5998;
+                            color: #fff;
+                        }}
+
+                        .bg-primary:hover {{
+                            background-color: rgba(59, 89, 152, 0.9);
+                        }}
+
+                        .btn {{
+                            display: inline-block;
+                            padding: 8px 16px;
+                            margin: 10px;
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            text-decoration: none;
+                        }}
+
+                        .btn-primary {{
+                            background-color: #3b5998;
+                            color: #fff;
+                        }}
+
+                        .btn-primary:hover {{
+                            background-color: rgba(59, 89, 152, 0.9);
+                        }}
+                    </style>
+                </head>
+
+                <body>
+                    <div class="header">
+                        <div class="bg-gray-100">
+                            <img src="{logoUnap}" alt="logo-unap" style="width:180px; margin: auto;" />
+                            <div class="flex flex-col items-center">
+                                <h2 class="text-3xl font-bold text-primary-800">USUARIO DEL SISTEMA DE INTRANET</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content">
+                        <div class="bg-white">
+                            <h3 class="text-xl font-bold text-primary-600">Estimado(a) {persona.nombres} {persona.apellido_paterno} {persona.apellido_materno}</h3>
+                            <p class="text-xs">La Escuela de Posgrado de la Universidad Nacional de la Amazonia Peruana le da la bienvenida a los sistemas de intranet.</p>
+                        </div>
+
+                        <div class="flex flex-col items-center p-4">
+                            <a href="{link_de_consulta}" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="icon icon-tabler icons-tabler-outline icon-tabler-download">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
+                                    <path d="M7 11l5 5l5 -5"></path>
+                                    <path d="M12 4l0 12"></path>
+                                </svg>
+                                Sistema de intranet
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="footer">
+                        <div class="bg-slate-100">
+                            <p>© 2024 Escuela de Postgrado - UNAP</p>
+                        </div>
+                    </div>
+                </body>
+
+                </html>"""
+
+                params = {
+                    "from": f"Notificación <{EMAIL_FROM}>",
+                    "to": [f"{persona.correo}"],
+                    "subject": "CORREO INSTITUCIONAL PARA LOS SISTEMAS DE INTRANET EPG - UNAP",
+                    "html": html_content,
+                    "headers": {"X-Entity-Ref-ID": "123456789"},
+                    # "attachments": [{"filename": "invoice.pdf", "content": list(f)}],
+                }
+
+                resend.Emails.send(params)  
+                personas_count += 1
+
+
+        return Response(
+            {
+                "correos_enviados": personas_count,
+            }
+        )
