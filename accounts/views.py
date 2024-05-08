@@ -267,7 +267,7 @@ def resend_email(request):
 
         resend.api_key = EMAIL_KEY
         personas = Persona.objects.filter(
-            is_active=True, expediente__promocion="2023-I", numero_documento="70246018"
+            is_active=True, expediente__promocion="2024-I"
         )
         personas_count = 0
         link_de_consulta = f"https://intranet.postgradounap.edu.pe/#/"
@@ -282,16 +282,11 @@ def resend_email(request):
                     "link_de_consulta": link_de_consulta,
                 }
 
-                print(persona.correo)
-                print(persona.full_name)
-                print(persona.numero_documento)
-                print(persona.user.username)
-
                 html_content = render_to_string('email_template.html', context)
 
                 params = {
                     "from": f"Notificación <{EMAIL_FROM}>",
-                    "to": [f"jrengifog@postgradounap.edu.pe"],  # persona.correo
+                    "to": [f"{persona.correo}"],  # persona.correo
                     "subject": "CORREO INSTITUCIONAL PARA LOS SISTEMAS DE INTRANET EPG - UNAP",
                     "html": html_content,
                     "headers": {"X-Entity-Ref-ID": "123456789"},
