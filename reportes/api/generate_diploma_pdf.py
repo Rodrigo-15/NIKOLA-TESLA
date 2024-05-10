@@ -314,12 +314,7 @@ def diploma_egresado(data):
 
 def diploma_diplomado(data):
     try:
-        # Guardar el PDF en la carpeta media
-        media_root = settings.MEDIA_ROOT
-        pdf_folder = os.path.join(media_root)
-        if not os.path.exists(pdf_folder):
-            os.makedirs(pdf_folder)
-
+       
         # milisecond
         milisecond = str(int(round(time.time() * 1000)))
         # Crear un objeto PDF con orientación horizontal y tamaño de página A4
@@ -329,8 +324,8 @@ def diploma_diplomado(data):
         resolucion = data["resolucion"]
         resolucion_directoral = data["resolucion_directoral"]
         diplomado = programa
-        fondo1 = os.path.join(media_root, "config", "diplomado01.png")
-        fondo2 = os.path.join(media_root, "config", "diplomado02.png")
+        fondo1 = settings.MEDIA_URL + "config/diplomado01.png"
+        fondo2 = settings.MEDIA_URL + "config/diplomado02.png"
         fecha_diploma = data["fecha_diploma"]
         fecha_inicio = data["fecha_inicio"]
         fecha_fin = data["fecha_fin"]
@@ -362,15 +357,21 @@ def diploma_diplomado(data):
         month = arrayMeses[month - 1]
         month_inicio = arrayMeses[month_inicio - 1]
         month_fin = arrayMeses[month_fin - 1]
+        
+        folder_name = "pdf/diplomas/"
 
-        c = canvas.Canvas(
-            os.path.join(
-                settings.MEDIA_ROOT,
-                "diplomas",
-                f"diploma_egregasado-{num_doc}-{milisecond}.pdf",
-            ),
-            landscape(A4),
-        )
+        pdf_file_name =  f"diplomado-{num_doc}-{milisecond}.pdf"
+        # -----generar pdf-----#
+        if settings.DEBUG:
+            pdf_folder = os.path.join(settings.MEDIA_ROOT, folder_name)
+            if not os.path.exists(pdf_folder):
+                os.makedirs(pdf_folder)
+            c = canvas.Canvas(
+                os.path.join(pdf_folder, f"{pdf_file_name}"), landscape(A4),
+            )
+        else:
+            c = canvas.Canvas(pdf_file_name, A4)
+
 
         def setF(size, name="Arial"):
             fontzise = size
@@ -382,9 +383,13 @@ def diploma_diplomado(data):
             style.fontName = fontname
             style.leading = size
 
-        pdfmetrics.registerFont(TTFont("Arial", f"media/config/arial.ttf"))
-        pdfmetrics.registerFont(TTFont("Arial-Bold", f"media/config/arialbd.ttf"))
-        pdfmetrics.registerFont(TTFont("Chalisa", f"media/config/Chalisa Octavia.ttf"))
+        font_path = settings.MEDIA_URL + "config/arial.ttf"
+        font_path1 = settings.MEDIA_URL + "config/arialbd.ttf"
+        font_path2 = settings.MEDIA_URL + f"config/Chalisa%20Octavia.ttf"
+        # Ajusta la ruta
+        pdfmetrics.registerFont(TTFont("Arial", font_path))
+        pdfmetrics.registerFont(TTFont("Arial-Bold", font_path1))
+        pdfmetrics.registerFont(TTFont("Chalisa", font_path2))
         lTop = A4[0] - cm * 2
         lBot = cm * 2
         lLeft = cm * 2
@@ -441,23 +446,28 @@ def diploma_diplomado(data):
         texto4 = f"Resolución Directoral de Diploma N° {resolucion}."
         texto5 = f"Iquitos, {day} de {month} de {year}."
 
-        rutaJson = "media/config/autoridades.json"
 
-        with open(rutaJson, "r+") as file:
-            datosJson = json.load(file)
+        s3 = settings.CREATE_STORAGE
+        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
 
-            for value in datosJson["director"]:
-                if value["is_active"] == True:
-                    director = value["nombre"]
-                    directorCargo = value["cargo"]
+        response = s3.get_object(Bucket=bucket_name, Key="config/autoridades.json")
+        autoridades = json.loads(response["Body"].read().decode("utf-8"))
+        # cargar la firma verificando si es director y esta activo
+        director = ["", ""]
+        secretario = ["", ""]
 
-            secretario = datosJson["secretario"][0]["nombre"]
-            secretarioCargo = datosJson["secretario"][0]["cargo"]
+        
+        for item in autoridades["director"]:
+            if item["is_active"]:
+                director = [item["nombre"], item["cargo"]]
+            break
 
-        datosFirma = [
-            [director, directorCargo, ""],
-            [secretario, secretarioCargo, ""],
-        ]
+        for item in autoridades["secretario"]:
+            if item["is_active"]:
+                secretario = [item["nombre"], item["cargo"]]
+            break
+
+      
 
         modulos = data["cursos"]
 
@@ -532,18 +542,15 @@ def diploma_diplomado(data):
         xd = lBot
 
         lBot -= 15
+        setF(10)
+        c.drawCentredString(lLeft + 135, lBot + 2, director[0])
+        setF(9)
+        c.drawCentredString(lLeft + 135, lBot - 10, director[1])
 
         setF(10)
-        c.drawCentredString(lLeft + 135, lBot + 2, datosFirma[0][0])
-        setF(7)
-        c.drawCentredString(lLeft + 135, lBot - 10, datosFirma[0][1])
-        c.drawCentredString(lLeft + 135, lBot - 34, datosFirma[0][2])
-
-        setF(10)
-        c.drawCentredString(lRight - 140, lBot + 2, datosFirma[1][0])
-        setF(7)
-        c.drawCentredString(lRight - 140, lBot - 10, datosFirma[1][1])
-        c.drawCentredString(lRight - 140, lBot - 34, datosFirma[1][2])
+        c.drawCentredString(lRight - 140, lBot + 2, secretario[0])
+        setF(9)
+        c.drawCentredString(lRight - 140, lBot - 10, secretario[1])
 
         lBot = xd
 
@@ -626,13 +633,7 @@ def diploma_diplomado(data):
 
         c.save()
 
-        # retornar la ruta del archivo PDF
-        path_return = os.path.join(
-            settings.MEDIA_URL,
-            "diplomas",
-            f"diploma_egregasado-{num_doc}-{milisecond}.pdf",
-        )
-        path_return = path_return.replace("\\", "/")
+        path_return = funtion_upload_file_to_s3(pdf_file_name, folder_name)
         return path_return
     except Exception as e:
         path_return = str(e)
