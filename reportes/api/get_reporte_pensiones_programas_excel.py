@@ -116,6 +116,10 @@ def reporte_pensiones_programa_function(programa_id, promocion):
 
     reportes = []
     num = 0
+    if programa_id == 47:
+        programa_id=20
+    elif programa_id == 1 or programa_id == 2:
+        programa_id=7
     for exp in expedientes_data:
         # pensiones
         monto_pension = Pago.objects.filter(
