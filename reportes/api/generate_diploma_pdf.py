@@ -131,7 +131,7 @@ def diploma_egresado(data):
                 os.path.join(pdf_folder, f"{pdf_file_name}"), landscape(A4),
             )
         else:
-            archivoPdf = canvas.Canvas(pdf_file_name, A4)
+            archivoPdf = canvas.Canvas(pdf_file_name, landscape(A4))
         
         background = settings.MEDIA_URL + "config/diploma.png"
 
@@ -370,7 +370,7 @@ def diploma_diplomado(data):
                 os.path.join(pdf_folder, f"{pdf_file_name}"), landscape(A4),
             )
         else:
-            c = canvas.Canvas(pdf_file_name, A4)
+            c = canvas.Canvas(pdf_file_name, landscape(A4))
 
 
         def setF(size, name="Arial"):
