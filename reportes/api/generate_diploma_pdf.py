@@ -324,10 +324,10 @@ def diploma_diplomado(data):
         resolucion = data["resolucion"]
         resolucion_directoral = data["resolucion_directoral"]
         diplomado = programa
-        # fondo1 = settings.MEDIA_URL + "config/diplomado01.png"
-        # fondo2 = settings.MEDIA_URL + "config/diplomado02.png"
-        fondo1 =os.path.join(settings.MEDIA_ROOT, f"config/diplomado01.png")
-        fondo2 = os.path.join(settings.MEDIA_ROOT, f"config/diplomado02.png")
+        fondo1 = settings.MEDIA_URL + "config/diplomado01.png"
+        fondo2 = settings.MEDIA_URL + "config/diplomado02.png"
+        #fondo1 =os.path.join(settings.MEDIA_ROOT, f"config/diplomado01.png")
+        #fondo2 = os.path.join(settings.MEDIA_ROOT, f"config/diplomado02.png")
         fecha_diploma = data["fecha_diploma"]
         fecha_inicio = data["fecha_inicio"]
         fecha_fin = data["fecha_fin"]

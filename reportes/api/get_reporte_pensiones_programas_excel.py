@@ -116,15 +116,20 @@ def reporte_pensiones_programa_function(programa_id, promocion):
 
     reportes = []
     num = 0
-    if programa_id == 47:
-        programa_id=20
-    elif programa_id == 1 or programa_id == 2:
-        programa_id=7
+    print(programa_id)
+    if programa_id == "47":
+        program=20
+    elif programa_id== "1" or programa_id=="2":
+        program=7
+    else:
+        program = programa_id
+    
+    print(program)
     for exp in expedientes_data:
         # pensiones
         monto_pension = Pago.objects.filter(
             numero_documento=exp.persona.numero_documento,
-            concepto__programa_id=programa_id,
+            concepto__programa_id=program,
         ).aggregate(Sum("monto"))["monto__sum"]
         if monto_pension == None:
             monto_pension = 0
