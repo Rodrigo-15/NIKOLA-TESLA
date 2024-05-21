@@ -632,25 +632,21 @@ def get_charge_procedure_pdf(request):
             data={"message": "El usuario no tiene un area asignada"},
         )
 
-    procedure1 = ProcedureSerializer(
-        Procedure.objects.filter(id=procedure_charge_id).first()
-    ).data
+    procedure_charge = ProcedureCharge.objects.filter(id=procedure_charge_id).first()
 
-    year, hora = procedure1["created_at"].split(" ", 1)
+    text_charge_number = procedure_charge.correlative
+    
+    fecha = procedure_charge.created_at.strftime("%d/%m/%Y")
+    hora = procedure_charge.created_at.strftime("%H:%M %p")
+    anio = procedure_charge.created_at.strftime("%Y")
 
-    hora = hora.replace("P", "")
-    hora = hora.replace("M", "")
-    hora = hora.replace("A", "")
-
-    idUsuarioOriginal = procedure1["user"]
+    idUsuarioOriginal = procedure_charge.user
     usuarioOriginal = PersonaSerializerFilter(
         Persona.objects.filter(user_id=idUsuarioOriginal).first()
     ).data
 
     data_area = cargo_area.area.all()
     areas = AreaSerializer(data_area, many=True).data
-    fecha = datetime.datetime.now().strftime("%d/%m/%Y")
-    anio = datetime.datetime.now().year
     usuario = Persona.objects.filter(user_id=user_id).first()
 
     trackins = ProcedureTracing.objects.filter(
@@ -674,13 +670,10 @@ def get_charge_procedure_pdf(request):
         serialized_procedure["action_description"] = trackin.action_description
         obj_procedure.append(serialized_procedure)
 
-    procedure_charge = ProcedureCharge.objects.filter(id=procedure_charge_id).first()
-
-    text_charge_number = procedure_charge.correlative
-
+    
     final_data = {
         "area": dict(areas[0]),
-        "fecha": year,
+        "fecha": fecha,
         "hora": hora,
         "anio": anio,
         "usuario": PersonaSerializerFilter(usuario).data,
@@ -689,6 +682,7 @@ def get_charge_procedure_pdf(request):
         "charge_number": text_charge_number,
         "original_user": usuarioOriginal,
     }
+    print(final_data)
     path = get_charge_procedure(final_data)
     return Response({"path": path}, status=status.HTTP_200_OK)
 

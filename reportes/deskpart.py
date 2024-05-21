@@ -470,7 +470,6 @@ def get_charge_procedure(data) -> str:
         tramites = []
         i = 0
         for value in data["procedure"]:
-            print(value)
             fechaaa, horaaa = value["created_at"].split(" ", 1)
             tramites.insert(
                 i,
