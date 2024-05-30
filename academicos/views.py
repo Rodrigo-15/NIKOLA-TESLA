@@ -687,7 +687,7 @@ def get_progreso_academico_by_expediente_id(request):
 def get_periodos_by_expediente_id(request):
     expediente_id = request.data.get("expediente_id")
     periodos = (
-        Matricula.objects.filter(expediente__id=expediente_id)
+        Matricula.objects.filter(expediente__id=expediente_id, is_retired=False)
         .values(
             "periodo__id",
             "periodo__nombre",
