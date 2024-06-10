@@ -61,7 +61,7 @@ def get_cursos_by_programa_id(request):
             .first()
         )
         obj_pago_ciclo = (
-            Matricula.objects.filter(expediente_id=expediente_id, is_retired = False)
+            Matricula.objects.filter(expediente_id=expediente_id, is_retirado = False)
             .distinct("curso_grupo__curso__ciclo")
             .values("curso_grupo__curso__ciclo")
             .order_by("-curso_grupo__curso__ciclo")
@@ -141,7 +141,7 @@ def get_cursos_by_programa_id(request):
 
         # ciclos ya matriculados
         obj_ciclo = (
-            Matricula.objects.filter(expediente_id=expediente_id, is_retired = False)
+            Matricula.objects.filter(expediente_id=expediente_id, is_retirado = False)
             .distinct("curso_grupo__curso__ciclo")
             .values("curso_grupo__curso__ciclo")
             .order_by("-curso_grupo__curso__ciclo")
