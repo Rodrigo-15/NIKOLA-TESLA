@@ -30,7 +30,7 @@ Password:
 ```
 ### Correr el Servidoras
 ```
-python manage.py runserver 192.168.16.184:8000
+
 daphne -b 192.168.16.184 -p 8000 backend.asgi:application
 ```
 

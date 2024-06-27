@@ -12,13 +12,7 @@ def api_get_procedures(request):
         query = request.GET.get("query")
         date = request.GET.get("date")
 
-        procedure_tracings = ProcedureTracing.objects.filter()
-
-        proceduretracing = ProcedureTracingSerializer(procedure_tracings, many=True)
-
-        procedures = Procedure.objects.filter(
-            id__in=[procedure["procedure"] for procedure in proceduretracing.data]
-        )
+        procedures = Procedure.objects.all()
         procedures = (
             procedures.filter(
                 Q(code_number__icontains=query)
