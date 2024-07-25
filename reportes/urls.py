@@ -88,4 +88,9 @@ urlpatterns = [
         get_tramites_area_excel,
         name="get_tramites_area_excel",
     ),
+    path(
+        "get_reporte_matriculas_excel/",
+        get_reporte_matriculas_excel,
+        name="get_reporte_matriculas_excel",
+    ),
 ]

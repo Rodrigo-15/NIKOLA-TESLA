@@ -50,6 +50,7 @@ from reportes.api import (
     api_get_reporte_pensiones_programas_excel,
     api_get_reporte_programas_excel,
     api_generate_diploma_pdf,
+    api_get_reporte_matriculas_excel,
 )
 
 
@@ -918,3 +919,9 @@ def get_reporte_programas_excel(request):
 def generate_diploma_pdf(request):
     if request.method == "GET":
         return api_generate_diploma_pdf(request)
+
+
+@api_view(["GET"])
+def get_reporte_matriculas_excel(request):
+    if request.method == "GET":
+        return api_get_reporte_matriculas_excel(request)

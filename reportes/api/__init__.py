@@ -9,3 +9,4 @@ from .get_reporte_pensiones_programas_excel import (
 )
 from .get_reporte_programas_excel import api_get_reporte_programas_excel
 from .generate_diploma_pdf import api_generate_diploma_pdf
+from .get_reporte_matriculas_excel import api_get_reporte_matriculas_excel
