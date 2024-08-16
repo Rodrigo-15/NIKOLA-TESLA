@@ -11,6 +11,7 @@ from academicos.models import Matricula, Cursos
 from admision.models import Expediente
 from core.models import CargoArea, Etapa
 from reportes.functions import funtion_upload_file_to_s3
+from decimal import Decimal, ROUND_HALF_UP
 
 
 def api_get_reporte_academico_alumno_pdf(request):
@@ -214,7 +215,8 @@ def reporte_academico_function(expediente_id):
                     "promedio": round((ppc / creditos), 2),
                 }
             )
-            promedio_graduado = round((notas_total / creditos_total), 2)
+            promedio_graduado = Decimal(notas_total) / creditos_total
+            promedio_graduado = promedio_graduado.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         else:
             promedios_x_ciclo.append(
                 {
