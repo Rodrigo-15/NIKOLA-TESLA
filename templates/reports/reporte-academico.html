@@ -474,10 +474,10 @@
                 </tbody>
             </table>
             {% if cursos_extracurricular|length > 0 %}
+            {% for ce in cursos_extracurricular %}
             <div class="idioma">
                 <b>EXTRACURRICULAR DEL IDIOMA EXTRANJERO</b>
             </div>
-            {% for ce in cursos_extracurricular %}
             <table>
                 <tbody>
                     <tr>
