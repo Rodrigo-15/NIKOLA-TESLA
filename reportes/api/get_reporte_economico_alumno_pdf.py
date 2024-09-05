@@ -63,7 +63,8 @@ def reporte_economico_function(numero_documento):
     # COSTO TOTAL MATRICULA
     cantidad_matriculas = expediente.programa.cantidad_matriculas
     concepto = Concepto.objects.filter(
-        codigo="531", nombre="MATRICULA MAESTRIA Y DOCTORADOS"
+        codigo__in=["531", "782"], 
+        nombre__in=["MATRICULA MAESTRIA Y DOCTORADOS", "MATRICULA - POSTGRADO"]
     ).first()
     precio_matricula = 0
 

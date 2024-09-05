@@ -228,7 +228,6 @@ def reporte_academico_function(expediente_id):
     # EXTRACURRICULARES
     obj_extracurricular = Matricula.objects.filter(
         expediente_id=expediente_id,
-        periodo_id=periodo.periodo.id,
         is_retirado=False,
         is_cerrado=True,
         curso_grupo__curso__plan_estudio__programa__isnull=True,
