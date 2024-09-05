@@ -304,7 +304,7 @@ def reporte_economico_alumno_api(request):
         monto_pagado = 0
         for pago in pagos_matricula:
             nro_cuota += 1
-            if pago.concepto_id == 48:
+            if pago.concepto_id in [48, 108]:
                 monto_pagado = pago.monto + pago_anterior
             else:
                 monto_pagado = (pago.monto - 50) + pago_anterior
@@ -494,7 +494,7 @@ def reporte_economico_expediente_api(request):
                 }
             )
             pago_anterior = monto_pagado
-            if pago.concepto_id == 48:
+            if pago.concepto_id in [48, 108]:
                 total_pago_matricula_lista += pago.monto
             else:
                 total_pago_matricula_lista += pago.monto - 50
