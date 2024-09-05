@@ -86,13 +86,13 @@ def reporte_economico_function(numero_documento):
     cantidad_pagos_programa = round((suma_pagos_programa / (costo - 1)), 0)
     cuotas_x_ciclo = round(int(cuotas / expediente.programa.cantidad_matriculas), 0)
     # PAGOS DE MATRICULA
-    pagos_matricula = pagos.filter(concepto__id__in=(48, 49)).order_by(
+    pagos_matricula = pagos.filter(concepto__id__in=(48, 49,108), expendiente=expediente.id).order_by(
         "fecha_operacion"
     )
     cantidad_pagos_matricula = pagos_matricula.count()
     suma_pagos_matricula = pagos_matricula.aggregate(Sum("monto"))["monto__sum"] or 0
     # PAGOS DE OTROS CONCEPTOS
-    pagos_otros = pagos.exclude(concepto__id__in=(48, 49)).exclude(
+    pagos_otros = pagos.exclude(concepto__id__in=(48, 49,108),expendiente=expediente.id).exclude(
         concepto__programa__codigo=expediente.programa.codigo
     )
     suma_pagos_otros = pagos_otros.aggregate(Sum("monto"))["monto__sum"] or 0
@@ -140,7 +140,7 @@ def reporte_economico_function(numero_documento):
     monto_pagado = 0
     for pago in pagos_matricula:
         nro_cuota += 1
-        if pago.concepto_id == 48:
+        if pago.concepto_id in [48, 108]:
             monto_pagado = pago.monto + pago_anterior
         else:
             monto_pagado = (pago.monto - 50) + pago_anterior
