@@ -159,7 +159,7 @@ def reporte_economico_function(numero_documento):
             }
         )
         pago_anterior = monto_pagado
-        if pago.concepto_id == 48:
+        if pago.concepto_id in [48, 108]:
             total_pago_matricula_lista += pago.monto
         else:
             total_pago_matricula_lista += pago.monto - 50
