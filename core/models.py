@@ -188,6 +188,7 @@ class CargoArea(models.Model):
         ("Lic.", "Licenciado"),
         ("Ing.", "Ingeniero"),
         ("Mtro.", "Maestro"),
+        ("Mtra.", "Maestra"),
         ("Dr.", "Doctorado"),
         ("C.P.C.", "Contador Público"),
     )
