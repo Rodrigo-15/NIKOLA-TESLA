@@ -5,28 +5,38 @@ from desk.serializers import ProcedureListSerializer, ProcedureTracingSerializer
 from django.db.models import Q
 from core.pagination import CustomPagination
 from django.db.models.functions import TruncDate
+from django.utils.dateparse import parse_date
 
 
 def api_get_procedures(request):
     try:
-        query = request.GET.get("query")
-        date = request.GET.get("date")
+        query = request.GET.get("query", "")
+        date_str = request.GET.get("date", None)
 
-        procedures = Procedure.objects.all()
-        procedures = (
-            procedures.filter(
-                Q(code_number__icontains=query)
-                | Q(subject__icontains=query)
-                | Q(file__person__full_name__icontains=query)
-                | Q(file__area__nombre__icontains=query)
-                | Q(file__legalperson__razon_social__icontains=query)
-                | Q(file__person__numero_documento__icontains=query)
-                | Q(file__legalperson__numero_documento__icontains=query),
-                **({"created_at__date": date} if date else {}),
+        # Construcción de filtros dinámicos
+        filters = Q()
+        
+        if query:
+            filters &= (
+                Q(code_number__icontains=query) |
+                Q(subject__icontains=query) |
+                Q(file__person__full_name__icontains=query) |
+                Q(file__area__nombre__icontains=query) |
+                Q(file__legalperson__razon_social__icontains=query) |
+                Q(file__person__numero_documento__icontains=query) |
+                Q(file__legalperson__numero_documento__icontains=query)
             )
-            .annotate(created_at_date=TruncDate("created_at"))
-            .order_by("-code_number")
-        )
+        
+        if date_str:
+            # Convertir el string a una fecha válida
+            date = parse_date(date_str)
+            if date:
+                filters &= Q(created_at__date=date)
+
+        # Aplicar filtros y ordenar los resultados
+        procedures = Procedure.objects.filter(filters).order_by("-code_number")
+
+        # Paginación
         paginator = CustomPagination()
         paginated_procedures = paginator.paginate_queryset(procedures, request)
         serializer = ProcedureListSerializer(paginated_procedures, many=True)
