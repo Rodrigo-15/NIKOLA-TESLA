@@ -53,14 +53,23 @@ class ProcedureListSerializer(serializers.Serializer):
         return "No registrado"
 
     def get_state(self, obj):
-        if ProcedureTracing.objects.filter(procedure_id=obj.id).count() == 1:
-            return "Iniciado"
-        elif ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_archived:
-            return "Archivado"
-        elif ProcedureTracing.objects.filter(procedure_id=obj.id).last().is_finished:
-            return "Concluido"
-        return "En proceso"
+        procedure_tracing_qs = ProcedureTracing.objects.filter(procedure_id=obj.id)
+        
+        # Obtener el último registro de manera segura
+        last_tracing = procedure_tracing_qs.last()
 
+        # Si solo hay un registro
+        if procedure_tracing_qs.count() == 1:
+            return "Iniciado"
+        # Verificar si se obtuvo un último registro
+        if last_tracing:
+            if last_tracing.is_archived:
+                return "Archivado"
+            elif last_tracing.is_finished:
+                return "Concluido"
+        # Si no se cumplen las condiciones anteriores, retornamos "En proceso"
+        return "En proceso"
+    
     def get_area_id(self, obj):
         if obj.file.area_id:
             return obj.file.area_id
