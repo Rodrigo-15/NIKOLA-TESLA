@@ -215,6 +215,8 @@ def reporte_academico_function(expediente_id):
                     "promedio": round((ppc / creditos), 2),
                 }
             )
+           
+            
             promedio_graduado = Decimal(notas_total) / creditos_total
             promedio_graduado = promedio_graduado.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         else:
@@ -224,7 +226,7 @@ def reporte_academico_function(expediente_id):
                     "promedio": "-",
                 }
             )
-
+            
     # EXTRACURRICULARES
     obj_extracurricular = Matricula.objects.filter(
         expediente_id=expediente_id,

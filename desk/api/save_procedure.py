@@ -45,15 +45,15 @@ def api_save_procedure(request):
         if type_person == "0":
             file = File.objects.filter(area_id=area_id).first()
             if not file:
-                File.objects.create(area_id=area_id)
+                file= File.objects.create(area_id=area_id)
         elif type_person == "1":
             file = File.objects.filter(person_id=person_id).first()
             if not file:
-                File.objects.create(person_id=person_id)
+                file=File.objects.create(person_id=person_id)
         elif type_person == "2":
             file = File.objects.filter(legalperson_id=person_id).first()
             if not file:
-                File.objects.create(legalperson_id=person_id)
+                file=File.objects.create(legalperson_id=person_id)
         else:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,

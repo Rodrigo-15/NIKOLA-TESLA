@@ -15,6 +15,12 @@ def api_approve_tracing(request):
             .last()
             .id
         )
+        if not tracing_id:
+            return Response(
+                {"message": "El procedimiento ya ha sido aprobado o no existe un seguimiento pendiente."},
+                status=status.HTTP_200_OK,
+            )
+        
         procedure = Procedure.objects.filter(id=procedure_id).first()
         ProcedureTracing.objects.filter(id=tracing_id).update(is_approved=True)
         count_tracing = ProcedureTracing.objects.filter(
