@@ -239,8 +239,8 @@ def diploma_egresado(data):
         path_return = path_return.replace("\\", "/")
         return path_return
     except Exception as e:
-        print(e)
-        return None
+        path_return = str(e)
+        return path_return
 
 
 def diploma_diplomado(data):
@@ -566,7 +566,6 @@ def diploma_diplomado(data):
         path_return = path_return.replace("\\", "/")
         return path_return
     except Exception as e:
-
         path_return = str(e)
         return path_return
 
@@ -632,6 +631,64 @@ def reporte_matricula(data):
 
     cursos = [
         ["N°", "CICLO", "CÓDIGO", "ASIGNATURA", "INTENTO", "SECCION", "CREDITOS"],
+    ]
+
+    cursos = [
+        ["N°", "CICLO", "CÓDIGO", "ASIGNATURA", "INTENTO", "SECCION", "CREDITOS"],
+        [
+            "1",
+            "1",
+            "DPC-01",
+            "INTRODUCCION A LAS COMPETENCIAS DOCENTES",
+            "01",
+            "A",
+            "4.00",
+        ],
+        [
+            "2",
+            "1",
+            "DPC-02",
+            "INNOVACION, DIVERSISDAD Y EQUIDAD EN LA EDUCACION",
+            "01",
+            "A",
+            "4.00",
+        ],
+        [
+            "3",
+            "1",
+            "DPC-03",
+            "COMPETENCIAS DIGITALES EN DOCENCIA UNIVERSITARIA",
+            "01",
+            "A",
+            "4.00",
+        ],
+        [
+            "4",
+            "1",
+            "DPC-04",
+            "METODOLOGIAS ACTIVAS Y TECNICAS DIDACTICAS",
+            "01",
+            "A",
+            "4.00",
+        ],
+        [
+            "5",
+            "1",
+            "DPC-05",
+            "HERRAMIENTAS Y RECURSOS DOCENTES PARA LA ENSEÑANZA Y EL APRENDIZAJE",
+            "01",
+            "A",
+            "4.00",
+        ],
+        [
+            "6",
+            "1",
+            "DPC-06",
+            "METODOLOGIA DE LA INVESTIGACION EDUCATIVA",
+            "01",
+            "A",
+            "4.00",
+        ],
     ]
 
     logoUnap = "media\config\logo_UNAP.jpg"
@@ -789,90 +846,3 @@ def reporte_matricula(data):
     c.drawImage(img_buffer, (A4[0] / 2) - 50, currenty - 110, 100, 100)
 
     c.save()
-
-
-def reporte_excel_programas_by_promocion_xlsx(data) -> str:
-    media_root = settings.MEDIA_ROOT
-    pdf_folder = os.path.join(media_root, "excel", "academicos")
-    if not os.path.exists(pdf_folder):
-        os.makedirs(pdf_folder)
-
-    # milisecond
-    milisecond = str(int(round(time.time() * 1000)))
-
-    programa = data["programa"]
-    promocion = data["promocion"]
-
-    path_file = os.path.join(
-        settings.MEDIA_ROOT,
-        "excel",
-        "academicos",
-        f"reporte-{programa}-{promocion}-{milisecond}.xlsx",
-    )
-
-    if os.path.exists(path_file):
-        os.remove(path_file)
-    cursos = data["cursos"]
-    datostabla = []
-
-    # for procedure in procedures:
-    #     datostabla.append(
-    #         [
-    #             procedure["code_number"],
-    #             procedure["subject"],
-    #             procedure["procedure_type_description"],
-    #             procedure["person_full_name"],
-    #         ]
-    #     )
-
-    file = Workbook(path_file)
-    ws = file.add_worksheet()
-
-    ws.write_string(1, 1, f"PROGRAMA: {programa}-{promocion}")
-
-    # ---------------tabla------------------#
-    headers = datostabla[0:1][0]
-    rows = datostabla[1:]
-
-    print(headers)
-
-    ws.add_table(
-        f"A4:D{len(rows) + 4}",
-        {
-            "data": rows,
-            "columns": [
-                {"header": headers[0]},
-                {"header": headers[1]},
-                {"header": headers[2]},
-                {"header": headers[3]},
-            ],
-        },
-    )
-
-    border_format = file.add_format(
-        {"border": 1}
-    )  # 1 is for a thin border. You can use other values for different border styles.
-
-    rowCounter = 3
-    largestAsunto = 0
-    for row in datostabla:
-        for i in range(len(row)):
-            if i == 2:
-                if len(row[i]) > largestAsunto:
-                    largestAsunto = len(row[i])
-        rowCounter += 1
-
-    ws.set_column("A:A", 12.5)
-    ws.set_column("B:B", largestAsunto * 2.4)
-
-    ws.set_column("C:D", 50)
-
-    path_return = os.path.join(
-        settings.MEDIA_URL,
-        "excel",
-        "academicos",
-        f"reporte-{programa}-{promocion}-{milisecond}.xlsx",
-    )
-
-    path_return = path_return.replace("\\", "/")
-    return path_return

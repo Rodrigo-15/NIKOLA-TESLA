@@ -32,7 +32,7 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ["*", "localhost", "localhost:5173"]
+ALLOWED_HOSTS = ["*"]
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_HEADERS = [
     "accept",
@@ -43,6 +43,7 @@ CORS_ALLOW_HEADERS = [
     "origin",
     "user-agent",
     "app-name",
+    "user",
 ]
 
 # Application definition
@@ -58,6 +59,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "django_filters",
     "corsheaders",
+    "channels",
     "accounts",
     "economicos",
     "academicos",
@@ -100,8 +102,17 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "backend.wsgi.application"
+ASGI_APPLICATION = "backend.asgi.application"
 
-
+# Channels
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
@@ -152,11 +163,26 @@ USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
+DEFAULT_FILE_STORAGE = env("DEFAULT_FILE_STORAGE")
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
+AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME")
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
-MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+# MEDIA_URL = "/media/"
+MEDIA_URL = "https://sigae-epg-bucket.s3.us-east-2.amazonaws.com/"
+MEDIA_LOCAL_URL = "/media/"
+import boto3
+
+CREATE_STORAGE = s3_client = boto3.client(
+    "s3",
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    region_name=AWS_S3_REGION_NAME,
+)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

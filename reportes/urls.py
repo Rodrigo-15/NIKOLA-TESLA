@@ -33,11 +33,6 @@ urlpatterns = [
         name="get_reporte_programas_excel",
     ),
     path(
-        "reporte_programa_function/",
-        reporte_programa_function,
-        name="reporte_programa_function",
-    ),
-    path(
         "get_reporte_actanotas_pdf/",
         get_reporte_actanotas_pdf,
         name="get_reporte_actanotas_pdf",
@@ -84,6 +79,18 @@ urlpatterns = [
         name="get_charge_procedure_pdf",
     ),
     path(
-        "reporte_alumnos_programas_by_promocion", reporte_alumnos_programas_by_promocion
+        "get_constancia_registro/",
+        get_constancia_registro,
+        name="get_constancia_registro",
+    ),
+    path(
+        "get_tramites_area_excel/",
+        get_tramites_area_excel,
+        name="get_tramites_area_excel",
+    ),
+    path(
+        "get_reporte_matriculas_excel/",
+        get_reporte_matriculas_excel,
+        name="get_reporte_matriculas_excel",
     ),
 ]

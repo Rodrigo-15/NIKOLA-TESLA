@@ -10,7 +10,7 @@
             margin-top: 1cm;
             margin-left: 1.5cm;
             margin-right: 1.5cm;
-            margin-button:1cm;
+            margin-button: 1cm;
         }
 
         body {
@@ -64,11 +64,13 @@
             margin-bottom: 10px;
             font-size: 12px;
         }
+
         .idioma {
-            margin-top:5px;
+            margin-top: 5px;
             font-size: 10px;
-            font-weigth:bold;
+            font-weigth: bold;
         }
+
         .unap {
             margin-block-start: -80px;
             height: 50px;
@@ -183,16 +185,19 @@
             font-size: 10px;
             text-align: center;
         }
+
         .th-resolucion {
             width: 100px;
             font-size: 10px;
             text-align: center;
         }
+
         .td-num {
             width: 15px;
             font-size: 9px;
             text-align: center;
         }
+
         .td-asignatura {
             width: 235px;
             font-size: 8px;
@@ -234,6 +239,7 @@
             font-size: 9px;
             text-align: center;
         }
+
         .td-resolucion {
             width: 100px;
             font-size: 7px;
@@ -382,9 +388,9 @@
                     <tr>
                         <th class="th-num">N°</th>
                         {% if expediente.programa.tipo_id != 3 %}
-                            <th class="th-asignatura">ASIGNATURAS</th>
+                        <th class="th-asignatura">ASIGNATURAS</th>
                         {% else %}
-                            <th class="th-asignatura">MODULOS</th>
+                        <th class="th-asignatura">MODULOS</th>
                         {% endif %}
                         <th class="th-nota">NOTA</th>
                         <th class="th-cred">CRED</th>
@@ -468,50 +474,50 @@
                 </tbody>
             </table>
             {% if cursos_extracurricular|length > 0 %}
-                <div class="idioma">
-                    <b>EXTRACURRICULAR DEL IDIOMA EXTRANJERO</b>
-                </div>
-                {% for ce in cursos_extracurricular %}
-                    <table >
-                        <tbody>
-                            <tr>
-                                <td class="td-titulo">CURSO</td>
-                                <td class="td-puntos">:</td>
-                                <td class="td-data"><b>{{ce.curso}}</b></td>
-                            </tr>
-                            <tr>
-                                <td class="td-titulo">MODALIDAD</td>
-                                <td class="td-puntos">:</td>
-                                <td class="td-data">{{ce.modalidad}}</td>
-                            </tr>
-                            <tr>
-                                <td class="td-titulo">RES. DIREC.</td>
-                                <td class="td-puntos">:</td>
-                                <td class="td-data">{{ce.resolucion}}</td>
-                            </tr>
-                            <tr>
-                                <td class="td-titulo">EJECUTADO</td>
-                                <td class="td-puntos">:</td>
-                                <td class="td-data">{{ce.ejecutado}}</td>
-                            </tr>
-                            <tr>
-                                <td class="td-titulo">NOTA</td>
-                                <td class="td-puntos">:</td>
-                                <td class="td-data">{{ce.nota}}</td>
-                            </tr>
-                            <tr>
-                                <td class="td-titulo">DOCENTE</td>
-                                <td class="td-puntos">:</td>
-                                <td class="td-data">{{ce.docente}}</td>
-                            </tr>
-                            <tr>
-                                <td class="td-titulo">ACTA N°</td>
-                                <td class="td-puntos">:</td>
-                                <td class="td-data">{{ce.acta}}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                {% endfor %}
+            {% for ce in cursos_extracurricular %}
+            <div class="idioma">
+                <b>EXTRACURRICULAR DEL IDIOMA EXTRANJERO</b>
+            </div>
+            <table>
+                <tbody>
+                    <tr>
+                        <td class="td-titulo">CURSO</td>
+                        <td class="td-puntos">:</td>
+                        <td class="td-data"><b>{{ce.curso}}</b></td>
+                    </tr>
+                    <tr>
+                        <td class="td-titulo">MODALIDAD</td>
+                        <td class="td-puntos">:</td>
+                        <td class="td-data">{{ce.modalidad}}</td>
+                    </tr>
+                    <tr>
+                        <td class="td-titulo">RES. DIREC.</td>
+                        <td class="td-puntos">:</td>
+                        <td class="td-data">{{ce.resolucion}}</td>
+                    </tr>
+                    <tr>
+                        <td class="td-titulo">EJECUTADO</td>
+                        <td class="td-puntos">:</td>
+                        <td class="td-data">{{ce.ejecutado}}</td>
+                    </tr>
+                    <tr>
+                        <td class="td-titulo">NOTA</td>
+                        <td class="td-puntos">:</td>
+                        <td class="td-data">{{ce.nota}}</td>
+                    </tr>
+                    <tr>
+                        <td class="td-titulo">DOCENTE</td>
+                        <td class="td-puntos">:</td>
+                        <td class="td-data">{{ce.docente}}</td>
+                    </tr>
+                    <tr>
+                        <td class="td-titulo">ACTA N°</td>
+                        <td class="td-puntos">:</td>
+                        <td class="td-data">{{ce.acta}}</td>
+                    </tr>
+                </tbody>
+            </table>
+            {% endfor %}
             {% endif %}
         </div>
         <div class="fecha">
@@ -521,7 +527,7 @@
             <p class="firma-p">-------------------------------------------------------</p>
             <p class="firma-p">{{cargoarea.grado_academico}} {{cargoarea.persona.nombres}}
                 {{cargoarea.persona.apellido_paterno}} {{cargoarea.persona.apellido_materno}}</p>
-            <p class="firma-p">{{cargoarea.cargo.nombre}} de la {{cargoarea.area.nombre}}</p>
+            <p class="firma-p">{{cargoarea.cargo.nombre}} de la Oficina {{area}}</p>
         </div>
     </main>
 </body>

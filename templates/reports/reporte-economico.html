@@ -157,7 +157,8 @@
         }
 
         table,
-        th,td {
+        th,
+        td {
             text-align: center;
             border: 1px solid black;
             border-collapse: collapse;
@@ -189,7 +190,8 @@
             margin: 0;
             text-transform: capitalize;
         }
-        .sub-historial{
+
+        .sub-historial {
             margin-top: 15px;
             margin-buttom: 0px;
             font-size: 16px;
@@ -197,24 +199,29 @@
             line-height: 8px;
             text-align: center;
         }
-        .sub-tabla{
-            margin:0px;
+
+        .sub-tabla {
+            margin: 0px;
             font-size: 12px;
             text-transform: uppercase;
             text-align: center;
         }
-        .txt-th{
+
+        .txt-th {
             font-size: 10px;
         }
-        .txt-td{
+
+        .txt-td {
             font-size: 10px;
         }
-        .td-firma{
+
+        .td-firma {
             font-size: 10px;
             width: 30px;
             text-align: right;
         }
-        .td-contend{
+
+        .td-contend {
             font-size: 14px;
             width: 120px;
             text-align: left;
@@ -240,7 +247,7 @@
     <main>
         <div class="subtitulo">
             <p id="Reporte">INFORME ECONOMICO N° &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-{{anio}}-OAE-EPG-UNAP</p>
-            <p id="Reporte">DECRETO N° &nbsp;&nbsp;&nbsp;&nbsp;-202&nbsp;&nbsp;&nbsp;-D-EPG-UNAP</p>
+            <p id="Reporte">TRAMITE N° &nbsp;&nbsp;&nbsp;&nbsp;-{{anio}}-D-EPG-UNAP</p>
         </div>
         <div class="container">
             <div class="concepto">
@@ -389,11 +396,11 @@
             </tfoot>
         </table>
         <br>
-            <div class="caja">
-                <div class="sub-tabla">
-                    <h3>Otros Conceptos</h3>
-                </div>
+        <div class="caja">
+            <div class="sub-tabla">
+                <h3>Otros Conceptos</h3>
             </div>
+        </div>
         <br>
         <table style="font-size: x-small;" class="wrapper">
             <thead>
@@ -418,8 +425,8 @@
             </tbody>
         </table>
         <div>
-            <p>EL PRESENTE INFORME ECONÓMICO HACE CONSTAR QUE EL/LA SR(A). {{ expediente.persona.nombres }} {{ expediente.persona.apellido_paterno }}
-                {{ expediente.persona.apellido_materno }} &nbsp;&nbsp;&nbsp;&nbsp; ADEUDA PAGOS REQUERIDOS POR SU PROGRAMA DE {{expediente.programa.nombre}}.</p>
+            <p>EL PRESENTE INFORME ECONÓMICO HACE CONSTAR QUE EL/LA SR(A). {{ expediente.persona.nombres }} {{expediente.persona.apellido_paterno }} {{ expediente.persona.apellido_materno }} &nbsp;&nbsp;&nbsp;&nbsp; ADEUDA PAGOS REQUERIDOS POR SU
+                PROGRAMA DE {{expediente.programa.nombre}}.</p>
         </div>
         <br>
         <br>
@@ -451,7 +458,7 @@
             <p class="firma-p">-------------------------------------------------------</p>
             <p class="firma-p">{{cargoarea.grado_academico}} {{cargoarea.persona.nombres}}
                 {{cargoarea.persona.apellido_paterno}} {{cargoarea.persona.apellido_materno}}</p>
-            <p class="firma-p">{{cargoarea.cargo.nombre}} De La {{cargoarea.area.nombre}}</p>
+            <p class="firma-p">{{cargoarea.cargo.nombre}} De La Oficina {{area}}</p>
         </div>
         <!-- <table style="font-size: x-small;" class="wrapper">
             <tr>

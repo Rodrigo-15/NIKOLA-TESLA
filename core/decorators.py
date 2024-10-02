@@ -22,7 +22,7 @@ def check_app_name(name=""):
 
             if name != "" and app_name != name:
                 return Response(
-                    "User does not have permission",
+                    "App does not have permission.",
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 

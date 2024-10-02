@@ -80,7 +80,8 @@ class CursoGrupoSerializer(serializers.Serializer):
     curso_nombre = serializers.CharField(source="curso.nombre")
     programa_nombre = serializers.SerializerMethodField(source="get_programa_nombre") 
     grupo = serializers.CharField()     
-    horarios = serializers.SerializerMethodField(source="get_horarios")     
+    horarios = serializers.SerializerMethodField(source="get_horarios")
+    resolucion = serializers.CharField()     
 
     def get_docente_nombre(self, obj):
         if not obj.docente:

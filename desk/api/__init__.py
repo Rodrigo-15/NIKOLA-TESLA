@@ -1,0 +1,39 @@
+from .generate_code_hash import api_generete_code_hash
+from .get_dashboard_data_desk import api_get_dashboard_data_desk
+from .get_dashboard_dates_desk import api_get_dashboard_dates_desk
+from .get_procedures_in_assigned import api_get_procedures_in_assigned
+from .get_procedure_and_tracing_by_id import api_get_procedure_and_tracing_by_id
+from .desk_notification import api_desk_notification
+from .save_procedure_action import api_save_procedure_action
+from .get_tracings_to_approved_for_user import api_get_tracings_to_approved_for_user
+from .save_procedure_externo_register import api_save_procedure_externo_register
+from .get_tracings_to_approved_for_external import (
+    api_get_tracings_to_approved_for_external,
+)
+from .save_procedure_externo import api_save_procedure_externo
+from .get_procedure_and_tracing_by_code_number import (
+    api_get_procedure_and_tracing_by_code_number,
+)
+from .get_procedures_reports import api_get_procedures_reports
+from .create_procedure_charge import api_create_procedure_charge
+from .get_procedures_derivations import api_get_procedures_derivations
+from .get_procedures_charges import api_get_procedures_charges
+from .anexar_procedure import api_anexar_procedure
+from .archive_procedure import api_archive_procedure
+from .get_procedures_finished import api_get_procedures_finished
+from .get_procedures_requirements import api_get_procedures_requirements
+from .finally_procedure import api_finally_procedure
+from .approve_tracing import api_approve_tracing
+from .get_tracings_to_approved_for_area import api_get_tracings_to_approved_for_area
+from .save_derive_procedure import api_save_derive_procedure
+from .update_procedure import api_update_procedure
+from .save_procedure import api_save_procedure
+from .get_user_for_area import api_get_user_for_area
+from .get_areas import api_get_areas
+from .get_procedure_by_id import api_get_procedure_by_id
+from .get_procedures_for_user import api_get_procedures_for_user
+from .get_procedures_in_started import api_get_procedures_in_started
+from .get_procedures import api_get_procedures
+from .login import api_login
+from .get_action_procedure import api_get_action_procedure
+from .get_expiration_date import api_get_expiration_date

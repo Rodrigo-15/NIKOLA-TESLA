@@ -61,7 +61,7 @@ def get_cursos_by_programa_id(request):
             .first()
         )
         obj_pago_ciclo = (
-            Matricula.objects.filter(expediente_id=expediente_id)
+            Matricula.objects.filter(expediente_id=expediente_id, is_retirado = False)
             .distinct("curso_grupo__curso__ciclo")
             .values("curso_grupo__curso__ciclo")
             .order_by("-curso_grupo__curso__ciclo")
@@ -141,7 +141,7 @@ def get_cursos_by_programa_id(request):
 
         # ciclos ya matriculados
         obj_ciclo = (
-            Matricula.objects.filter(expediente_id=expediente_id)
+            Matricula.objects.filter(expediente_id=expediente_id, is_retirado = False)
             .distinct("curso_grupo__curso__ciclo")
             .values("curso_grupo__curso__ciclo")
             .order_by("-curso_grupo__curso__ciclo")
@@ -307,6 +307,14 @@ def get_horarios_matriculados_by_expediente(request):
                 if curso_grupo.docente
                 else "no asignado"
             )
+            if curso_grupo.fecha_inicio is None:
+                inicio = "-"
+            else:
+                inicio = curso_grupo.fecha_inicio.strftime("%d/%m/%Y")
+            if curso_grupo.fecha_termino is None:
+                termino = "-"
+            else:
+                termino = curso_grupo.fecha_termino.strftime("%d/%m/%Y")
             obj_grupo = {
                 "id": curso_grupo.id,
                 "grupo": curso_grupo.grupo,
@@ -315,6 +323,8 @@ def get_horarios_matriculados_by_expediente(request):
                 "limite_registros": 0,
                 "numero_registros": 0,
                 "horarios": [],
+                "fecha_inicio": inicio,
+                "fecha_termino": termino,
             }
 
             horarios = Horario.get_horarios_by_curso_grupo(curso_grupo.id)
@@ -323,6 +333,7 @@ def get_horarios_matriculados_by_expediente(request):
                     "dia": DIAS[horario.dia],
                     "hora_inicio": horario.hora_inicio.strftime("%H:%M %p"),
                     "hora_fin": horario.hora_fin.strftime("%H:%M %p"),
+                    "aula": horario.aula.nombre if horario.aula else "-",
                 }
                 obj_grupo["horarios"].append(obj_horario)
 
@@ -413,7 +424,7 @@ def get_alumnos_curso_grupo_by_id(request):
                 else:
                     promedio_final = expediente["promedio_final"]
             serializer = ExpedienteAlumnoSerializer(alumno)
-            alumnos.append({**serializer.data, "promedio_final": promedio_final})
+            alumnos.append({**serializer.data, "promedio_final": promedio_final, "is_cerrado": expediente["is_cerrado"]})
         return Response(alumnos)
 
 
@@ -459,12 +470,25 @@ def get_estado_notas_curso_by_id(request):
         periodo_id = request.GET.get("periodo_id")
         matricula_obj = Matricula.objects.filter(
             periodo_id=periodo_id, curso_grupo_id=curso_grupo_id
-        ).first()
+        )
+        for matricula in matricula_obj:
+            if matricula.is_publicado == False:
+                is_publicado = False
+                break
+            else:
+                is_publicado = matricula.is_publicado
+
+        for matricula in matricula_obj:  
+            if matricula.is_cerrado == False:
+                is_cerrado = False
+                break
+            else:
+                is_cerrado = True
         if matricula_obj:
             return Response(
                 {
-                    "is_cerrado": matricula_obj.is_cerrado,
-                    "is_publicado": matricula_obj.is_publicado,
+                    "is_cerrado": is_cerrado,
+                    "is_publicado": is_publicado,
                 }
             )
 
@@ -491,10 +515,9 @@ def save_notas(request):
                     )
                     for matricula in matricula_obj:
                         matricula.promedio_final = float(alumno["promedio_final"])
-                        if matricula.is_cerrado == True:
-                            return Response(status=status.HTTP_400_BAD_REQUEST)
-                        else:
+                        if matricula.is_cerrado == False:
                             matricula.save()
+                            
                 else:
                     return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -687,7 +710,7 @@ def get_progreso_academico_by_expediente_id(request):
 def get_periodos_by_expediente_id(request):
     expediente_id = request.data.get("expediente_id")
     periodos = (
-        Matricula.objects.filter(expediente__id=expediente_id)
+        Matricula.objects.filter(expediente__id=expediente_id, is_retirado=False)
         .values(
             "periodo__id",
             "periodo__nombre",

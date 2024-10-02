@@ -1,0 +1,12 @@
+from .get_reporte_matricula_pdf import api_get_reporte_matricula_pdf
+from .get_listado_alumnos_excel import api_get_listado_alumnos_excel
+from .get_reporte_actanotas_pdf import api_get_reporte_actanotas_pdf
+from .get_reporte_actanotas_aplazado_pdf import api_get_reporte_actanotas_aplazado_pdf
+from .get_reporte_academico_alumno_pdf import api_get_reporte_academico_alumno_pdf
+from .get_reporte_economico_alumno_pdf import api_get_reporte_economico_alumno_pdf
+from .get_reporte_pensiones_programas_excel import (
+    api_get_reporte_pensiones_programas_excel,
+)
+from .get_reporte_programas_excel import api_get_reporte_programas_excel
+from .generate_diploma_pdf import api_generate_diploma_pdf
+from .get_reporte_matriculas_excel import api_get_reporte_matriculas_excel
