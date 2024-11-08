@@ -182,7 +182,7 @@ def reporte_economico_function(numero_documento):
 
     # ENCARGADO OFICINA
     obj_cargoarea = CargoArea.objects.filter(
-        cargo__id=5, is_active=True, area__id=5
+        cargo__id=1, is_active=True, area__id=5
     ).first()
     area = obj_cargoarea.area.first().nombre
     return {
