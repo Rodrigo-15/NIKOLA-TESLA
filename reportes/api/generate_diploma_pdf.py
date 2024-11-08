@@ -257,7 +257,7 @@ def diploma_egresado(data):
 
         archivoPdf.setFillColor(HexColor("#000000"))
         archivoPdf.setFont("times", 21)
-        archivoPdf.drawString(500, 150, f"{fecha}.".capitalize())
+        archivoPdf.drawString(500, 185, f"{fecha}.".capitalize())
 
         style.fontName = "times"
         style.fontSize = 9
