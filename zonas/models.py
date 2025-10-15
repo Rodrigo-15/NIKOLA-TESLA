@@ -10,6 +10,10 @@ class Pais(models.Model):
 
     def __str__(self):
         return f"{self.nombre} - {self.iso}"
+    
+    class Meta:
+        verbose_name = "País"
+        verbose_name_plural = "Países"
 
 
 class Region(models.Model):

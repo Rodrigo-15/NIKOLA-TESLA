@@ -16,6 +16,9 @@ class Facultad(models.Model):
 
     def __str__(self):
         return f"{self.nombre} - {self.sigla}"
+    class Meta:
+        verbose_name = "Facultad"
+        verbose_name_plural = "Facultades"
 
 
 class TipoPrograma(models.Model):
@@ -76,6 +79,10 @@ class Cursos(models.Model):
     @staticmethod
     def get_cursos_by_programa_id(programa_id):
         return Cursos.objects.filter(plan_estudio__programa_id=programa_id)
+    
+    class Meta:
+        verbose_name = "Curso"
+        verbose_name_plural = "Cursos"
 
 
 class RequisitoCurso(models.Model):

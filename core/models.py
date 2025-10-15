@@ -221,6 +221,10 @@ class Apps(models.Model):
     @staticmethod
     def get_apps():
         return Apps.objects.filter(is_active=True)
+    
+    class Meta:
+        verbose_name = "App"
+        verbose_name_plural = "Apps"
 
 
 class Menu(models.Model):

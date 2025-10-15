@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "desk",
     "django_seed",
+    "api",
 ]
 
 MIDDLEWARE = [
@@ -118,14 +119,15 @@ CHANNEL_LAYERS = {
 
 DATABASES = {
     "default": {
-        "ENGINE": env("ENGINE"),
-        "NAME": env("NAMEDB"),
-        "USER": env("USERDB"),
-        "PASSWORD": env("PASSWORDDB"),
-        "HOST": env("HOSTDB"),
-        "PORT": env("PORTDB"),
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("DB_NAME", default="backend"),
+        "USER": env("DB_USER", default="rodri"),
+        "PASSWORD": env("DB_PASSWORD", default="adrenaline"),
+        "HOST": env("DB_HOST", default="localhost"),
+        "PORT": env("DB_PORT", default="5432"),
     }
 }
+
 
 
 # Password validation
@@ -163,11 +165,14 @@ USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
-DEFAULT_FILE_STORAGE = env("DEFAULT_FILE_STORAGE")
-AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
-AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
-AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME")
+DEFAULT_FILE_STORAGE = env(
+    "DEFAULT_FILE_STORAGE", 
+    default="django.core.files.storage.FileSystemStorage"
+)
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="")
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID", default="")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY", default="")
+AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="")
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
@@ -191,10 +196,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permission.IsAuthenticated"
+    ],
 }
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 
