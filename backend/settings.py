@@ -114,7 +114,7 @@ DATABASES = {
     "default": dj_database_url.config(
         default=env("DATABASE_URL", default="postgresql://postgres:postgres@localhost:5432/postgres"),
         conn_max_age=600,
-        ssl_require=True
+        ssl_require=False
     )
 }
 
