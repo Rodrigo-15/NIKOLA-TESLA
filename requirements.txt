@@ -1,3 +1,5 @@
+--prefer-binary
+
 asgiref==3.10.0
 astroid==2.15.5
 async-timeout==4.0.3
@@ -77,8 +79,7 @@ tinycss2==1.2.1
 tomli==2.0.1
 tomlkit==0.11.8
 toposort==1.10
-Twisted==23.8.0
-twisted-iocpsupport==1.0.4
+Twisted[tls]==23.8.0
 txaio==23.1.1
 typing_extensions==4.1.1
 tzdata==2025.2
