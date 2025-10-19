@@ -153,3 +153,6 @@ REST_FRAMEWORK = {
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# 🌐 Configuración de URLs base para entornos local y producción
+URL_LOCAL = "http://127.0.0.1:8000/"
+URL_PROD = "https://tu-backend.onrender.com/"  # ← cámbialo por tu URL de Render cuando ya esté activo
