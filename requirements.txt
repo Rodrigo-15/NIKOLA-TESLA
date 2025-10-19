@@ -91,4 +91,4 @@ wrapt==1.15.0
 XlsxWriter==3.0.3
 zope.interface==6.2
 zopfli==0.2.2
-gunicorn==22.1.0
+gunicorn==23.0.0
