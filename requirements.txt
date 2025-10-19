@@ -37,6 +37,7 @@ et-xmlfile==1.1.0
 Faker==17.6.0
 filelock==3.19.1
 fonttools==4.39.0
+gunicorn==23.0.0
 html5lib==1.1
 hyperlink==21.0.0
 idna==3.6
@@ -91,4 +92,3 @@ wrapt==1.15.0
 XlsxWriter==3.0.3
 zope.interface==6.2
 zopfli==0.2.2
-gunicorn==23.0.0
